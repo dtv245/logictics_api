@@ -1,9 +1,8 @@
 package com.company.logicstic.dto;
 
-import com.company.logicstic.repository.ResponseMeta;
-import jakarta.servlet.http.HttpServletRequest;
-
 import java.util.List;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 public record ApiResponse<T>(
         boolean success,

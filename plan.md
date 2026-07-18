@@ -1,141 +1,190 @@
-# Plan: Review Entity vs SQL Schema
+# Project Overview
 
-Cập nhật lần cuối: 2026-07-18 09:54 (Asia/Ho_Chi_Minh)
-Tổng số bảng nghiệp vụ trong schema: 50
-Đã kiểm tra: 50 / 50
+## Architecture
 
-## Danh sách bảng
-- [x] ai_dispatch_sessions — Đã xong (Cảnh báo x1)
-- [x] api_keys — Đã xong (Đạt)
-- [x] customers — Đã xong (Góp ý x1)
-- [x] eld_provider_configurations — Đã xong (Đạt)
-- [x] load_board_configurations — Đã xong (Đạt)
-- [x] notifications — Đã xong (Đạt)
-- [x] telegram_chats — Đã xong (Đạt)
-- [x] tenant_roles — Đã xong (Cảnh báo x1)
-- [x] terminals — Đã xong (Cảnh báo x1)
-- [x] ai_dispatch_decisions — Đã xong (Cảnh báo x1)
-- [x] containers — Đã xong (Cảnh báo x1)
-- [x] customer_users — Đã xong (Góp ý x1)
-- [x] employees — Đã xong (Nghiêm trọng x1)
-- [x] hos_logs — Đã xong (Góp ý x1)
-- [x] hos_violations — Đã xong (Đạt)
-- [x] tenant_role_claims — Đã xong (Cảnh báo x1)
-- [x] trucks — Đã xong (Đạt)
-- [x] driver_behavior_events — Đã xong (Đạt)
-- [x] driver_hos_statuses — Đã xong (Đạt)
-- [x] eld_driver_mappings — Đã xong (Góp ý x1)
-- [x] eld_vehicle_mappings — Đã xong (Góp ý x1)
-- [x] expenses — Đã xong (Đạt)
-- [x] loads — Đã xong (Cảnh báo x1)
-- [x] maintenance_schedules — Đã xong (Góp ý x1)
-- [x] posted_trucks — Đã xong (Góp ý x1)
-- [x] tracking_links — Đã xong (Cảnh báo x1)
-- [x] trips — Đã xong (Cảnh báo x1)
-- [x] accident_reports — Đã xong (Cảnh báo x1)
-- [x] accident_third_parties — Đã xong (Đạt)
-- [x] accident_witnesses — Đã xong (Đạt)
-- [x] conversations — Đã xong (Cảnh báo x1)
-- [x] dvir_reports — Đã xong (Cảnh báo x1)
-- [x] invoices — Đã xong (Cảnh báo x2)
-- [x] load_board_listings — Đã xong (Cảnh báo x1)
-- [x] load_condition_reports — Đã xong (Cảnh báo x1)
-- [x] load_exceptions — Đã xong (Cảnh báo x1)
-- [x] maintenance_records — Đã xong (Cảnh báo x1)
-- [x] messages — Đã xong (Cảnh báo x1)
-- [x] payment_links — Đã xong (Cảnh báo x1)
-- [x] payments — Đã xong (Cảnh báo x1)
-- [x] time_entries — Đã xong (Cảnh báo x1)
-- [x] trip_stops — Đã xong (Cảnh báo x1)
-- [x] condition_defects — Đã xong (Đạt)
-- [x] conversation_participants — Đã xong (Cảnh báo x1)
-- [x] documents — Đã xong (Cảnh báo x2)
-- [x] driver_licenses — Đã xong (Cảnh báo x2)
-- [x] dvir_defects — Đã xong (Đạt)
-- [x] invoice_line_items — Đã xong (Đạt)
-- [x] maintenance_parts — Đã xong (Đạt)
-- [x] message_read_receipts — Đã xong (Cảnh báo x1)
+- **Framework**: Spring Boot 4.1.0 (SB4), Java 21
+- **Persistence**: Spring Data JPA (Hibernate), Flyway for migrations, PostgreSQL
+- **Security**: Spring Security OAuth2 Resource Server, JWT (jjwt 0.12.3)
+- **API Documentation**: SpringDoc OpenAPI (springdoc-openapi-starter-webmvc-ui 2.8.9)
+- **Mapping**: MapStruct 1.5.5.Final (declared but NOT actually used)
+- **Utilities**: Lombok, HikariCP
+- **Multi-tenancy**: Custom ThreadLocal-based tenant context with dynamic DataSource routing
 
-## Vấn đề đã phát hiện (tổng hợp, cập nhật dần)
-| Bảng | Vấn đề | Mức độ | Trạng thái sửa |
-|------|--------|--------|-----------------|
-| employees | Entity kế thừa BaseAuditableEntity nhưng bảng SQL không có 4 cột audit | Nghiêm trọng | Đã sửa — cập nhật sql.md và migration 016 |
-| 23 bảng dùng BaseAuditableEntity | CreatedBy/LastModifiedBy chưa có cơ chế tự động populate | Cảnh báo | Đã sửa — Spring Data JPA Auditing lấy request principal |
-| ai_dispatch_decisions | AiDispatchSession thiếu inverse collection cho decision phụ thuộc session | Cảnh báo | Đã sửa — decisions, PERSIST/MERGE, orphanRemoval |
-| tenant_role_claims | TenantRole thiếu inverse collection cho claim phụ thuộc role | Cảnh báo | Đã sửa — claims, PERSIST/MERGE, orphanRemoval |
-| conversations/messages/message_read_receipts | Thiếu inverse/orphan management cho aggregate messaging | Cảnh báo | Đã sửa — messages, participants, readReceipts |
-| tracking_links/load_exceptions | Load thiếu inverse cho các child có lifecycle phụ thuộc | Cảnh báo | Đã sửa — trackingLinks và exceptions |
-| trip_stops | Trip thiếu inverse collection cho stop phụ thuộc trip | Cảnh báo | Đã sửa — stops, PERSIST/MERGE, orphanRemoval |
-| invoices | tax_behavior chưa phản ánh DEFAULT 'exclusive' trong columnDefinition | Cảnh báo | Đã sửa — text DEFAULT 'exclusive' |
-| documents | status chưa phản ánh DEFAULT 'active' trong columnDefinition | Cảnh báo | Đã sửa — text DEFAULT 'active' |
-| driver_licenses | status chưa phản ánh DEFAULT 'active' trong columnDefinition | Cảnh báo | Đã sửa — text DEFAULT 'active' |
+## Package Structure
+
+```
+com.company.logicstic/
+├── LogicsticApplication.java
+├── config/              # Multi-tenancy, JPA auditing, OpenAPI, Mapper config
+├── controller/          # REST controllers (13 controllers)
+├── dto/                 # Request/Response records (flat + domain sub-packages)
+├── entity/              # JPA entities (45+ entities)
+├── exception/           # Global exception handler + custom exceptions
+├── mapper/              # EMPTY - MapStruct mappers not created
+├── repository/          # JPA repositories (12 repos)
+└── service/             # Business logic services (15 services)
+```
+
+## Business Domains
+
+- **Customer Management**: Customer CRUD
+- **Employee/Driver Management**: Employee CRUD with role assignment
+- **Truck Management**: Truck CRUD
+- **Load Management**: Load CRUD with complex address/location fields
+- **Trip Management**: Trip CRUD with truck assignments
+- **Invoice Management**: Invoice CRUD with line items, customer/employee/load relations
+- **Payment Management**: Payment CRUD with invoice relations
+- **Document Management**: Document CRUD with polymorphic relations (load/truck/employee)
+- **Notification Management**: Notification read/mark-read
+- **Message/Conversation**: Messaging between employees
+- **Inspection**: Load condition reports
+- **Role Management**: TenantRole CRUD
 
 ---
 
-# Plan: REST API Implementation
+# Problems Found
 
-Cập nhật lần cuối: 2026-07-18 11:27 (Asia/Ho_Chi_Minh)
-Tổng số nhóm endpoint trong `docs/docs/api/overview.md`: 24
-Đã hoàn thành: 0 / 24
+## Critical
 
-## Điều kiện tiên quyết
-- [ ] JWT Resource Server — Đã thêm integration filter đọc JWT claim `tenant`; vẫn cần cấu hình issuer/audience thực tế của IdentityServer
-- [x] Tenant context/isolation — Đã triển khai database-per-tenant bằng routing datasource; không cần tenant key trong bảng nghiệp vụ
-- [ ] Realtime adapter — Chưa thiết kế; không dùng STOMP trực tiếp cho client SignalR
+### 1. MapStruct Not Used (Mapper layer empty)
+- `MapperConfiguration.java` exists, `mapstruct-processor` is in pom.xml, but no actual mapper interfaces exist
+- All DTO<->Entity mapping is done manually via static `from()` methods on records
+- All `applyFields()` methods in services manually copy fields — this is what MapStruct should automate
+- **Impact**: ~300 lines of manual mapping code that is error-prone and violates DRY
 
-## Quyết định kiến trúc chờ xác nhận
-- [ ] A. Response format — Chọn format tài liệu `{isSuccess,data,error}` hoặc giữ envelope hiện tại `{success,code,message,data,errors,meta}`
-- [ ] B. Realtime protocol — Xác nhận Angular được chuyển từ `@microsoft/signalr` sang STOMP client, hoặc giữ SignalR và cần một gateway/adapter tương thích SignalR
-- [ ] C. Thứ tự triển khai — Chọn JWT/tenant infrastructure trước hoặc REST nghiệp vụ trước; khuyến nghị JWT/tenant trước
+### 2. Massive Code Duplication (DRY Violation)
+Every service has the identical pattern:
+- `search()` — creates Sort, creates PageRequest, calls repo.search, wraps in PagedResponse.from()
+- `getById()` — findById + map + orElseThrow
+- `create()` — new Entity(), applyFields(), repository.save()
+- `update()` — findById, applyFields(), repository.save()
+- `delete()` — existsById check, deleteById
 
-## Thứ tự nhóm endpoint đề xuất
-- [ ] Roles (`/api/roles`) — Chưa làm
-- [ ] Customers (`/api/customers`) — Chưa làm
-- [ ] Employees (`/api/employees`) — Chưa làm
-- [ ] Drivers (`/api/drivers`) — Chưa làm
-- [ ] Trucks (`/api/trucks`) — Chưa làm
-- [ ] Loads (`/api/loads`) — Chưa làm
-- [ ] Trips (`/api/trips`) — Chưa làm
-- [ ] Invoices (`/api/invoices`) — Chưa làm
-- [ ] Payments (`/api/payments`) — Chưa làm
-- [ ] Conversations (`/api/messages/conversations`) — Chưa làm
-- [ ] Messages (`/api/messages`) — Chưa làm
-- [ ] Unread Count (`/api/messages/unread-count`) — Chưa làm
-- [ ] Inspections (`/api/inspections`) — Chưa làm
-- [ ] Documents (`/api/documents`) — Chưa làm
-- [ ] Proof of Delivery (`/api/documents/pod`) — Chưa làm
-- [ ] Bill of Lading (`/api/documents/bol`) — Chưa làm
-- [ ] Notifications (`/api/notifications`) — Chưa làm
-- [ ] Reports (`/api/reports`) — Chưa làm
-- [ ] Stats (`/api/stats`) — Chưa làm
-- [ ] Users (`/api/users`) — Chưa làm; chưa có entity tương ứng rõ ràng
-- [ ] Tenants (`/api/tenants`) — Chưa làm; chưa có entity `Tenant`
-- [ ] Subscriptions (`/api/subscriptions`) — Chưa làm; chưa có entity `Subscription`
-- [ ] Inspection Parts (`/api/inspections/parts`) — Chưa làm; chưa có catalog/entity/contract
-- [ ] VIN Decoder (`/api/vins/{vin}`) — Chưa làm; chưa xác định provider/response contract
+This pattern repeats in **12+ services** with zero abstraction.
+
+### 3. Service Layer Data Mapping Leakage
+- Services directly access repository.findById() for foreign key resolution (e.g., `customerRepository.findById(req.customerId())`)
+- This couples services to multiple repositories, violating Single Responsibility
+- Foreign key resolution should be in a dedicated layer or handled by the repository
+
+### 4. Missing Tests
+- Zero test classes exist in `src/test`
+- No unit tests, no integration tests, no controller tests
+
+### 5. Missing JavaDoc
+- Zero JavaDoc comments on any public class or method
+- No business rule documentation
+
+## Medium
+
+### 6. N+1 Query Risk
+- `getById()` = single findById which may trigger lazy loading if the entity has lazy relationships
+- No `JOIN FETCH` or `EntityGraph` used on any repository method
+- The `search()` queries only select the root entity — related entities will be lazy-loaded
+
+### 7. Sort Injection Risk
+- `Sort.by(orderBy)` takes user-provided field names directly from request parameters
+- This allows potential sort-by-arbitrary-column injection (though Spring Data validates against unknown properties)
+
+### 8. Mixed Case Column Names in Base Entity
+- `BaseAuditableEntity` uses quoted column names: `"CreatedAt"`, `"CreatedBy"`, `"LastModifiedAt"`, `"LastModifiedBy"`
+- Mixed case with quotes is non-standard and forces case-sensitive queries
+
+### 9. `applyFields()` Methods Are Long Methods
+- `LoadService.applyFields()`: 55 lines
+- `InvoiceService.applyFields()`: 36 lines
+- `PaymentService.applyFields()`: 23 lines
+- These should be replaced by MapStruct mappers
+
+### 10. Repository + DTO Package Boundary Violation
+- `ResponseMeta` class is in the `repository` package but is a DTO used by the API response layer
+- Should be in the `dto` package
+
+### 11. Missing Input Validation for Search Parameters
+- `page`, `pageSize`, `orderBy` are not validated
+- Negative page numbers, excessive page sizes could cause issues
+
+### 12. Missing Logging in Services
+- No SLF4J logging in any service class
+- Only `GlobalExceptionHandler` has logging
+
+## Minor
+
+### 13. Driver-Specific Logic Leakage
+- `EmployeeService.searchDrivers()` has a TODO comment and delegates to `search()` with null roleId
+- No actual driver filtering implemented
+
+### 14. ConversationService Missing Update/Delete
+- `ConversationService` only has `create()`, `getById()`, and `listByParticipant()`
+- No update or delete methods — possible incomplete API
+
+### 15. NotificationService Missing Filter Parameters
+- `NotificationService.list()` has no search/filter parameters
+- Returns ALL notifications paginated — could become a performance issue
+
+### 16. Magic Strings for Page Defaults
+- `defaultValue = "1"` for page, `defaultValue = "20"` for pageSize repeated across all controllers
+- Should be constants
+
+### 17. `@AllArgsConstructor` on Entities
+- Entities have `@AllArgsConstructor` from Lombok which creates a constructor with all fields
+- This is dangerous as field reordering breaks the constructor silently
+
+### 18. Useless `@AllArgsConstructor` on `BaseAuditableEntity`
+- Abstract class with `@AllArgsConstructor` — constructors on abstract classes should not be used
 
 ---
 
-# Plan: Database-per-tenant Multi-tenancy
+# Refactoring Strategy
 
-Cập nhật lần cuối: 2026-07-18 11:27 (Asia/Ho_Chi_Minh)
+## WHY
 
-- [x] Tenant Registry DB trung tâm — `tenant_registry` migration + JdbcTemplate service; registry không chứa dữ liệu nghiệp vụ
-- [x] Mã hóa tenant DB password — AES/GCM, yêu cầu `TENANT_REGISTRY_ENCRYPTION_KEY` dạng Base64 16/24/32 bytes
-- [x] TenantContext — ThreadLocal, set/clear theo request
-- [x] Dynamic routing — `TenantRoutingDataSource` extends `AbstractRoutingDataSource`, lookup key từ `TenantContext`
-- [x] Tenant connection pools — HikariDataSource per tenant, cache trong memory, giới hạn bằng `TENANT_MAX_POOLS`
-- [x] Lazy tenant datasource registration — filter đảm bảo pool được tạo khi request đầu tiên của tenant tới
-- [x] JWT claim integration — `TenantJwtClaimFilter` đọc claim `tenant` từ `JwtAuthenticationToken` đã validate và clear trong `finally`
-- [x] Migration per tenant — `TenantMigrationService` chạy Flyway tuần tự từng tenant, fail thì dừng và trả danh sách migrated/pending
-- [x] Tenant provisioning async — tạo database PostgreSQL, migrate, sau đó insert registry
-- [x] Baseline tenant schema — `src/main/resources/db/migration/tenant/V1__baseline_business_schema.sql` copy từ `sql.md`
-- [x] Test tenant isolation — routing datasource không trả dữ liệu tenant B khi context là tenant A
-- [x] Test context cleanup — filter clear TenantContext sau mỗi request cùng thread
+The current codebase has high cyclomatic redundancy, zero test coverage, no documentation, and significant code duplication. While functionally complete, it lacks the quality attributes expected of production enterprise software: maintainability, testability, and scalability.
 
-## Runtime còn cần cấu hình khi bật multi-tenancy
-- [ ] `TENANCY_ENABLED=true`
-- [ ] `TENANT_REGISTRY_DB_URL`, `TENANT_REGISTRY_DB_USERNAME`, `TENANT_REGISTRY_DB_PASSWORD`
-- [ ] `TENANT_REGISTRY_ENCRYPTION_KEY`
-- [ ] IdentityServer issuer/audience cho Resource Server
-- [ ] Admin DB credentials cho provisioning nếu cần tạo database tự động
+## HOW
+
+Phase the refactoring to minimize risk:
+
+1. **Common Infrastructure** — Extract shared patterns, add constants, fix package boundary violations
+2. **Mapper Layer** — Implement MapStruct interfaces for all DTO<->Entity mappings
+3. **Service Layer** — Create abstract base service to eliminate CRUD duplication
+4. **Repository Layer** — Add JOIN FETCH/EntityGraph to prevent N+1
+5. **Controller Layer** — Extract common controller patterns, add validation
+6. **Documentation** — Add JavaDoc to all public APIs
+7. **Testing** — Add unit tests, integration tests, controller tests
+8. **Cleanup** — Remove dead code, fix naming, add logging
+
+## EXPECTED BENEFITS
+
+- **~40% reduction in code volume** by eliminating duplication
+- **100% MapStruct coverage** replacing manual mapping
+- **Test coverage > 80%** for business logic
+- **N+1 query elimination**
+- **Full JavaDoc coverage** for all public APIs
+- **Improved maintainability** through consistent patterns
+
+---
+
+# Risk Assessment
+
+| Risk | Level | Mitigation |
+|------|-------|------------|
+| Breaking API compatibility | **High** | Keep all API signatures identical; add fields only |
+| Service base class change regression | **Medium** | Comprehensive test suite before/after |
+| MapStruct mapping errors | **Medium** | Verify all mappers with integration tests |
+| Entity changes affecting DB schema | **Low** | No schema changes — mapping only |
+| Removing dead code | **Low** | Verify no callers exist |
+
+---
+
+# Refactoring Order
+
+1. **Common Infrastructure** — Constants, ResponseMeta relocation, page defaults
+2. **MapStruct Mappers** — Create all mapper interfaces, eliminate `from()` and `applyFields()`
+3. **Abstract Base Service** — Extract CRUD template to reduce duplication by ~60%
+4. **Repository N+1 Fixes** — Add JOIN FETCH / EntityGraph annotations
+5. **Controller Cleanup** — Constant page defaults, validation for search params
+6. **Documentation** — JavaDoc for all public classes and methods
+7. **Logging** — Add SLF4J logging to all services
+8. **Testing** — Unit tests (Service layer), Integration tests (Repository layer), Controller tests (MockMvc)
+9. **Final Cleanup** — Remove unused imports, fix minor issues, verify compatibility

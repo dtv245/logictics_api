@@ -1,9 +1,16 @@
-package com.company.logicstic.repository;
+package com.company.logicstic.dto;
 
 import java.time.Instant;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+/**
+ * Metadata included in every API response for traceability and debugging.
+ *
+ * @param timestamp The server time when the response was generated
+ * @param path      The request URI that generated this response
+ * @param requestId Optional correlation ID from the X-Request-Id header
+ */
 public record ResponseMeta(
         Instant timestamp,
         String path,
