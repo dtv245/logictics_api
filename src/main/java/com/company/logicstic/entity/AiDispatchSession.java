@@ -12,6 +12,8 @@ import org.hibernate.annotations.UuidGenerator;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -81,6 +83,9 @@ public class AiDispatchSession extends BaseAuditableEntity {
 
     @Column(name = "is_overage", nullable = false)
     private Boolean isOverage;
+
+    @OneToMany(mappedBy = "session", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private List<AiDispatchDecision> decisions = new ArrayList<>();
 
     @Override
     public boolean equals(Object o) {

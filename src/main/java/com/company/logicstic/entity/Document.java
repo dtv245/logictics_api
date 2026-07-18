@@ -66,7 +66,7 @@ public class Document extends BaseAuditableEntity {
     @Column(name = "\"type\"", nullable = false, columnDefinition = "text")
     private String type;
 
-    @Column(name = "status", nullable = false, columnDefinition = "text")
+    @Column(name = "status", nullable = false, columnDefinition = "text DEFAULT 'active'")
     private String status;
 
     @Column(name = "description", length = 1000)

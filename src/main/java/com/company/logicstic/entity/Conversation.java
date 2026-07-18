@@ -12,6 +12,8 @@ import org.hibernate.annotations.UuidGenerator;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -51,4 +53,10 @@ public class Conversation {
 
     @Column(name = "last_message_at")
     private OffsetDateTime lastMessageAt;
+
+    @OneToMany(mappedBy = "conversation", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private List<Message> messages = new ArrayList<>();
+
+    @OneToMany(mappedBy = "conversation", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private List<ConversationParticipant> participants = new ArrayList<>();
 }

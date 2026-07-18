@@ -66,7 +66,7 @@ public class DriverLicense extends BaseAuditableEntity {
     @Column(name = "medical_cert_expires_at")
     private OffsetDateTime medicalCertExpiresAt;
 
-    @Column(name = "status", nullable = false, columnDefinition = "text")
+    @Column(name = "status", nullable = false, columnDefinition = "text DEFAULT 'active'")
     private String status;
 
     @ManyToOne(fetch = FetchType.LAZY)

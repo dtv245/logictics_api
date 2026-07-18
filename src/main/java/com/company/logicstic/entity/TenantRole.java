@@ -12,6 +12,8 @@ import org.hibernate.annotations.UuidGenerator;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -36,4 +38,7 @@ public class TenantRole {
 
     @Column(name = "normalized_name", nullable = false, columnDefinition = "text")
     private String normalizedName;
+
+    @OneToMany(mappedBy = "role", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private List<TenantRoleClaim> claims = new ArrayList<>();
 }

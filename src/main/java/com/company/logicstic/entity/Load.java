@@ -12,6 +12,8 @@ import org.hibernate.annotations.UuidGenerator;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -176,4 +178,10 @@ public class Load extends BaseAuditableEntity {
 
     @Column(name = "origin_location_longitude", nullable = false)
     private Double originLocationLongitude;
+
+    @OneToMany(mappedBy = "load", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private List<TrackingLink> trackingLinks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "load", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private List<LoadException> exceptions = new ArrayList<>();
 }

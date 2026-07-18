@@ -46,7 +46,7 @@ public class Invoice extends BaseAuditableEntity {
     @Column(name = "status", nullable = false, columnDefinition = "text")
     private String status;
 
-    @Column(name = "tax_behavior", nullable = false, columnDefinition = "text")
+    @Column(name = "tax_behavior", nullable = false, columnDefinition = "text DEFAULT 'exclusive'")
     private String taxBehavior;
 
     @Column(name = "tax_breakdown_json", columnDefinition = "text")
