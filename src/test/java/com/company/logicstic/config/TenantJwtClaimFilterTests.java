@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 
-import com.company.logicstic.service.TenantDataSourceService;
+import com.company.logicstic.tenant.TenantDataSourceService;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

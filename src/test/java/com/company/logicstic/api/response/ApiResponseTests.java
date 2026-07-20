@@ -1,7 +1,7 @@
 package com.company.logicstic.api.response;
 
-import com.company.logicstic.dto.ApiError;
-import com.company.logicstic.dto.ApiResponse;
+import com.company.logicstic.shared.dto.ApiError;
+import com.company.logicstic.shared.dto.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 

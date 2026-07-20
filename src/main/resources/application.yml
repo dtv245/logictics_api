@@ -10,37 +10,37 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
-    properties:
-      hibernate:
-        jdbc:
-          time_zone: UTC
-  flyway:
-    enabled: false
+#  jpa:
+#    hibernate:
+#      ddl-auto: validate
+#    open-in-view: false
+#    properties:
+#      hibernate:
+#        jdbc:
+#          time_zone: UTC
+#  flyway:
+#    enabled: false
 
 server:
   port: ${SERVER_PORT:8080}
 
-app:
-  tenancy:
-    enabled: ${TENANCY_ENABLED:false}
-    registry:
-      url: ${TENANT_REGISTRY_DB_URL:}
-      username: ${TENANT_REGISTRY_DB_USERNAME:}
-      password: ${TENANT_REGISTRY_DB_PASSWORD:}
-      encryption-key: ${TENANT_REGISTRY_ENCRYPTION_KEY:}
-      auto-initialize: ${TENANT_REGISTRY_AUTO_INITIALIZE:true}
-    pool:
-      max-tenant-pools: ${TENANT_MAX_POOLS:100}
-      maximum-pool-size: ${TENANT_POOL_MAX_SIZE:10}
-      minimum-idle: ${TENANT_POOL_MIN_IDLE:1}
-    migration:
-      locations: ${TENANT_MIGRATION_LOCATIONS:classpath:db/migration/tenant}
-    provisioning:
-      admin-url: ${TENANT_PROVISIONING_ADMIN_DB_URL:}
-      admin-username: ${TENANT_PROVISIONING_ADMIN_DB_USERNAME:}
-      admin-password: ${TENANT_PROVISIONING_ADMIN_DB_PASSWORD:}
-      template-database: ${TENANT_TEMPLATE_DATABASE:}
+#app:
+#  tenancy:
+#    enabled: ${TENANCY_ENABLED:false}
+#    registry:
+#      url: ${TENANT_REGISTRY_DB_URL:}
+#      username: ${TENANT_REGISTRY_DB_USERNAME:}
+#      password: ${TENANT_REGISTRY_DB_PASSWORD:}
+#      encryption-key: ${TENANT_REGISTRY_ENCRYPTION_KEY:}
+#      auto-initialize: ${TENANT_REGISTRY_AUTO_INITIALIZE:true}
+#    pool:
+#      max-tenant-pools: ${TENANT_MAX_POOLS:100}
+#      maximum-pool-size: ${TENANT_POOL_MAX_SIZE:10}
+#      minimum-idle: ${TENANT_POOL_MIN_IDLE:1}
+#    migration:
+#      locations: ${TENANT_MIGRATION_LOCATIONS:classpath:db/migration/tenant}
+#    provisioning:
+#      admin-url: ${TENANT_PROVISIONING_ADMIN_DB_URL:}
+#      admin-username: ${TENANT_PROVISIONING_ADMIN_DB_USERNAME:}
+#      admin-password: ${TENANT_PROVISIONING_ADMIN_DB_PASSWORD:}
+#      template-database: ${TENANT_TEMPLATE_DATABASE:}

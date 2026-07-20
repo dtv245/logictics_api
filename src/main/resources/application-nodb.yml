@@ -1,5 +1,10 @@
+# Local profile: starts the app without PostgreSQL/JPA.
+# Controllers and services that depend on repositories are disabled via @Profile("!nodb").
+# Use /health (or /api/health) to verify the process is up.
 spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
       - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+  flyway:
+    enabled: false
