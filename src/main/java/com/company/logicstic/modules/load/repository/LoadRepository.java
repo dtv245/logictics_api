@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.load.repository;
 
+import com.company.logicstic.modules.load.entity.Load;
 import java.util.UUID;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -9,12 +9,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import com.company.logicstic.modules.load.entity.Load;
-
 public interface LoadRepository extends JpaRepository<Load, UUID> {
 
-    @EntityGraph(attributePaths = {"customer", "assignedTruck", "assignedDispatcher"})
-    @Query("""
+  @EntityGraph(attributePaths = {"customer", "assignedTruck", "assignedDispatcher"})
+  @Query(
+      """
             SELECT l FROM Load l
             WHERE (:search IS NULL
                    OR LOWER(l.name) LIKE LOWER(CONCAT('%', :search, '%'))
@@ -24,12 +23,11 @@ public interface LoadRepository extends JpaRepository<Load, UUID> {
               AND (:truckId IS NULL OR l.assignedTruck.id = :truckId)
               AND (:dispatcherId IS NULL OR l.assignedDispatcher.id = :dispatcherId)
             """)
-    Page<Load> search(
-            @Param("search") String search,
-            @Param("status") String status,
-            @Param("customerId") UUID customerId,
-            @Param("truckId") UUID truckId,
-            @Param("dispatcherId") UUID dispatcherId,
-            Pageable pageable
-    );
+  Page<Load> search(
+      @Param("search") String search,
+      @Param("status") String status,
+      @Param("customerId") UUID customerId,
+      @Param("truckId") UUID truckId,
+      @Param("dispatcherId") UUID dispatcherId,
+      Pageable pageable);
 }

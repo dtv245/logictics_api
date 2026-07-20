@@ -1,21 +1,21 @@
 package com.company.logicstic.modules.messaging.repository;
 
 import com.company.logicstic.modules.messaging.entity.Conversation;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.UUID;
-
 public interface ConversationRepository extends JpaRepository<Conversation, UUID> {
 
-    @Query("""
+  @Query(
+      """
             SELECT DISTINCT c FROM Conversation c
             JOIN c.participants p
-            WHERE p.employeeId = :employeeId
+            WHERE p.employee.id = :employeeId
             ORDER BY c.lastMessageAt DESC
             """)
-    Page<Conversation> findByParticipant(@Param("employeeId") UUID employeeId, Pageable pageable);
+  Page<Conversation> findByParticipant(@Param("employeeId") UUID employeeId, Pageable pageable);
 }

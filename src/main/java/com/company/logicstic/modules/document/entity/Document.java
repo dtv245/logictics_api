@@ -1,131 +1,138 @@
 package com.company.logicstic.modules.document.entity;
 
-import com.company.logicstic.shared.BaseAuditableEntity;
 import com.company.logicstic.modules.employee.entity.Employee;
-import com.company.logicstic.modules.fleet.entity.Truck;
 import com.company.logicstic.modules.fleet.entity.DvirReport;
 import com.company.logicstic.modules.fleet.entity.MaintenanceRecord;
-import jakarta.persistence.*;
+import com.company.logicstic.modules.fleet.entity.Truck;
+import com.company.logicstic.modules.load.entity.Load;
+import com.company.logicstic.modules.load.entity.LoadConditionReport;
+import com.company.logicstic.modules.load.entity.TripStop;
+import com.company.logicstic.shared.BaseAuditableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
-
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(
     name = "documents",
     schema = "public",
     indexes = {
-        @Index(name = "ix_documents_accident_report_id", columnList = "accident_report_id"),
-        @Index(name = "ix_documents_dvir_report_id", columnList = "dvir_report_id"),
-        @Index(name = "ix_documents_employee_id", columnList = "employee_id"),
-        @Index(name = "ix_documents_load_condition_report_id", columnList = "load_condition_report_id"),
-        @Index(name = "ix_documents_load_id", columnList = "load_id"),
-        @Index(name = "ix_documents_maintenance_record_id", columnList = "maintenance_record_id"),
-        @Index(name = "ix_documents_trip_stop_id", columnList = "trip_stop_id"),
-        @Index(name = "ix_documents_truck_id", columnList = "truck_id"),
-        @Index(name = "ix_documents_uploaded_by_id", columnList = "uploaded_by_id")
-    }
-)
+      @Index(name = "ix_documents_accident_report_id", columnList = "accident_report_id"),
+      @Index(name = "ix_documents_dvir_report_id", columnList = "dvir_report_id"),
+      @Index(name = "ix_documents_employee_id", columnList = "employee_id"),
+      @Index(
+          name = "ix_documents_load_condition_report_id",
+          columnList = "load_condition_report_id"),
+      @Index(name = "ix_documents_load_id", columnList = "load_id"),
+      @Index(name = "ix_documents_maintenance_record_id", columnList = "maintenance_record_id"),
+      @Index(name = "ix_documents_trip_stop_id", columnList = "trip_stop_id"),
+      @Index(name = "ix_documents_truck_id", columnList = "truck_id"),
+      @Index(name = "ix_documents_uploaded_by_id", columnList = "uploaded_by_id")
+    })
 @Getter
 @Setter
 @NoArgsConstructor
 public class Document extends BaseAuditableEntity {
 
-    @Id
-    @GeneratedValue
-    @UuidGenerator
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+  @Id
+  @GeneratedValue
+  @UuidGenerator
+  @Column(name = "id", nullable = false, updatable = false)
+  private UUID id;
 
-    @Column(name = "owner_type", nullable = false, columnDefinition = "text")
-    private String ownerType;
+  @Column(name = "owner_type", nullable = false, columnDefinition = "text")
+  private String ownerType;
 
-    @Column(name = "file_name", nullable = false, length = 255)
-    private String fileName;
+  @Column(name = "file_name", nullable = false, length = 255)
+  private String fileName;
 
-    @Column(name = "original_file_name", nullable = false, length = 255)
-    private String originalFileName;
+  @Column(name = "original_file_name", nullable = false, length = 255)
+  private String originalFileName;
 
-    @Column(name = "content_type", nullable = false, length = 128)
-    private String contentType;
+  @Column(name = "content_type", nullable = false, length = 128)
+  private String contentType;
 
-    @Column(name = "file_size_bytes", nullable = false)
-    private Long fileSizeBytes;
+  @Column(name = "file_size_bytes", nullable = false)
+  private Long fileSizeBytes;
 
-    @Column(name = "blob_path", nullable = false, length = 512)
-    private String blobPath;
+  @Column(name = "blob_path", nullable = false, length = 512)
+  private String blobPath;
 
-    @Column(name = "blob_container", nullable = false, length = 128)
-    private String blobContainer;
+  @Column(name = "blob_container", nullable = false, length = 128)
+  private String blobContainer;
 
-    @Column(name = "\"type\"", nullable = false, columnDefinition = "text")
-    private String type;
+  @Column(name = "\"type\"", nullable = false, columnDefinition = "text")
+  private String type;
 
-    @Column(name = "status", nullable = false, columnDefinition = "text DEFAULT 'active'")
-    private String status;
+  @Column(name = "status", nullable = false, columnDefinition = "text DEFAULT 'active'")
+  private String status;
 
-    @Column(name = "description", length = 1000)
-    private String description;
+  @Column(name = "description", length = 1000)
+  private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "uploaded_by_id", nullable = false)
-    private Employee uploadedBy;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "uploaded_by_id", nullable = false)
+  private Employee uploadedBy;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id")
-    private Employee employee;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "employee_id")
+  private Employee employee;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "load_id")
-    private Load load;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "load_id")
+  private Load load;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "load_condition_report_id")
-    private LoadConditionReport loadConditionReport;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "load_condition_report_id")
+  private LoadConditionReport loadConditionReport;
 
-    @Column(name = "recipient_name", length = 255)
-    private String recipientName;
+  @Column(name = "recipient_name", length = 255)
+  private String recipientName;
 
-    @Column(name = "recipient_signature", length = 2048)
-    private String recipientSignature;
+  @Column(name = "recipient_signature", length = 2048)
+  private String recipientSignature;
 
-    @Column(name = "capture_latitude")
-    private Double captureLatitude;
+  @Column(name = "capture_latitude")
+  private Double captureLatitude;
 
-    @Column(name = "capture_longitude")
-    private Double captureLongitude;
+  @Column(name = "capture_longitude")
+  private Double captureLongitude;
 
-    @Column(name = "captured_at")
-    private OffsetDateTime capturedAt;
+  @Column(name = "captured_at")
+  private OffsetDateTime capturedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trip_stop_id")
-    private TripStop tripStop;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "trip_stop_id")
+  private TripStop tripStop;
 
-    @Column(name = "notes", length = 2000)
-    private String notes;
+  @Column(name = "notes", length = 2000)
+  private String notes;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "truck_id")
-    private Truck truck;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "truck_id")
+  private Truck truck;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "accident_report_id")
-    private AccidentReport accidentReport;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "accident_report_id")
+  private AccidentReport accidentReport;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dvir_report_id")
-    private DvirReport dvirReport;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "dvir_report_id")
+  private DvirReport dvirReport;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "maintenance_record_id")
-    private MaintenanceRecord maintenanceRecord;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "maintenance_record_id")
+  private MaintenanceRecord maintenanceRecord;
 }

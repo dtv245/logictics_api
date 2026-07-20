@@ -138,7 +138,7 @@ def parse_columns(body: str) -> tuple[list[Column], set[str], dict[str, ForeignK
         primary_keys = {unquote(value)[0] for value in pk_match.group(1).split(",")}
 
     fk_pattern = re.compile(
-        r"FOREIGN KEY\s*\(([^)]+)\)\s*REFERENCES\s+public\.(\"[^\"]+\"|\w+)\s*\(([^)]+)\)",
+        r"FOREIGN KEY\s*\(([^)]+)\)\s*REFERENCES\s+(?:public\.)?(\"[^\"]+\"|\w+)\s*\(([^)]+)\)",
         re.IGNORECASE,
     )
     for match in fk_pattern.finditer(body):
@@ -178,7 +178,7 @@ def parse_columns(body: str) -> tuple[list[Column], set[str], dict[str, ForeignK
 def parse_ddl(ddl: str) -> dict[str, Table]:
     tables: dict[str, Table] = {}
     table_pattern = re.compile(
-        r"CREATE TABLE\s+public\.(\"[^\"]+\"|\w+)\s*\((.*?)\n\);",
+        r"CREATE TABLE\s+(?:public\.)?(\"[^\"]+\"|\w+)\s*\((.*?)\n\);",
         re.IGNORECASE | re.DOTALL,
     )
     for match in table_pattern.finditer(ddl):

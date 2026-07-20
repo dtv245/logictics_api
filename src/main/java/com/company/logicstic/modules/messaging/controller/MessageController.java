@@ -1,7 +1,19 @@
 package com.company.logicstic.modules.messaging.controller;
 
+import com.company.logicstic.modules.messaging.dto.ConversationView;
+import com.company.logicstic.modules.messaging.dto.CreateConversationRequest;
+import com.company.logicstic.modules.messaging.dto.MessageView;
+import com.company.logicstic.modules.messaging.dto.SendMessageRequest;
+import com.company.logicstic.modules.messaging.service.ConversationService;
+import com.company.logicstic.modules.messaging.service.MessageService;
+import com.company.logicstic.shared.common.Constants;
+import com.company.logicstic.shared.dto.ApiResponse;
+import com.company.logicstic.shared.dto.PagedResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.util.UUID;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,96 +26,86 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.company.logicstic.modules.messaging.dto.ConversationView;
-import com.company.logicstic.modules.messaging.dto.CreateConversationRequest;
-import com.company.logicstic.modules.messaging.dto.MessageView;
-import com.company.logicstic.modules.messaging.dto.SendMessageRequest;
-import com.company.logicstic.modules.messaging.service.ConversationService;
-import com.company.logicstic.modules.messaging.service.MessageService;
-import com.company.logicstic.shared.common.Constants;
-import com.company.logicstic.shared.dto.ApiResponse;
-import com.company.logicstic.shared.dto.PagedResponse;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-
 @Profile("!nodb")
 @RestController
 @RequestMapping("/api/messages")
 @Validated
 public class MessageController {
 
-    private final ConversationService conversationService;
-    private final MessageService messageService;
+  private final ConversationService conversationService;
+  private final MessageService messageService;
 
-    public MessageController(ConversationService conversationService, MessageService messageService) {
-        this.conversationService = conversationService;
-        this.messageService = messageService;
-    }
+  public MessageController(ConversationService conversationService, MessageService messageService) {
+    this.conversationService = conversationService;
+    this.messageService = messageService;
+  }
 
-    // Conversations
+  // Conversations
 
-    @GetMapping("/conversations")
-    public ResponseEntity<ApiResponse<PagedResponse<ConversationView>>> listConversations(
-            @RequestParam UUID employeeId,
-            @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
-            @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE_SIZE) @Min(1) @Max(Constants.MAX_PAGE_SIZE) int pageSize,
-            HttpServletRequest request
-    ) {
-        PagedResponse<ConversationView> data = conversationService.listByParticipant(employeeId, page, pageSize);
-        return ResponseEntity.ok(ApiResponse.success(data, request));
-    }
+  @GetMapping("/conversations")
+  public ResponseEntity<ApiResponse<PagedResponse<ConversationView>>> listConversations(
+      @RequestParam UUID employeeId,
+      @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
+      @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE_SIZE)
+          @Min(1)
+          @Max(Constants.MAX_PAGE_SIZE)
+          int pageSize,
+      HttpServletRequest request) {
+    PagedResponse<ConversationView> data =
+        conversationService.listByParticipant(employeeId, page, pageSize);
+    return ResponseEntity.ok(ApiResponse.success(data, request));
+  }
 
-    @GetMapping("/conversations/{id}")
-    public ResponseEntity<ApiResponse<ConversationView>> getConversation(
-            @PathVariable UUID id,
-            HttpServletRequest request
-    ) {
-        ConversationView data = conversationService.getById(id);
-        return ResponseEntity.ok(ApiResponse.success(data, request));
-    }
+  @GetMapping("/conversations/{id}")
+  public ResponseEntity<ApiResponse<ConversationView>> getConversation(
+      @PathVariable UUID id, HttpServletRequest request) {
+    ConversationView data = conversationService.getById(id);
+    return ResponseEntity.ok(ApiResponse.success(data, request));
+  }
 
-    @PostMapping("/conversations")
-    public ResponseEntity<ApiResponse<ConversationView>> createConversation(
-            @Valid @RequestBody CreateConversationRequest body,
-            HttpServletRequest request
-    ) {
-        ConversationView data = conversationService.create(body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
-    }
+  @PostMapping("/conversations")
+  public ResponseEntity<ApiResponse<ConversationView>> createConversation(
+      @Valid @RequestBody CreateConversationRequest body, HttpServletRequest request) {
+    ConversationView data = conversationService.create(body);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
+  }
 
-    // Messages
+  // Messages
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<PagedResponse<MessageView>>> listMessages(
-            @RequestParam UUID conversationId,
-            @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
-            @RequestParam(defaultValue = "50") @Min(1) @Max(Constants.MAX_PAGE_SIZE) int pageSize,
-            HttpServletRequest request
-    ) {
-        PagedResponse<MessageView> data = messageService.listByConversation(conversationId, page, pageSize);
-        return ResponseEntity.ok(ApiResponse.success(data, request));
-    }
+  @GetMapping
+  public ResponseEntity<ApiResponse<PagedResponse<MessageView>>> listMessages(
+      @RequestParam UUID conversationId,
+      @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
+      @RequestParam(defaultValue = "50") @Min(1) @Max(Constants.MAX_PAGE_SIZE) int pageSize,
+      HttpServletRequest request) {
+    PagedResponse<MessageView> data =
+        messageService.listByConversation(conversationId, page, pageSize);
+    return ResponseEntity.ok(ApiResponse.success(data, request));
+  }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<MessageView>> sendMessage(
-            @Valid @RequestBody SendMessageRequest body,
-            HttpServletRequest request
-    ) {
-        MessageView data = messageService.create(body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
-    }
+  @PostMapping
+  public ResponseEntity<ApiResponse<MessageView>> sendMessage(
+      @Valid @RequestBody SendMessageRequest body, HttpServletRequest request) {
+    MessageView data = messageService.create(body);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
+  }
 
-    // Unread count
+  // Unread count
 
-    @GetMapping("/unread-count")
-    public ResponseEntity<ApiResponse<Long>> getUnreadCount(
-            @RequestParam UUID employeeId,
-            HttpServletRequest request
-    ) {
-        long count = messageService.countUnread(employeeId);
-        return ResponseEntity.ok(ApiResponse.success("OK", "Unread count retrieved", count, request));
-    }
+  @GetMapping("/unread-count")
+  public ResponseEntity<ApiResponse<Long>> getUnreadCount(
+      @RequestParam UUID employeeId, HttpServletRequest request) {
+    long count = messageService.countUnread(employeeId);
+    return ResponseEntity.ok(ApiResponse.success("OK", "Unread count retrieved", count, request));
+  }
+
+  @PostMapping("/conversations/{conversationId}/read")
+  public ResponseEntity<ApiResponse<Integer>> markRead(
+      @PathVariable UUID conversationId,
+      @RequestParam UUID employeeId,
+      HttpServletRequest request) {
+    int marked = messageService.markRead(conversationId, employeeId);
+    return ResponseEntity.ok(
+        ApiResponse.success("OK", "Conversation marked as read", marked, request));
+  }
 }
