@@ -1,0 +1,62 @@
+# Production.
+#
+# Every value here is a deliberate reduction of what the process exposes or is allowed to do.
+# Credentials are supplied by the environment and have no defaults anywhere (docs/docs/development/engineering-conventions.md §11).
+#
+# Activate explicitly:  --spring.profiles.active=prod
+spring:
+  data:
+    redis:
+      # No default, unlike application.yml: in production an unset REDIS_PASSWORD must fail the
+      # boot rather than connect to an unauthenticated instance.
+      password: ${REDIS_PASSWORD}
+  jpa:
+    show-sql: false
+    hibernate:
+      # §10: `none` in production. The schema is owned by Flyway; Hibernate must not even validate
+      # at boot, so a deployment cannot be blocked by a benign type mismatch during a rollout.
+      ddl-auto: none
+  flyway:
+    # Migrations are applied deliberately as a release step, not implicitly by an app restart, so a
+    # rolling restart can never run a migration twice or half-way (docs/docs/deployment §Database
+    # migrations). Run them with `SPRING_FLYWAY_ENABLED=true` on a one-shot container.
+    enabled: ${FLYWAY_ENABLED:false}
+    clean-disabled: true
+    validate-on-migrate: true
+
+server:
+  error:
+    # A stack trace or an exception message in the body leaks internals; the correlation id in
+    # ApiResponse.meta.requestId is how a client reports a failure instead.
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+  # Behind nginx (docs/docs/deployment/docker-deployment.md), so honour the proxy headers.
+  forward-headers-strategy: native
+
+springdoc:
+  # The contract is published from the build artefact, not served by the production process.
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: WARN
+    com.company.logicstic: INFO
+
+app:
+  cache:
+    enabled: ${CACHE_ENABLED:true}

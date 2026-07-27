@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.finance.controller;
 
-import com.company.logicstic.modules.finance.dto.CreateInvoiceRequest;
-import com.company.logicstic.modules.finance.dto.InvoiceView;
+import com.company.logicstic.modules.finance.dto.request.CreateInvoiceRequest;
+import com.company.logicstic.modules.finance.dto.response.InvoiceResponse;
 import com.company.logicstic.modules.finance.service.InvoiceService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,7 +38,7 @@ public class InvoiceController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<InvoiceView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<InvoiceResponse>>> search(
       @RequestParam(required = false) String status,
       @RequestParam(required = false) String type,
       @RequestParam(required = false) UUID customerId,
@@ -51,32 +51,32 @@ public class InvoiceController {
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_FIELD_NUMBER) String orderBy,
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) boolean descending,
       HttpServletRequest request) {
-    PagedResponse<InvoiceView> data =
+    PagedResponse<InvoiceResponse> data =
         invoiceService.search(
             status, type, customerId, employeeId, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<InvoiceView>> getById(
+  public ResponseEntity<ApiResponse<InvoiceResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    InvoiceView data = invoiceService.getById(id);
+    InvoiceResponse data = invoiceService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<InvoiceView>> create(
+  public ResponseEntity<ApiResponse<InvoiceResponse>> create(
       @Valid @RequestBody CreateInvoiceRequest body, HttpServletRequest request) {
-    InvoiceView data = invoiceService.create(body);
+    InvoiceResponse data = invoiceService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<InvoiceView>> update(
+  public ResponseEntity<ApiResponse<InvoiceResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreateInvoiceRequest body,
       HttpServletRequest request) {
-    InvoiceView data = invoiceService.update(id, body);
+    InvoiceResponse data = invoiceService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

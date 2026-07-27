@@ -1,8 +1,0 @@
-spring:
-  datasource:
-    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5433/us_logisticsx_test}
-    username: ${TEST_DB_USERNAME:postgres}
-    password: ${TEST_DB_PASSWORD:postgres}
-  jpa:
-    hibernate:
-      ddl-auto: validate

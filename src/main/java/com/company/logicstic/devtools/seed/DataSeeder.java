@@ -1,46 +1,46 @@
 package com.company.logicstic.devtools.seed;
 
-import com.company.logicstic.modules.customer.dto.CreateCustomerRequest;
-import com.company.logicstic.modules.customer.dto.CustomerView;
+import com.company.logicstic.modules.customer.dto.request.CreateCustomerRequest;
+import com.company.logicstic.modules.customer.dto.response.CustomerResponse;
 import com.company.logicstic.modules.customer.repository.CustomerRepository;
 import com.company.logicstic.modules.customer.service.CustomerService;
 import com.company.logicstic.modules.document.entity.Document;
 import com.company.logicstic.modules.document.repository.DocumentRepository;
-import com.company.logicstic.modules.employee.dto.CreateEmployeeRequest;
-import com.company.logicstic.modules.employee.dto.EmployeeView;
+import com.company.logicstic.modules.employee.dto.request.CreateEmployeeRequest;
+import com.company.logicstic.modules.employee.dto.response.EmployeeResponse;
 import com.company.logicstic.modules.employee.entity.Employee;
 import com.company.logicstic.modules.employee.repository.EmployeeRepository;
 import com.company.logicstic.modules.employee.service.EmployeeService;
-import com.company.logicstic.modules.finance.dto.CreateInvoiceRequest;
-import com.company.logicstic.modules.finance.dto.CreatePaymentRequest;
-import com.company.logicstic.modules.finance.dto.InvoiceView;
+import com.company.logicstic.modules.finance.dto.request.CreateInvoiceRequest;
+import com.company.logicstic.modules.finance.dto.request.CreatePaymentRequest;
+import com.company.logicstic.modules.finance.dto.response.InvoiceResponse;
 import com.company.logicstic.modules.finance.service.InvoiceService;
 import com.company.logicstic.modules.finance.service.PaymentService;
-import com.company.logicstic.modules.fleet.dto.CreateTruckRequest;
-import com.company.logicstic.modules.fleet.dto.TruckView;
-import com.company.logicstic.modules.fleet.entity.Terminal;
+import com.company.logicstic.modules.fleet.dto.request.CreateTruckRequest;
+import com.company.logicstic.modules.fleet.dto.response.TruckResponse;
 import com.company.logicstic.modules.fleet.entity.Truck;
 import com.company.logicstic.modules.fleet.repository.TruckRepository;
 import com.company.logicstic.modules.fleet.service.TruckService;
-import com.company.logicstic.modules.inspection.dto.CreateInspectionRequest;
+import com.company.logicstic.modules.inspection.dto.request.CreateInspectionRequest;
 import com.company.logicstic.modules.inspection.service.InspectionService;
-import com.company.logicstic.modules.load.dto.CreateLoadRequest;
-import com.company.logicstic.modules.load.dto.LoadView;
+import com.company.logicstic.modules.load.dto.request.CreateLoadRequest;
+import com.company.logicstic.modules.load.dto.response.LoadResponse;
 import com.company.logicstic.modules.load.entity.Load;
 import com.company.logicstic.modules.load.entity.LoadStatus;
 import com.company.logicstic.modules.load.repository.LoadRepository;
 import com.company.logicstic.modules.load.service.LoadService;
-import com.company.logicstic.modules.messaging.dto.SendMessageRequest;
+import com.company.logicstic.modules.messaging.dto.request.SendMessageRequest;
 import com.company.logicstic.modules.messaging.entity.Conversation;
 import com.company.logicstic.modules.messaging.entity.ConversationParticipant;
 import com.company.logicstic.modules.messaging.repository.ConversationRepository;
 import com.company.logicstic.modules.messaging.service.ConversationService;
 import com.company.logicstic.modules.messaging.service.MessageService;
-import com.company.logicstic.modules.role.dto.CreateRoleRequest;
-import com.company.logicstic.modules.role.dto.RoleView;
+import com.company.logicstic.modules.role.dto.request.CreateRoleRequest;
+import com.company.logicstic.modules.role.dto.response.RoleResponse;
 import com.company.logicstic.modules.role.repository.TenantRoleRepository;
 import com.company.logicstic.modules.role.service.RoleService;
-import com.company.logicstic.modules.trip.dto.CreateTripRequest;
+import com.company.logicstic.modules.terminal.entity.Terminal;
+import com.company.logicstic.modules.trip.dto.request.CreateTripRequest;
 import com.company.logicstic.modules.trip.repository.TripRepository;
 import com.company.logicstic.modules.trip.service.TripService;
 import jakarta.persistence.EntityManager;
@@ -364,7 +364,7 @@ public class DataSeeder implements CommandLineRunner {
               FAKER.address().zipCode(),
               COUNTRY_NAME_VIETNAM);
 
-      CustomerView customer = customerService.create(request);
+      CustomerResponse customer = customerService.create(request);
       customerIds.add(customer.id());
     }
   }
@@ -482,7 +482,7 @@ public class DataSeeder implements CommandLineRunner {
         continue;
       }
 
-      InvoiceView invoice = createInvoiceForLoad(load);
+      InvoiceResponse invoice = createInvoiceForLoad(load);
       if (invoice.status().equals(INVOICE_STATUS_PAID)) {
         createPaymentForInvoice(invoice, load);
       }
@@ -510,7 +510,7 @@ public class DataSeeder implements CommandLineRunner {
   // Creation & Persistence Helper Methods
   // ===============================================================================================
 
-  private RoleView createRole(String tenant, String roleNameSuffix, String... permissions) {
+  private RoleResponse createRole(String tenant, String roleNameSuffix, String... permissions) {
     String roleName = tenant + " - " + roleNameSuffix;
     List<CreateRoleRequest.ClaimRequest> claims = new ArrayList<>();
     for (String permission : permissions) {
@@ -542,7 +542,7 @@ public class DataSeeder implements CommandLineRunner {
   private void createEmployeesForRole(
       String tenant, UUID roleId, int count, List<UUID> idListToPopulate) {
     for (int i = 0; i < count; i++) {
-      EmployeeView employee = createSingleEmployee(tenant, roleId);
+      EmployeeResponse employee = createSingleEmployee(tenant, roleId);
       employeeIds.add(employee.id());
       if (idListToPopulate != null) {
         idListToPopulate.add(employee.id());
@@ -550,7 +550,7 @@ public class DataSeeder implements CommandLineRunner {
     }
   }
 
-  private EmployeeView createSingleEmployee(String tenant, UUID roleId) {
+  private EmployeeResponse createSingleEmployee(String tenant, UUID roleId) {
     String firstName = FAKER.name().firstName();
     String lastName = FAKER.name().lastName();
     String email =
@@ -638,7 +638,7 @@ public class DataSeeder implements CommandLineRunner {
             "",
             null);
 
-    TruckView truck = truckService.create(request);
+    TruckResponse truck = truckService.create(request);
     truckIds.add(truck.id());
   }
 
@@ -708,7 +708,7 @@ public class DataSeeder implements CommandLineRunner {
             destination.latitude(),
             destination.longitude());
 
-    LoadView load = loadService.create(request);
+    LoadResponse load = loadService.create(request);
     loadIds.add(load.id());
   }
 
@@ -734,7 +734,7 @@ public class DataSeeder implements CommandLineRunner {
     countDocuments++;
   }
 
-  private InvoiceView createInvoiceForLoad(Load load) {
+  private InvoiceResponse createInvoiceForLoad(Load load) {
     BigDecimal subTotal = load.getDeliveryCostAmount();
     BigDecimal taxAmount =
         subTotal.multiply(TAX_RATE_TEN_PERCENT).setScale(2, RoundingMode.HALF_UP);
@@ -766,7 +766,7 @@ public class DataSeeder implements CommandLineRunner {
     return invoiceService.create(request);
   }
 
-  private void createPaymentForInvoice(InvoiceView invoice, Load load) {
+  private void createPaymentForInvoice(InvoiceResponse invoice, Load load) {
     CreatePaymentRequest request =
         new CreatePaymentRequest(
             PAYMENT_STATUS_COMPLETED,

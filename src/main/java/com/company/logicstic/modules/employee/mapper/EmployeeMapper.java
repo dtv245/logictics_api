@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.employee.mapper;
 
-import com.company.logicstic.modules.employee.dto.CreateEmployeeRequest;
-import com.company.logicstic.modules.employee.dto.EmployeeView;
+import com.company.logicstic.modules.employee.dto.request.CreateEmployeeRequest;
+import com.company.logicstic.modules.employee.dto.response.EmployeeResponse;
 import com.company.logicstic.modules.employee.entity.Employee;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -45,5 +45,5 @@ public interface EmployeeMapper {
   @Mapping(
       target = "roleName",
       expression = "java(employee.getRole() != null ? employee.getRole().getName() : null)")
-  EmployeeView toView(Employee employee);
+  EmployeeResponse toResponse(Employee employee);
 }

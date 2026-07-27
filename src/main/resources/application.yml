@@ -1,46 +1,103 @@
+# Default configuration (docs/docs/development/engineering-conventions.md §11). Profile-specific values live in application-{local,dev,staging,prod}.yml,
+# never here. Secrets are environment variables with no default — a committed default is a leaked
+# credential the day it reaches an environment.
+#
+# The active profile is NOT set in this file and must not be set in .env. It is chosen by the run
+# configuration (--spring.profiles.active=…) so that tests, which read this same configuration,
+# cannot silently inherit a profile from a file every developer has a different copy of.
 spring:
   application:
     name: logicstic
   config:
+    # Local development only: credentials and ports. Never SPRING_PROFILES_ACTIVE.
     import: optional:file:.env[.properties]
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:}
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-#  jpa:
-#    hibernate:
-#      ddl-auto: validate
-#    open-in-view: false
-#    properties:
-#      hibernate:
-#        jdbc:
-#          time_zone: UTC
-#  flyway:
-#    enabled: false
+  jpa:
+    hibernate:
+      # §10: validate in every environment; update/create-drop are forbidden.
+      ddl-auto: validate
+    # §10: anything the response needs is fetched inside the service transaction.
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      # An empty password means "no auth", which is what a local Redis actually is — it is not a
+      # committed credential. application-prod.yml re-declares this with no default so a missing
+      # secret fails the boot instead of quietly connecting unauthenticated.
+      password: ${REDIS_PASSWORD:}
+      # Short and explicit: a cache must add latency measured in milliseconds, never seconds. If
+      # Redis is slow the CacheErrorHandler falls back to the database.
+      timeout: ${REDIS_TIMEOUT:2s}
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:2s}
+  flyway:
+    enabled: true
+    # §14: tenant tables and registry/platform tables are separate migration histories and must
+    # never be mixed. Both trees start at V1, so scanning the shared parent db/migration would
+    # fail with a duplicate-version error.
+    locations: classpath:db/migration/tenant
 
 server:
   port: ${SERVER_PORT:8080}
 
-#app:
-#  tenancy:
-#    enabled: ${TENANCY_ENABLED:false}
-#    registry:
-#      url: ${TENANT_REGISTRY_DB_URL:}
-#      username: ${TENANT_REGISTRY_DB_USERNAME:}
-#      password: ${TENANT_REGISTRY_DB_PASSWORD:}
-#      encryption-key: ${TENANT_REGISTRY_ENCRYPTION_KEY:}
-#      auto-initialize: ${TENANT_REGISTRY_AUTO_INITIALIZE:true}
-#    pool:
-#      max-tenant-pools: ${TENANT_MAX_POOLS:100}
-#      maximum-pool-size: ${TENANT_POOL_MAX_SIZE:10}
-#      minimum-idle: ${TENANT_POOL_MIN_IDLE:1}
-#    migration:
-#      locations: ${TENANT_MIGRATION_LOCATIONS:classpath:db/migration/tenant}
-#    provisioning:
-#      admin-url: ${TENANT_PROVISIONING_ADMIN_DB_URL:}
-#      admin-username: ${TENANT_PROVISIONING_ADMIN_DB_USERNAME:}
-#      admin-password: ${TENANT_PROVISIONING_ADMIN_DB_PASSWORD:}
-#      template-database: ${TENANT_TEMPLATE_DATABASE:}
+app:
+  security:
+    jwt:
+      # No defaults: a resource server that silently falls back to a localhost issuer will happily
+      # accept tokens from the wrong authority. Local values live in application-nodb.yml.
+      issuer: ${AUTH_ISSUER_URI}
+      audience: ${AUTH_AUDIENCE}
+      jwk-set-uri: ${AUTH_JWK_SET_URI}
+
+  cache:
+    # Same switch style as tenancy below: every cache bean is
+    # @ConditionalOnProperty(app.cache.enabled=true). Off by default so caching is opted into per
+    # environment, and can be turned off during an incident without a redeploy.
+    enabled: ${CACHE_ENABLED:false}
+    # First key segment, so this application's entries can be scanned or dropped without touching
+    # anything else sharing the Redis instance. Full key: <prefix>:<tenant>:<cache>:<id>
+    key-prefix: ${CACHE_KEY_PREFIX:logistics}
+    default-ttl: 10m
+    # TTL is a safety net, not the invalidation mechanism — writes evict explicitly. It bounds how
+    # long a change made outside the owning service (DataSeeder, manual SQL, a failed evict) can
+    # stay visible, so each value is chosen by how much that would hurt.
+    ttl:
+      # UN/LOCODE directory; every write path lives in TerminalServiceImpl and evicts.
+      terminal: 24h
+      # Authorisation-adjacent, so shorter than terminal despite changing just as rarely.
+      role: 6h
+      customer: 1h
+      # Employee and truck names are denormalised into five other features' responses, so they get
+      # the shortest TTL: it caps the blast radius if a cross-feature evict is ever missed.
+      employee: 30m
+      truck: 30m
+
+  tenancy:
+    # Every tenancy bean is @ConditionalOnProperty(app.tenancy.enabled=true), so this flag — not a
+    # commented-out block — is what turns the feature off (§11).
+    enabled: ${TENANCY_ENABLED:false}
+    registry:
+      url: ${TENANT_REGISTRY_DB_URL}
+      username: ${TENANT_REGISTRY_DB_USERNAME}
+      password: ${TENANT_REGISTRY_DB_PASSWORD}
+      encryption-key: ${TENANT_REGISTRY_ENCRYPTION_KEY}
+      auto-initialize: ${TENANT_REGISTRY_AUTO_INITIALIZE:true}
+    pool:
+      max-tenant-pools: ${TENANT_MAX_POOLS:100}
+      maximum-pool-size: ${TENANT_POOL_MAX_SIZE:10}
+      minimum-idle: ${TENANT_POOL_MIN_IDLE:1}
+    migration:
+      locations: ${TENANT_MIGRATION_LOCATIONS:classpath:db/migration/tenant}
+    provisioning:
+      admin-url: ${TENANT_PROVISIONING_ADMIN_DB_URL}
+      admin-username: ${TENANT_PROVISIONING_ADMIN_DB_USERNAME}
+      admin-password: ${TENANT_PROVISIONING_ADMIN_DB_PASSWORD}
+      template-database: ${TENANT_TEMPLATE_DATABASE}

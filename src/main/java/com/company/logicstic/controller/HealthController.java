@@ -11,8 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthController {
 
-  @Value("${spring.profiles.active:}")
-  private String activeProfiles;
+  private final String activeProfiles;
+
+  public HealthController(@Value("${spring.profiles.active:}") String activeProfiles) {
+    this.activeProfiles = activeProfiles;
+  }
 
   @GetMapping({"/", "/health", "/api/health"})
   public ResponseEntity<Map<String, Object>> health() {

@@ -1,7 +1,5 @@
 package com.company.logicstic.shared.exception;
 
-import org.springframework.http.HttpStatus;
-
 /**
  * Thrown when an invalid state transition is attempted (e.g. trying to dispatch an
  * already-delivered load).
@@ -15,8 +13,7 @@ public class InvalidStateTransitionException extends ApiException {
   public InvalidStateTransitionException(
       String entityName, String currentState, String targetState) {
     super(
-        HttpStatus.BAD_REQUEST,
-        "INVALID_STATE_TRANSITION",
+        ErrorCode.INVALID_STATE_TRANSITION,
         String.format(
             "Cannot transition %s from '%s' to '%s'", entityName, currentState, targetState));
     this.entityName = entityName;

@@ -18,9 +18,9 @@ public interface TruckRepository extends JpaRepository<Truck, UUID> {
       """
             SELECT t FROM Truck t
             WHERE (:search IS NULL
-                   OR LOWER(t.number) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(t.vin) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', :search, '%')))
+                   OR LOWER(t.number) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                   OR LOWER(t.vin) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                   OR LOWER(t.licensePlate) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
               AND (:status IS NULL OR t.status = :status)
               AND (:type IS NULL OR t.type = :type)
             """)

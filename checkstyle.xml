@@ -2,6 +2,154 @@
 <!DOCTYPE module PUBLIC
     "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
     "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<!--
+  Checkstyle rules for LogisticsX (docs/docs/development/engineering-conventions.md §16).
+
+  Scope: this file encodes the conventions that are *mechanically* checkable on a single file —
+  naming (§3), import hygiene, and the hard bans in §8 and §13. It deliberately does NOT duplicate
+  formatting rules: Spotless applies google-java-format, and having two tools argue about
+  whitespace only produces noise.
+
+  Cross-file architectural rules (§2 layering, cross-feature repository access, package cycles)
+  cannot be expressed here — Checkstyle sees one file at a time. Those live in ArchitectureTest
+  (§15.6).
+-->
 <module name="Checker">
   <property name="charset" value="UTF-8"/>
+  <property name="severity" value="error"/>
+  <property name="fileExtensions" value="java"/>
+
+  <!-- §13: no System.out / System.err anywhere in production or test code. -->
+  <module name="RegexpSingleline">
+    <property name="format" value="System\.(out|err)\.print"/>
+    <property name="message" value="docs/docs/development/engineering-conventions.md §13: use SLF4J (@Slf4j), never System.out/System.err."/>
+  </module>
+
+  <!-- §8: printStackTrace hides the failure and bypasses structured logging. -->
+  <module name="RegexpSingleline">
+    <property name="format" value="\.printStackTrace\(\)"/>
+    <property name="message" value="docs/docs/development/engineering-conventions.md §8: never call printStackTrace(); log the cause object instead."/>
+  </module>
+
+  <!-- §15.5: a @Disabled test needs a reason and a ticket id. -->
+  <module name="RegexpSingleline">
+    <property name="format" value="@Disabled\s*(\(\s*\))?\s*$"/>
+    <property name="message" value="docs/docs/development/engineering-conventions.md §15.5: @Disabled requires a reason and ticket id, e.g. @Disabled(&quot;LOG-123: flaky until X&quot;)."/>
+  </module>
+
+  <module name="TreeWalker">
+
+    <!-- ================= Imports ================= -->
+
+    <!-- Google Java Style (the format Spotless applies) forbids wildcard imports. -->
+    <module name="AvoidStarImport"/>
+    <module name="RedundantImport"/>
+    <module name="UnusedImports">
+      <property name="processJavadoc" value="true"/>
+    </module>
+
+    <module name="IllegalImport">
+      <!-- §7: use org.springframework…Transactional, not the Jakarta one. -->
+      <property name="illegalClasses" value="jakarta.transaction.Transactional"/>
+      <message key="import.illegal" value="docs/docs/development/engineering-conventions.md §7: use org.springframework.transaction.annotation.Transactional."/>
+    </module>
+
+    <module name="IllegalImport">
+      <!-- §12: Boot 4 ships Jackson 3; databind moved to tools.jackson.
+           (jakarta annotations in com.fasterxml.jackson.annotation are unchanged and allowed.) -->
+      <property name="illegalPkgs" value="com.fasterxml.jackson.databind"/>
+      <message key="import.illegal" value="docs/docs/development/engineering-conventions.md §12: Boot 4 uses tools.jackson.databind, not com.fasterxml.jackson.databind."/>
+    </module>
+
+    <module name="IllegalImport">
+      <!-- §12: these Boot 3 test packages no longer exist in Boot 4. -->
+      <property name="illegalClasses"
+                value="org.springframework.boot.test.mock.mockito.MockBean,
+                       org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest,
+                       org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc"/>
+      <message key="import.illegal" value="docs/docs/development/engineering-conventions.md §12: use the Boot 4 replacements (@MockitoBean, org.springframework.boot.webmvc.test.autoconfigure.*)."/>
+    </module>
+
+    <!-- ================= Naming (§3) ================= -->
+
+    <module name="PackageName">
+      <!-- lowercase, single word per segment: 'loadboard', never 'load_board' or 'loadBoard'. -->
+      <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+      <message key="name.invalidPattern" value="docs/docs/development/engineering-conventions.md §3: package segments are lowercase single words."/>
+    </module>
+    <module name="TypeName"/>
+
+    <!-- §3: production methods are camelCase. Scoped to src/main by the filter below. -->
+    <module name="MethodName">
+      <property name="id" value="methodNameProduction"/>
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+    </module>
+
+    <!-- §15.1: test methods are should_<outcome>_when_<condition>, so underscores are
+         required, not tolerated. Scoped to src/test by the filter below. -->
+    <module name="MethodName">
+      <property name="id" value="methodNameTest"/>
+      <property name="format" value="^[a-z][a-zA-Z0-9]*(_[a-z0-9][a-zA-Z0-9]*)*$"/>
+    </module>
+    <module name="MemberName"/>
+    <module name="ParameterName"/>
+    <module name="LocalVariableName"/>
+    <module name="LocalFinalVariableName"/>
+    <module name="ConstantName">
+      <!-- 'log' is the field Lombok's @Slf4j generates, and §13 mandates @Slf4j. -->
+      <property name="format" value="^([A-Z][A-Z0-9]*(_[A-Z0-9]+)*|log)$"/>
+    </module>
+    <module name="ClassTypeParameterName">
+      <property name="format" value="^[A-Z][0-9]?$"/>
+    </module>
+    <module name="MethodTypeParameterName">
+      <property name="format" value="^[A-Z][0-9]?$"/>
+    </module>
+
+    <!-- ================= Correctness ================= -->
+
+    <module name="EqualsHashCode"/>
+    <module name="MissingSwitchDefault"/>
+    <module name="FallThrough"/>
+    <module name="StringLiteralEquality"/>
+    <module name="SimplifyBooleanExpression"/>
+    <module name="SimplifyBooleanReturn"/>
+    <module name="EmptyStatement"/>
+    <module name="DefaultComesLast"/>
+    <module name="OneStatementPerLine"/>
+    <module name="MultipleVariableDeclarations"/>
+    <module name="UpperEll"/>
+    <module name="ArrayTypeStyle"/>
+    <module name="ModifierOrder"/>
+
+    <!-- §8: an empty catch block silently swallows the failure. -->
+    <module name="EmptyCatchBlock">
+      <property name="exceptionVariableName" value="expected|ignored"/>
+    </module>
+
+    <!-- §8: business failures use typed ApiException subclasses, never these. -->
+    <module name="IllegalThrows">
+      <property name="illegalClassNames" value="java.lang.Throwable, java.lang.Error, java.lang.RuntimeException"/>
+      <message key="illegal.throw" value="docs/docs/development/engineering-conventions.md §8: throw a typed ApiException subclass, not a raw RuntimeException."/>
+    </module>
+
+    <!-- §6: field injection is forbidden in production code and in tests. -->
+    <module name="Regexp">
+      <property name="format" value="@Autowired[\s\r\n]+(private|protected|public|final|[A-Za-z_$][\w.$]*(&lt;[^;]*&gt;)?\s+[a-zA-Z_$][\w$]*\s*;)"/>
+      <property name="illegalPattern" value="true"/>
+      <property name="message" value="docs/docs/development/engineering-conventions.md §6: constructor injection only — no @Autowired field."/>
+    </module>
+
+  </module>
+
+  <!-- Scope the two MethodName variants to the source tree each one describes. -->
+  <module name="SuppressionSingleFilter">
+    <property name="id" value="methodNameProduction"/>
+    <property name="files" value="[\\/]src[\\/]test[\\/]"/>
+  </module>
+  <module name="SuppressionSingleFilter">
+    <property name="id" value="methodNameTest"/>
+    <property name="files" value="[\\/]src[\\/]main[\\/]"/>
+  </module>
+
 </module>

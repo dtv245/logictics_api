@@ -41,6 +41,20 @@ ConnectionStrings__EuTenantDatabase="Host=localhost;Port=5432;Database=eu_logist
 | `ConnectionStrings__UsTenantDatabase` | Full connection string for the US demo tenant database |
 | `ConnectionStrings__EuTenantDatabase` | Full connection string for the EU demo tenant database |
 
+### Spring API Authentication
+
+```bash
+AUTH_ISSUER_URI="https://id.yourdomain.com"
+AUTH_AUDIENCE="logisticsx.api"
+AUTH_JWK_SET_URI="https://id.yourdomain.com/.well-known/openid-configuration/jwks"
+```
+
+| Variable           | Description |
+|--------------------|-------------|
+| `AUTH_ISSUER_URI`  | Expected JWT issuer (`iss`) |
+| `AUTH_AUDIENCE`    | Required API audience (`aud`) |
+| `AUTH_JWK_SET_URI` | Identity Server public signing-key endpoint |
+
 ### Stripe Integration
 
 ```bash

@@ -1,10 +1,31 @@
 # Local profile: starts the app without PostgreSQL/JPA.
 # Controllers and services that depend on repositories are disabled via @Profile("!nodb").
 # Use /health (or /api/health) to verify the process is up.
+#
+# Activate it explicitly on the run configuration (--spring.profiles.active=nodb).
+# It must never be activated from .env — see docs/docs/development/engineering-conventions.md §11.
 spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
       - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+      # The Redis starter is on the classpath for the cache; the nodb context must not
+      # acquire a connection factory it will never use.
+      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
   flyway:
+    enabled: false
+
+app:
+  security:
+    jwt:
+      # Placeholder issuer for local boot only. application.yml intentionally has no default for
+      # these, so a real environment must supply AUTH_ISSUER_URI / AUTH_AUDIENCE / AUTH_JWK_SET_URI.
+      issuer: https://localhost:7001
+      audience: logisticsx.api
+      jwk-set-uri: https://localhost:7001/.well-known/openid-configuration/jwks
+
+app:
+  cache:
+    # nodb boots without infrastructure; caching would drag in a Redis connection factory that the
+    # excluded auto-configuration above never creates.
     enabled: false

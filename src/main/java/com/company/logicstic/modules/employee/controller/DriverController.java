@@ -1,6 +1,6 @@
 package com.company.logicstic.modules.employee.controller;
 
-import com.company.logicstic.modules.employee.dto.EmployeeView;
+import com.company.logicstic.modules.employee.dto.response.EmployeeResponse;
 import com.company.logicstic.modules.employee.service.EmployeeService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -31,7 +31,7 @@ public class DriverController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<EmployeeView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<EmployeeResponse>>> search(
       @RequestParam(required = false) String search,
       @RequestParam(required = false) String status,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
@@ -42,15 +42,15 @@ public class DriverController {
       @RequestParam(defaultValue = "lastName") String orderBy,
       @RequestParam(defaultValue = "false") boolean descending,
       HttpServletRequest request) {
-    PagedResponse<EmployeeView> data =
+    PagedResponse<EmployeeResponse> data =
         employeeService.searchDrivers(search, status, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<EmployeeView>> getById(
+  public ResponseEntity<ApiResponse<EmployeeResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    EmployeeView data = employeeService.getDriverById(id);
+    EmployeeResponse data = employeeService.getDriverById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 }

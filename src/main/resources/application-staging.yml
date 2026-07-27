@@ -1,0 +1,44 @@
+# Pre-production. Intentionally configured like `prod` so that what is verified here is what ships;
+# the only relaxation is that Swagger stays available for QA and contract testing.
+#
+# Activate explicitly:  --spring.profiles.active=staging
+spring:
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    clean-disabled: true
+    validate-on-migrate: true
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    root: INFO
+    com.company.logicstic: INFO
+
+app:
+  cache:
+    # Staging mirrors production so what is verified here is what ships; TTLs come from
+    # application.yml unchanged.
+    enabled: ${CACHE_ENABLED:true}

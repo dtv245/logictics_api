@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.load.mapper;
 
-import com.company.logicstic.modules.load.dto.CreateLoadRequest;
-import com.company.logicstic.modules.load.dto.LoadView;
+import com.company.logicstic.modules.load.dto.request.CreateLoadRequest;
+import com.company.logicstic.modules.load.dto.response.LoadResponse;
 import com.company.logicstic.modules.load.entity.Load;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -94,5 +94,5 @@ public interface LoadMapper {
       target = "destinationTerminalId",
       expression =
           "java(load.getDestinationTerminal() != null ? load.getDestinationTerminal().getId() : null)")
-  LoadView toView(Load load);
+  LoadResponse toResponse(Load load);
 }

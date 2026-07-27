@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.finance.mapper;
 
-import com.company.logicstic.modules.finance.dto.CreateInvoiceRequest;
-import com.company.logicstic.modules.finance.dto.InvoiceView;
+import com.company.logicstic.modules.finance.dto.request.CreateInvoiceRequest;
+import com.company.logicstic.modules.finance.dto.response.InvoiceResponse;
 import com.company.logicstic.modules.finance.entity.Invoice;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -69,5 +69,5 @@ public interface InvoiceMapper {
       target = "employeeName",
       expression =
           "java(invoice.getEmployee() != null ? invoice.getEmployee().getFirstName() + \" \" + invoice.getEmployee().getLastName() : null)")
-  InvoiceView toView(Invoice invoice);
+  InvoiceResponse toResponse(Invoice invoice);
 }

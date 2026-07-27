@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.employee.controller;
 
-import com.company.logicstic.modules.employee.dto.CreateEmployeeRequest;
-import com.company.logicstic.modules.employee.dto.EmployeeView;
+import com.company.logicstic.modules.employee.dto.request.CreateEmployeeRequest;
+import com.company.logicstic.modules.employee.dto.response.EmployeeResponse;
 import com.company.logicstic.modules.employee.service.EmployeeService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,7 +38,7 @@ public class EmployeeController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<EmployeeView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<EmployeeResponse>>> search(
       @RequestParam(required = false) String search,
       @RequestParam(required = false) String status,
       @RequestParam(required = false) UUID roleId,
@@ -50,31 +50,31 @@ public class EmployeeController {
       @RequestParam(defaultValue = "lastName") String orderBy,
       @RequestParam(defaultValue = "false") boolean descending,
       HttpServletRequest request) {
-    PagedResponse<EmployeeView> data =
+    PagedResponse<EmployeeResponse> data =
         employeeService.search(search, status, roleId, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<EmployeeView>> getById(
+  public ResponseEntity<ApiResponse<EmployeeResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    EmployeeView data = employeeService.getById(id);
+    EmployeeResponse data = employeeService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<EmployeeView>> create(
+  public ResponseEntity<ApiResponse<EmployeeResponse>> create(
       @Valid @RequestBody CreateEmployeeRequest body, HttpServletRequest request) {
-    EmployeeView data = employeeService.create(body);
+    EmployeeResponse data = employeeService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<EmployeeView>> update(
+  public ResponseEntity<ApiResponse<EmployeeResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreateEmployeeRequest body,
       HttpServletRequest request) {
-    EmployeeView data = employeeService.update(id, body);
+    EmployeeResponse data = employeeService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

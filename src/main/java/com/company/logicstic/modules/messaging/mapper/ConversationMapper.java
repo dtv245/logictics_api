@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.messaging.mapper;
 
-import com.company.logicstic.modules.messaging.dto.ConversationView;
-import com.company.logicstic.modules.messaging.dto.CreateConversationRequest;
+import com.company.logicstic.modules.messaging.dto.request.CreateConversationRequest;
+import com.company.logicstic.modules.messaging.dto.response.ConversationResponse;
 import com.company.logicstic.modules.messaging.entity.Conversation;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -40,5 +40,5 @@ public interface ConversationMapper {
       target = "participantIds",
       expression =
           "java(conversation.getParticipants().stream().map(participant -> participant.getEmployee().getId()).toList())")
-  ConversationView toView(Conversation conversation);
+  ConversationResponse toResponse(Conversation conversation);
 }

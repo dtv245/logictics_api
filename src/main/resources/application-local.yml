@@ -1,0 +1,60 @@
+# Local development on a developer machine, against a local PostgreSQL.
+#
+# docs/docs/development/engineering-conventions.md §11: profile files carry only what differs from application.yml, and never a
+# secret with a default. Credentials still come from .env / the environment.
+#
+# Activate explicitly:  --spring.profiles.active=local
+spring:
+  jpa:
+    # Echo SQL while developing. Never enabled in staging or production: statements can carry PII
+    # and the log volume hides the lines that matter.
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    # A local database is disposable, so a checksum mismatch after editing a not-yet-merged
+    # migration should be repairable rather than fatal.
+    clean-disabled: false
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,configprops
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.company.logicstic: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    # Renders bound parameters; local only, for the same PII reason as show-sql.
+    org.hibernate.orm.jdbc.bind: TRACE
+
+app:
+  cache:
+    enabled: ${CACHE_ENABLED:true}
+    # Short TTLs locally so a stale entry never outlives a debugging session and every eviction
+    # path gets exercised by hand rather than only by the integration test.
+    default-ttl: 1m
+    ttl:
+      terminal: 2m
+      role: 2m
+      customer: 1m
+      employee: 1m
+      truck: 1m

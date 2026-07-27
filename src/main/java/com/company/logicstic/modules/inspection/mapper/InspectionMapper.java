@@ -1,10 +1,10 @@
 package com.company.logicstic.modules.inspection.mapper;
 
-import com.company.logicstic.modules.inspection.dto.CreateInspectionRequest;
-import com.company.logicstic.modules.inspection.dto.DefectView;
-import com.company.logicstic.modules.inspection.dto.InspectionView;
-import com.company.logicstic.modules.load.entity.ConditionDefect;
-import com.company.logicstic.modules.load.entity.LoadConditionReport;
+import com.company.logicstic.modules.inspection.dto.request.CreateInspectionRequest;
+import com.company.logicstic.modules.inspection.dto.response.DefectResponse;
+import com.company.logicstic.modules.inspection.dto.response.InspectionResponse;
+import com.company.logicstic.modules.inspection.entity.ConditionDefect;
+import com.company.logicstic.modules.inspection.entity.LoadConditionReport;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -50,9 +50,9 @@ public interface InspectionMapper {
       expression =
           "java(report.getInspectedBy() != null ? report.getInspectedBy().getFirstName() + \" \" + report.getInspectedBy().getLastName() : null)")
   @Mapping(target = "defects", source = "defects")
-  InspectionView toView(LoadConditionReport report);
+  InspectionResponse toResponse(LoadConditionReport report);
 
-  default DefectView toView(ConditionDefect defect) {
-    return DefectView.from(defect);
+  default DefectResponse toResponse(ConditionDefect defect) {
+    return DefectResponse.from(defect);
   }
 }

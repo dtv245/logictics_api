@@ -2,6 +2,9 @@
 
 Backend Java sử dụng Spring Boot, Spring Data JPA và PostgreSQL. Source code chính dùng package gốc `com.company.logicstic`.
 
+Quy ước phát triển được chuẩn hóa trong
+[engineering-conventions.md](docs/docs/development/engineering-conventions.md).
+
 ## Công nghệ
 
 - Java 21
@@ -17,45 +20,24 @@ Backend Java sử dụng Spring Boot, Spring Data JPA và PostgreSQL. Source cod
 
 ```text
 logicstic/
-├── pom.xml
-├── mvnw
-├── mvnw.cmd
-├── README.md
-├── sql.md
-├── plan.md
 ├── docs/
-│   └── entity-relationships.md
+│   └── docs/
+│       ├── architecture/
+│       │   ├── database-schema.sql
+│       │   └── entity-relationships.md
+│       └── development/
+│           └── engineering-conventions.md
+├── pom.xml
+├── README.md
 ├── scripts/
 │   └── generate_entities.py
 ├── src/
-│   ├── main/
-│   │   ├── java/com/company/logicstic/
-│   │   │   ├── LogicsticApplication.java
-│   │   │   ├── config/
-│   │   │   ├── controller/
-│   │   │   ├── dto/
-│   │   │   ├── entity/
-│   │   │   ├── exception/
-│   │   │   ├── mapper/
-│   │   │   ├── repository/
-│   │   │   └── service/
-│   │   └── resources/
-│   │       ├── application.yml
-│   │       ├── static/
-│   │       └── templates/
-│   └── test/
-│       ├── java/com/company/logicstic/
-│       │   ├── LogicsticApplicationTests.java
-│       │   ├── entity/
-│       │   │   └── EntityMappingTests.java
-│       │   ├── controller/
-│       │   ├── repository/
-│       │   └── service/
-│       └── resources/
-│           └── application-test.yml
-└── target/
-    ├── classes/
-    └── logicstic-1.0.0.jar
+│   ├── main/java/com/company/logicstic/
+│   │   ├── modules/
+│   │   └── shared/
+│   └── test/java/com/company/logicstic/
+├── mvnw
+└── mvnw.cmd
 ```
 
 `target/` do Maven tự sinh và không nên commit vào Git.
@@ -83,14 +65,16 @@ HTTP Request → Controller → Service → Repository → PostgreSQL
 
 ## Entity và database
 
-Project hiện có 50 JPA entity được tạo từ schema trong `sql.md`:
+Mô hình dữ liệu gốc được mô tả trong
+[database-schema.sql](docs/docs/architecture/database-schema.sql):
 
 - UUID primary key dùng Hibernate `@UuidGenerator`.
 - Quan hệ foreign key dùng `FetchType.LAZY`.
 - Hibernate chỉ kiểm tra schema bằng `ddl-auto: validate`, không tự tạo hoặc thay đổi bảng.
-- Chi tiết quan hệ nằm trong `docs/entity-relationships.md`.
+- Chi tiết quan hệ nằm trong
+  [entity-relationships.md](docs/docs/architecture/entity-relationships.md).
 
-Sinh lại entity sau khi thay đổi `sql.md`:
+Sinh lại entity sau khi thay đổi schema:
 
 ```bash
 python3 scripts/generate_entities.py

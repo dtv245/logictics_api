@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.finance.mapper;
 
-import com.company.logicstic.modules.finance.dto.CreatePaymentRequest;
-import com.company.logicstic.modules.finance.dto.PaymentView;
+import com.company.logicstic.modules.finance.dto.request.CreatePaymentRequest;
+import com.company.logicstic.modules.finance.dto.response.PaymentResponse;
 import com.company.logicstic.modules.finance.entity.Payment;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -33,5 +33,5 @@ public interface PaymentMapper {
   @Mapping(
       target = "invoiceNumber",
       expression = "java(payment.getInvoice() != null ? payment.getInvoice().getNumber() : null)")
-  PaymentView toView(Payment payment);
+  PaymentResponse toResponse(Payment payment);
 }

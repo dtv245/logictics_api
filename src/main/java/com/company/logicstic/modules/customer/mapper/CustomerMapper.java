@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.customer.mapper;
 
-import com.company.logicstic.modules.customer.dto.CreateCustomerRequest;
-import com.company.logicstic.modules.customer.dto.CustomerView;
+import com.company.logicstic.modules.customer.dto.request.CreateCustomerRequest;
+import com.company.logicstic.modules.customer.dto.response.CustomerResponse;
 import com.company.logicstic.modules.customer.entity.Customer;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -38,5 +38,5 @@ public interface CustomerMapper {
   void updateEntity(CreateCustomerRequest req, @MappingTarget Customer customer);
 
   /** Maps an entity to its view representation. */
-  CustomerView toView(Customer customer);
+  CustomerResponse toResponse(Customer customer);
 }

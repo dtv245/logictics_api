@@ -1,136 +1,29 @@
 package com.company.logicstic.modules.messaging.service;
 
-import com.company.logicstic.modules.employee.entity.Employee;
-import com.company.logicstic.modules.employee.repository.EmployeeRepository;
-import com.company.logicstic.modules.messaging.dto.MessageView;
-import com.company.logicstic.modules.messaging.dto.SendMessageRequest;
-import com.company.logicstic.modules.messaging.entity.Conversation;
+import com.company.logicstic.modules.messaging.dto.request.SendMessageRequest;
+import com.company.logicstic.modules.messaging.dto.response.MessageResponse;
 import com.company.logicstic.modules.messaging.entity.Message;
-import com.company.logicstic.modules.messaging.entity.MessageReadReceipt;
-import com.company.logicstic.modules.messaging.mapper.MessageMapper;
-import com.company.logicstic.modules.messaging.repository.ConversationRepository;
-import com.company.logicstic.modules.messaging.repository.ConversationParticipantRepository;
-import com.company.logicstic.modules.messaging.repository.MessageRepository;
-import com.company.logicstic.modules.messaging.repository.MessageReadReceiptRepository;
-import com.company.logicstic.shared.AbstractBaseService;
 import com.company.logicstic.shared.dto.PagedResponse;
-import com.company.logicstic.shared.exception.BadRequestException;
-import com.company.logicstic.shared.exception.ResourceNotFoundException;
-import java.time.OffsetDateTime;
+import com.company.logicstic.shared.service.CrudService;
 import java.util.UUID;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Profile("!nodb")
-@Service
-@Transactional(readOnly = true)
-public class MessageService extends AbstractBaseService<Message, MessageView, SendMessageRequest> {
+/** Public API of the message feature — messages inside a conversation and their read receipts. */
+public interface MessageService extends CrudService<Message, MessageResponse, SendMessageRequest> {
 
-  private final MessageRepository messageRepository;
-  private final ConversationRepository conversationRepository;
-  private final ConversationParticipantRepository participantRepository;
-  private final MessageReadReceiptRepository readReceiptRepository;
-  private final EmployeeRepository employeeRepository;
-  private final MessageMapper messageMapper;
+  /**
+   * Lists the messages of a conversation, newest first.
+   *
+   * @param page 1-based page number
+   */
+  PagedResponse<MessageResponse> listByConversation(UUID conversationId, int page, int pageSize);
 
-  public MessageService(
-      MessageRepository messageRepository,
-      ConversationRepository conversationRepository,
-      ConversationParticipantRepository participantRepository,
-      MessageReadReceiptRepository readReceiptRepository,
-      EmployeeRepository employeeRepository,
-      MessageMapper messageMapper) {
-    super(messageRepository, messageMapper::toView, messageMapper::toEntity, (req, entity) -> {});
-    this.messageRepository = messageRepository;
-    this.conversationRepository = conversationRepository;
-    this.participantRepository = participantRepository;
-    this.readReceiptRepository = readReceiptRepository;
-    this.employeeRepository = employeeRepository;
-    this.messageMapper = messageMapper;
-  }
+  /** Counts messages the employee has not read yet, across all their conversations. */
+  long countUnread(UUID employeeId);
 
-  @Override
-  protected String entityName() {
-    return "Message";
-  }
-
-  public PagedResponse<MessageView> listByConversation(
-      UUID conversationId, int page, int pageSize) {
-    var pageable = PageRequest.of(page - 1, pageSize, Sort.by("sentAt").ascending());
-    return PagedResponse.from(
-        messageRepository
-            .findByConversationIdOrderBySentAtAsc(conversationId, pageable)
-            .map(messageMapper::toView));
-  }
-
-  @Override
-  protected void beforeCreate(Message message, SendMessageRequest request) {
-    resolveRelations(message, request);
-    OffsetDateTime sentAt = OffsetDateTime.now();
-    message.setSentAt(sentAt);
-    message.setIsDeleted(false);
-    message.setDeletedAt(null);
-    message.getConversation().setLastMessageAt(sentAt);
-  }
-
-  public long countUnread(UUID employeeId) {
-    return messageRepository.countUnread(employeeId);
-  }
-
-  @Transactional
-  public int markRead(UUID conversationId, UUID employeeId) {
-    var participant =
-        participantRepository
-            .findByConversationIdAndEmployeeId(conversationId, employeeId)
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "Conversation participant not found: " + employeeId));
-    Employee employee = participant.getEmployee();
-    OffsetDateTime readAt = OffsetDateTime.now();
-    var unreadMessages = messageRepository.findUnread(conversationId, employeeId);
-    var receipts =
-        unreadMessages.stream()
-            .map(
-                message -> {
-                  MessageReadReceipt receipt = new MessageReadReceipt();
-                  receipt.setMessage(message);
-                  receipt.setReadBy(employee);
-                  receipt.setReadAt(readAt);
-                  return receipt;
-                })
-            .toList();
-    if (!receipts.isEmpty()) {
-      readReceiptRepository.saveAll(receipts);
-    }
-    participant.setLastReadAt(readAt);
-    participantRepository.save(participant);
-    return receipts.size();
-  }
-
-  private void resolveRelations(Message message, SendMessageRequest request) {
-    Conversation conversation =
-        conversationRepository
-            .findById(request.conversationId())
-            .orElseThrow(
-                () ->
-                    new ResourceNotFoundException(
-                        "Conversation not found: " + request.conversationId()));
-    message.setConversation(conversation);
-
-    if (!participantRepository.existsByConversationIdAndEmployeeId(
-        request.conversationId(), request.senderId())) {
-      throw new BadRequestException("Sender is not a participant of this conversation");
-    }
-
-    Employee sender =
-        employeeRepository
-            .findById(request.senderId())
-            .orElseThrow(
-                () -> new ResourceNotFoundException("Sender not found: " + request.senderId()));
-    message.setSender(sender);
-  }
+  /**
+   * Marks every unread message of a conversation as read by the employee.
+   *
+   * @return the number of messages newly marked as read
+   */
+  int markRead(UUID conversationId, UUID employeeId);
 }

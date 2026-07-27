@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.trip.controller;
 
-import com.company.logicstic.modules.trip.dto.CreateTripRequest;
-import com.company.logicstic.modules.trip.dto.TripView;
+import com.company.logicstic.modules.trip.dto.request.CreateTripRequest;
+import com.company.logicstic.modules.trip.dto.response.TripResponse;
 import com.company.logicstic.modules.trip.service.TripService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,7 +38,7 @@ public class TripController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<TripView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<TripResponse>>> search(
       @RequestParam(required = false) String search,
       @RequestParam(required = false) String status,
       @RequestParam(required = false) UUID truckId,
@@ -50,31 +50,31 @@ public class TripController {
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_FIELD_NAME) String orderBy,
       @RequestParam(defaultValue = "false") boolean descending,
       HttpServletRequest request) {
-    PagedResponse<TripView> data =
+    PagedResponse<TripResponse> data =
         tripService.search(search, status, truckId, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<TripView>> getById(
+  public ResponseEntity<ApiResponse<TripResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    TripView data = tripService.getById(id);
+    TripResponse data = tripService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<TripView>> create(
+  public ResponseEntity<ApiResponse<TripResponse>> create(
       @Valid @RequestBody CreateTripRequest body, HttpServletRequest request) {
-    TripView data = tripService.create(body);
+    TripResponse data = tripService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<TripView>> update(
+  public ResponseEntity<ApiResponse<TripResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreateTripRequest body,
       HttpServletRequest request) {
-    TripView data = tripService.update(id, body);
+    TripResponse data = tripService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
@@ -86,19 +86,19 @@ public class TripController {
   }
 
   @PostMapping("/{id}/dispatch")
-  public ResponseEntity<ApiResponse<TripView>> dispatch(
+  public ResponseEntity<ApiResponse<TripResponse>> dispatch(
       @PathVariable UUID id, HttpServletRequest request) {
     return ResponseEntity.ok(ApiResponse.success(tripService.dispatch(id), request));
   }
 
   @PostMapping("/{id}/complete")
-  public ResponseEntity<ApiResponse<TripView>> complete(
+  public ResponseEntity<ApiResponse<TripResponse>> complete(
       @PathVariable UUID id, HttpServletRequest request) {
     return ResponseEntity.ok(ApiResponse.success(tripService.complete(id), request));
   }
 
   @PostMapping("/{id}/cancel")
-  public ResponseEntity<ApiResponse<TripView>> cancel(
+  public ResponseEntity<ApiResponse<TripResponse>> cancel(
       @PathVariable UUID id, HttpServletRequest request) {
     return ResponseEntity.ok(ApiResponse.success(tripService.cancel(id), request));
   }

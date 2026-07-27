@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.inspection.controller;
 
-import com.company.logicstic.modules.inspection.dto.CreateInspectionRequest;
-import com.company.logicstic.modules.inspection.dto.InspectionView;
+import com.company.logicstic.modules.inspection.dto.request.CreateInspectionRequest;
+import com.company.logicstic.modules.inspection.dto.response.InspectionResponse;
 import com.company.logicstic.modules.inspection.service.InspectionService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,7 +38,7 @@ public class InspectionController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<InspectionView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<InspectionResponse>>> search(
       @RequestParam(required = false) UUID loadId,
       @RequestParam(required = false) String type,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
@@ -49,31 +49,31 @@ public class InspectionController {
       @RequestParam(defaultValue = "inspectedAt") String orderBy,
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) boolean descending,
       HttpServletRequest request) {
-    PagedResponse<InspectionView> data =
+    PagedResponse<InspectionResponse> data =
         inspectionService.search(loadId, type, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<InspectionView>> getById(
+  public ResponseEntity<ApiResponse<InspectionResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    InspectionView data = inspectionService.getById(id);
+    InspectionResponse data = inspectionService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<InspectionView>> create(
+  public ResponseEntity<ApiResponse<InspectionResponse>> create(
       @Valid @RequestBody CreateInspectionRequest body, HttpServletRequest request) {
-    InspectionView data = inspectionService.create(body);
+    InspectionResponse data = inspectionService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<InspectionView>> update(
+  public ResponseEntity<ApiResponse<InspectionResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreateInspectionRequest body,
       HttpServletRequest request) {
-    InspectionView data = inspectionService.update(id, body);
+    InspectionResponse data = inspectionService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

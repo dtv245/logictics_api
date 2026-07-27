@@ -11,8 +11,7 @@ class TenantMigrationSqlTest {
 
   private static final Pattern CREATE_TABLE =
       Pattern.compile(
-          "CREATE TABLE\\s+(\\w+)\\s*\\((.*?)\\n\\);",
-          Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+          "CREATE TABLE\\s+(\\w+)\\s*\\((.*?)\\n\\);", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static final Pattern RENAME =
       Pattern.compile(
           "ALTER TABLE\\s+(\\w+)\\s+RENAME COLUMN\\s+\"([^\"]+)\"\\s+TO\\s+(\\w+);",

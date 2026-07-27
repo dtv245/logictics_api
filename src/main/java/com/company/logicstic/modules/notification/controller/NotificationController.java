@@ -1,6 +1,6 @@
 package com.company.logicstic.modules.notification.controller;
 
-import com.company.logicstic.modules.notification.dto.NotificationView;
+import com.company.logicstic.modules.notification.dto.response.NotificationResponse;
 import com.company.logicstic.modules.notification.service.NotificationService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -32,21 +32,21 @@ public class NotificationController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<NotificationView>>> list(
+  public ResponseEntity<ApiResponse<PagedResponse<NotificationResponse>>> list(
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE_SIZE)
           @Min(1)
           @Max(Constants.MAX_PAGE_SIZE)
           int pageSize,
       HttpServletRequest request) {
-    PagedResponse<NotificationView> data = notificationService.list(page, pageSize);
+    PagedResponse<NotificationResponse> data = notificationService.list(page, pageSize);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<NotificationView>> getById(
+  public ResponseEntity<ApiResponse<NotificationResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    NotificationView data = notificationService.getById(id);
+    NotificationResponse data = notificationService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

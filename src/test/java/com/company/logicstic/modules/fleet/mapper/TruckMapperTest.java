@@ -3,8 +3,8 @@ package com.company.logicstic.modules.fleet.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.company.logicstic.modules.employee.entity.Employee;
-import com.company.logicstic.modules.fleet.dto.CreateTruckRequest;
-import com.company.logicstic.modules.fleet.dto.TruckView;
+import com.company.logicstic.modules.fleet.dto.request.CreateTruckRequest;
+import com.company.logicstic.modules.fleet.dto.response.TruckResponse;
 import com.company.logicstic.modules.fleet.entity.Truck;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +13,7 @@ import org.mapstruct.factory.Mappers;
 
 /**
  * Pure unit tests for {@link TruckMapper} using Mappers.getMapper(). No Spring context required —
- * avoids DB dependency. Verifies parity with the old {@code TruckView.from()} logic.
+ * avoids DB dependency. Verifies parity with the old {@code TruckResponse.from()} logic.
  */
 class TruckMapperTest {
 
@@ -49,7 +49,7 @@ class TruckMapperTest {
     truck.setMainDriver(main);
     truck.setSecondaryDriver(secondary);
 
-    TruckView view = truckMapper.toView(truck);
+    TruckResponse view = truckMapper.toResponse(truck);
 
     assertThat(view.mainDriverId()).isEqualTo(main.getId());
     assertThat(view.mainDriverName()).isEqualTo("John Doe");
@@ -71,7 +71,7 @@ class TruckMapperTest {
     truck.setMainDriver(null);
     truck.setSecondaryDriver(null);
 
-    TruckView view = truckMapper.toView(truck);
+    TruckResponse view = truckMapper.toResponse(truck);
 
     assertThat(view.mainDriverId()).isNull();
     assertThat(view.mainDriverName()).isNull();
@@ -141,9 +141,9 @@ class TruckMapperTest {
     t.setCurrentLocationLatitude(51.5);
     t.setCurrentLocationLongitude(-0.1);
 
-    // Expected from old TruckView.from() logic
-    TruckView expected =
-        new TruckView(
+    // Expected from old TruckResponse.from() logic
+    TruckResponse expected =
+        new TruckResponse(
             truckId,
             "T-100",
             "TANKER",
@@ -165,7 +165,7 @@ class TruckMapperTest {
             51.5,
             -0.1);
 
-    TruckView actual = truckMapper.toView(t);
+    TruckResponse actual = truckMapper.toResponse(t);
     assertThat(actual).isEqualTo(expected);
   }
 }

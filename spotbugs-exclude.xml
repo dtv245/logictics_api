@@ -1,2 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<FindBugsFilter/>
+<!--
+  SpotBugs exclusion filter.
+
+  Scope is deliberately narrow: only EI_EXPOSE_REP / EI_EXPOSE_REP2 are suppressed, and only
+  where they are structural false positives for this architecture (docs/docs/development/engineering-conventions.md §16).
+  Every other detector stays on for every class — a real finding must be fixed, not added here.
+
+  Why these are false positives:
+    * JPA entities  — a bidirectional association must hand out the live referenced entity;
+                      copying it defensively would break Hibernate identity and dirty checking.
+    * DTOs          — request/response records are built by MapStruct or Jackson from data the
+                      caller already owns, and are never mutated after construction.
+    * Spring beans  — a singleton storing its injected collaborators is the entire point of
+                      constructor injection (docs/docs/development/engineering-conventions.md §6).
+-->
+<FindBugsFilter>
+
+  <!-- JPA entities: associations and collections are owned by the persistence context. -->
+  <Match>
+    <Class name="~.*\.entity\..*"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+
+  <!-- Request/response records and the shared envelope types. -->
+  <Match>
+    <Class name="~.*\.dto\..*"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+
+  <!-- Spring-managed beans holding constructor-injected collaborators. -->
+  <Match>
+    <Class name="~.*(Controller|Service|ServiceImpl|Repository|Configuration|Config|Properties|Mapper|Filter|Converter|Handler|EntryPoint|Listener|Seeder|Cipher|Provider|Resolver|Advice)(\$.*)?"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+
+  <!-- MapStruct-generated implementations are not reviewed source. -->
+  <Match>
+    <Class name="~.*MapperImpl(\$.*)?"/>
+  </Match>
+
+  <!-- Lombok @Builder emits synthetic members that trip the same two detectors. -->
+  <Match>
+    <Class name="~.*\$.*Builder"/>
+    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+  </Match>
+
+</FindBugsFilter>

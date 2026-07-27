@@ -22,8 +22,12 @@ public class FileSystemDocumentStorage implements DocumentStorage {
   @Override
   public void store(String container, String path, byte[] content) {
     Path target = resolve(container, path);
+    Path parent = target.getParent();
+    if (parent == null) {
+      throw new DocumentStorageException("Document path has no parent directory: " + path);
+    }
     try {
-      Files.createDirectories(target.getParent());
+      Files.createDirectories(parent);
       Files.write(target, content, StandardOpenOption.CREATE_NEW);
     } catch (IOException exception) {
       throw new DocumentStorageException("Unable to store document", exception);

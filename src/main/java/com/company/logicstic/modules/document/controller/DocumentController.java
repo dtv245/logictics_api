@@ -1,8 +1,8 @@
 package com.company.logicstic.modules.document.controller;
 
-import com.company.logicstic.modules.document.dto.DocumentDownload;
-import com.company.logicstic.modules.document.dto.DocumentUploadRequest;
-import com.company.logicstic.modules.document.dto.DocumentView;
+import com.company.logicstic.modules.document.dto.request.DocumentUploadRequest;
+import com.company.logicstic.modules.document.dto.response.DocumentDownloadResponse;
+import com.company.logicstic.modules.document.dto.response.DocumentResponse;
 import com.company.logicstic.modules.document.service.DocumentService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -13,18 +13,18 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,7 +41,7 @@ public class DocumentController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<DocumentView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<DocumentResponse>>> search(
       @RequestParam(required = false) String type,
       @RequestParam(required = false) String status,
       @RequestParam(required = false) UUID loadId,
@@ -55,31 +55,31 @@ public class DocumentController {
       @RequestParam(defaultValue = "fileName") String orderBy,
       @RequestParam(defaultValue = "false") boolean descending,
       HttpServletRequest request) {
-    PagedResponse<DocumentView> data =
+    PagedResponse<DocumentResponse> data =
         documentService.search(
             type, status, loadId, truckId, employeeId, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<DocumentView>> getById(
+  public ResponseEntity<ApiResponse<DocumentResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    DocumentView data = documentService.getById(id);
+    DocumentResponse data = documentService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<ApiResponse<DocumentView>> upload(
+  public ResponseEntity<ApiResponse<DocumentResponse>> upload(
       @RequestPart("file") MultipartFile file,
       @Valid @RequestPart("metadata") DocumentUploadRequest metadata,
       HttpServletRequest request) {
-    DocumentView data = documentService.upload(file, metadata);
+    DocumentResponse data = documentService.upload(file, metadata);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}/download")
   public ResponseEntity<byte[]> download(@PathVariable UUID id) {
-    DocumentDownload download = documentService.download(id);
+    DocumentDownloadResponse download = documentService.download(id);
     return ResponseEntity.ok()
         .contentType(MediaType.parseMediaType(download.contentType()))
         .header(

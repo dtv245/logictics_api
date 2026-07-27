@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.trip.mapper;
 
-import com.company.logicstic.modules.trip.dto.CreateTripRequest;
-import com.company.logicstic.modules.trip.dto.TripView;
+import com.company.logicstic.modules.trip.dto.request.CreateTripRequest;
+import com.company.logicstic.modules.trip.dto.response.TripResponse;
 import com.company.logicstic.modules.trip.entity.Trip;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -48,6 +48,6 @@ public interface TripMapper {
   @Mapping(
       target = "stops",
       expression =
-          "java(trip.getStops().stream().map(com.company.logicstic.modules.trip.dto.TripStopView::from).toList())")
-  TripView toView(Trip trip);
+          "java(trip.getStops().stream().map(com.company.logicstic.modules.trip.dto.response.TripStopResponse::from).toList())")
+  TripResponse toResponse(Trip trip);
 }

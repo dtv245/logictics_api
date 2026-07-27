@@ -16,8 +16,8 @@ public interface LoadRepository extends JpaRepository<Load, UUID> {
       """
             SELECT l FROM Load l
             WHERE (:search IS NULL
-                   OR LOWER(l.name) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(l.externalBrokerReference) LIKE LOWER(CONCAT('%', :search, '%')))
+                   OR LOWER(l.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                   OR LOWER(l.externalBrokerReference) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
               AND (:status IS NULL OR l.status = :status)
               AND (:customerId IS NULL OR l.customer.id = :customerId)
               AND (:truckId IS NULL OR l.assignedTruck.id = :truckId)

@@ -16,7 +16,7 @@ public interface TripRepository extends JpaRepository<Trip, UUID> {
       """
             SELECT t FROM Trip t
             WHERE (:search IS NULL
-                   OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))
+                   OR LOWER(t.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
               AND (:status IS NULL OR t.status = :status)
               AND (:truckId IS NULL OR t.truck.id = :truckId)
             """)

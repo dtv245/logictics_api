@@ -2,8 +2,8 @@ package com.company.logicstic.modules.employee.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.company.logicstic.modules.employee.dto.CreateEmployeeRequest;
-import com.company.logicstic.modules.employee.dto.EmployeeView;
+import com.company.logicstic.modules.employee.dto.request.CreateEmployeeRequest;
+import com.company.logicstic.modules.employee.dto.response.EmployeeResponse;
 import com.company.logicstic.modules.employee.entity.Employee;
 import com.company.logicstic.modules.role.entity.TenantRole;
 import java.math.BigDecimal;
@@ -15,8 +15,8 @@ import org.mapstruct.factory.Mappers;
 
 /**
  * Pure unit tests for {@link EmployeeMapper} using Mappers.getMapper(). No Spring context required
- * — avoids DB dependency in test suite. Verifies parity with the old {@code EmployeeView.from()}
- * logic.
+ * — avoids DB dependency in test suite. Verifies parity with the old {@code
+ * EmployeeResponse.from()} logic.
  */
 class EmployeeMapperTest {
 
@@ -46,7 +46,7 @@ class EmployeeMapperTest {
     employee.setSalaryCurrency("USD");
     employee.setRole(role);
 
-    EmployeeView view = employeeMapper.toView(employee);
+    EmployeeResponse view = employeeMapper.toResponse(employee);
 
     assertThat(view.id()).isEqualTo(employee.getId());
     assertThat(view.email()).isEqualTo("john@example.com");
@@ -71,7 +71,7 @@ class EmployeeMapperTest {
     employee.setSalaryCurrency("USD");
     employee.setRole(null);
 
-    EmployeeView view = employeeMapper.toView(employee);
+    EmployeeResponse view = employeeMapper.toResponse(employee);
 
     assertThat(view.roleId()).isNull();
     assertThat(view.roleName()).isNull();
@@ -135,8 +135,8 @@ class EmployeeMapperTest {
     e.setRole(role);
 
     // Old from() logic result
-    EmployeeView expected =
-        new EmployeeView(
+    EmployeeResponse expected =
+        new EmployeeResponse(
             empId,
             "test@co.com",
             "Test",
@@ -156,7 +156,7 @@ class EmployeeMapperTest {
             "12345",
             "US");
 
-    EmployeeView actual = employeeMapper.toView(e);
+    EmployeeResponse actual = employeeMapper.toResponse(e);
     assertThat(actual).isEqualTo(expected);
   }
 }

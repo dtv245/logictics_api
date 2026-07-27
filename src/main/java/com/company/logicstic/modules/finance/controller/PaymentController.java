@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.finance.controller;
 
-import com.company.logicstic.modules.finance.dto.CreatePaymentRequest;
-import com.company.logicstic.modules.finance.dto.PaymentView;
+import com.company.logicstic.modules.finance.dto.request.CreatePaymentRequest;
+import com.company.logicstic.modules.finance.dto.response.PaymentResponse;
 import com.company.logicstic.modules.finance.service.PaymentService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,7 +38,7 @@ public class PaymentController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<PaymentView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<PaymentResponse>>> search(
       @RequestParam(required = false) String status,
       @RequestParam(required = false) UUID invoiceId,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
@@ -49,31 +49,31 @@ public class PaymentController {
       @RequestParam(defaultValue = "recordedAt") String orderBy,
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) boolean descending,
       HttpServletRequest request) {
-    PagedResponse<PaymentView> data =
+    PagedResponse<PaymentResponse> data =
         paymentService.search(status, invoiceId, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<PaymentView>> getById(
+  public ResponseEntity<ApiResponse<PaymentResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    PaymentView data = paymentService.getById(id);
+    PaymentResponse data = paymentService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<PaymentView>> create(
+  public ResponseEntity<ApiResponse<PaymentResponse>> create(
       @Valid @RequestBody CreatePaymentRequest body, HttpServletRequest request) {
-    PaymentView data = paymentService.create(body);
+    PaymentResponse data = paymentService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<PaymentView>> update(
+  public ResponseEntity<ApiResponse<PaymentResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreatePaymentRequest body,
       HttpServletRequest request) {
-    PaymentView data = paymentService.update(id, body);
+    PaymentResponse data = paymentService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

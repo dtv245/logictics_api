@@ -1,0 +1,131 @@
+# Local / single-host stack: API + PostgreSQL + Redis.
+#
+# Every value comes from .env (copy .env.example). Nothing here carries a real
+# credential, and the app image reads configuration only from the environment.
+#
+#   docker compose up -d --build
+#   docker compose logs -f api
+#   docker compose down          # keeps data;  down -v  drops the volumes
+#
+# Production note: docs/docs/deployment/docker-deployment.md runs PostgreSQL
+# outside compose. To do that, delete the postgres service and point DB_URL at
+# the external host.
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: logistics-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-us_logisticsx}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    ports:
+      # Published so psql and the IDE can reach it. Bind to loopback only: the
+      # database must never be reachable from outside this host.
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      # PostgreSQL 18+ images changed this: the mount goes at /var/lib/postgresql,
+      # not .../data. The image stores the cluster in a major-version subdirectory
+      # so `pg_upgrade --link` can work across a mount boundary. Mounting the old
+      # path makes the container refuse to start with "unused mount/volume".
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      # -d and -U matter: without them pg_isready reports the server as ready
+      # while the target database is still being created by initdb.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-us_logisticsx}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [logistics]
+
+  redis:
+    image: redis:7-alpine
+    container_name: logistics-redis
+    restart: unless-stopped
+    # A cache holding tenant-scoped business data is not something to leave open.
+    # With no password set the flag list collapses to just the persistence args.
+    command: >
+      sh -c 'exec redis-server --save 60 1 --appendonly no
+      ${REDIS_PASSWORD:+--requirepass "$$REDIS_PASSWORD"}'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ${REDIS_PASSWORD:+-a \"$$REDIS_PASSWORD\"} ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    networks: [logistics]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: logisticsx-api:local
+    container_name: logistics-api
+    restart: unless-stopped
+    depends_on:
+      # service_healthy, not service_started: Flyway runs during app startup and
+      # a Postgres that has merely started is not yet accepting connections.
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # `local`, not `dev`: DataSeeder is @Profile({"dev","seed"}) and it currently aborts startup
+      # on a fresh database (it creates loads with a non-DRAFT status, which LoadServiceImpl
+      # rejects). A stack that cannot boot is worse than a stack without demo data.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SERVER_PORT: 8080
+
+      # Service names, not localhost: inside the compose network each service is
+      # reachable by its own name.
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-us_logisticsx}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      CACHE_ENABLED: ${CACHE_ENABLED:-true}
+
+      # The API validates tokens it did not issue; the Identity Server is a
+      # separate deployment. These have no defaults in application.yml on
+      # purpose, so a wrong issuer fails loudly instead of silently accepting
+      # tokens from the wrong authority.
+      AUTH_ISSUER_URI: ${AUTH_ISSUER_URI:?AUTH_ISSUER_URI is required}
+      AUTH_AUDIENCE: ${AUTH_AUDIENCE:?AUTH_AUDIENCE is required}
+      AUTH_JWK_SET_URI: ${AUTH_JWK_SET_URI:?AUTH_JWK_SET_URI is required}
+
+      TENANCY_ENABLED: ${TENANCY_ENABLED:-false}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    volumes:
+      # Uploaded documents survive a container replacement. Swap for blob
+      # storage before running more than one replica — a local directory is not
+      # shared state.
+      - documents-data:/app/data/documents
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      start_period: 90s
+      retries: 5
+    networks: [logistics]
+
+volumes:
+  postgres-data:
+  redis-data:
+  documents-data:
+
+networks:
+  logistics:
+    # Named explicitly so the containers talk to each other here and not on the
+    # default bridge alongside every other project on the host.
+    driver: bridge

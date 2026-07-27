@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.customer.controller;
 
-import com.company.logicstic.modules.customer.dto.CreateCustomerRequest;
-import com.company.logicstic.modules.customer.dto.CustomerView;
+import com.company.logicstic.modules.customer.dto.request.CreateCustomerRequest;
+import com.company.logicstic.modules.customer.dto.response.CustomerResponse;
 import com.company.logicstic.modules.customer.service.CustomerService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,7 +38,7 @@ public class CustomerController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<CustomerView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<CustomerResponse>>> search(
       @RequestParam(required = false) String search,
       @RequestParam(required = false) String status,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
@@ -49,31 +49,31 @@ public class CustomerController {
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_FIELD_NAME) String orderBy,
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_DIRECTION) boolean descending,
       HttpServletRequest request) {
-    PagedResponse<CustomerView> data =
+    PagedResponse<CustomerResponse> data =
         customerService.search(search, status, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<CustomerView>> getById(
+  public ResponseEntity<ApiResponse<CustomerResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    CustomerView data = customerService.getById(id);
+    CustomerResponse data = customerService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<CustomerView>> create(
+  public ResponseEntity<ApiResponse<CustomerResponse>> create(
       @Valid @RequestBody CreateCustomerRequest body, HttpServletRequest request) {
-    CustomerView data = customerService.create(body);
+    CustomerResponse data = customerService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<CustomerView>> update(
+  public ResponseEntity<ApiResponse<CustomerResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreateCustomerRequest body,
       HttpServletRequest request) {
-    CustomerView data = customerService.update(id, body);
+    CustomerResponse data = customerService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

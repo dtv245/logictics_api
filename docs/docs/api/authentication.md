@@ -2,6 +2,10 @@
 
 LogisticsX uses OAuth 2.0 / OpenID Connect via Duende IdentityServer.
 
+The Spring Boot API is an OAuth2 Resource Server. It does not issue or store user passwords. The
+Identity Server owns login, refresh token, logout, and authorization-code flows; this API validates
+the resulting Bearer access token before serving protected resources.
+
 ## Identity Server URLs
 
 | Environment | URL |
@@ -130,22 +134,23 @@ public async Task<IActionResult> CreateLoad(...)
 | Dispatcher | Load/trip management |
 | Driver | View assigned loads |
 
-## API Configuration
+## Spring API Configuration
 
-In `appsettings.json`:
+Configure the Resource Server with environment variables:
 
-```json
-{
-  "IdentityServer": {
-    "Authority": "https://id.yourdomain.com",
-    "Audience": "logisticsx.api",
-    "ValidIssuers": [
-      "https://id.yourdomain.com",
-      "https://localhost:7001"
-    ]
-  }
-}
+```dotenv
+AUTH_ISSUER_URI=https://id.yourdomain.com
+AUTH_AUDIENCE=logisticsx.api
+AUTH_JWK_SET_URI=https://id.yourdomain.com/.well-known/openid-configuration/jwks
 ```
+
+Every protected token must have a valid signature and expiration, the configured issuer and
+audience, and a non-empty `tenant` claim. The API accepts `role` as either a string or a list and
+maps it to Spring Security `ROLE_*` authorities.
+
+The public endpoints are `/`, `/health`, `/api/health`, `/actuator/health`, Swagger UI, and the
+OpenAPI document. All other `/api/**` endpoints require a Bearer token. See
+[Authorization](authorization.md) for the endpoint role matrix.
 
 ## Client Configuration
 

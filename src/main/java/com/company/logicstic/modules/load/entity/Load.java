@@ -3,8 +3,8 @@ package com.company.logicstic.modules.load.entity;
 import com.company.logicstic.modules.customer.entity.Customer;
 import com.company.logicstic.modules.employee.entity.Employee;
 import com.company.logicstic.modules.fleet.entity.Container;
-import com.company.logicstic.modules.fleet.entity.Terminal;
 import com.company.logicstic.modules.fleet.entity.Truck;
+import com.company.logicstic.modules.terminal.entity.Terminal;
 import com.company.logicstic.shared.BaseAuditableEntity;
 import com.company.logicstic.shared.exception.InvalidStateTransitionException;
 import jakarta.persistence.CascadeType;
@@ -205,7 +205,7 @@ public class Load extends BaseAuditableEntity {
       mappedBy = "load",
       cascade = {CascadeType.PERSIST, CascadeType.MERGE},
       orphanRemoval = true)
-  private List<LoadException> exceptions = new ArrayList<>();
+  private List<LoadExceptionEvent> exceptions = new ArrayList<>();
 
   // ── Domain behavior: State machine ─────────────────────────────────
 

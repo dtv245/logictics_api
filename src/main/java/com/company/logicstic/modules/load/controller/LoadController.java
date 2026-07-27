@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.load.controller;
 
-import com.company.logicstic.modules.load.dto.CreateLoadRequest;
-import com.company.logicstic.modules.load.dto.LoadView;
+import com.company.logicstic.modules.load.dto.request.CreateLoadRequest;
+import com.company.logicstic.modules.load.dto.response.LoadResponse;
 import com.company.logicstic.modules.load.service.LoadService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,7 +38,7 @@ public class LoadController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<LoadView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<LoadResponse>>> search(
       @RequestParam(required = false) String search,
       @RequestParam(required = false) String status,
       @RequestParam(required = false) UUID customerId,
@@ -52,32 +52,32 @@ public class LoadController {
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_FIELD_NAME) String orderBy,
       @RequestParam(defaultValue = "false") boolean descending,
       HttpServletRequest request) {
-    PagedResponse<LoadView> data =
+    PagedResponse<LoadResponse> data =
         loadService.search(
             search, status, customerId, truckId, dispatcherId, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<LoadView>> getById(
+  public ResponseEntity<ApiResponse<LoadResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    LoadView data = loadService.getById(id);
+    LoadResponse data = loadService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<LoadView>> create(
+  public ResponseEntity<ApiResponse<LoadResponse>> create(
       @Valid @RequestBody CreateLoadRequest body, HttpServletRequest request) {
-    LoadView data = loadService.create(body);
+    LoadResponse data = loadService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<LoadView>> update(
+  public ResponseEntity<ApiResponse<LoadResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreateLoadRequest body,
       HttpServletRequest request) {
-    LoadView data = loadService.update(id, body);
+    LoadResponse data = loadService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
@@ -91,30 +91,30 @@ public class LoadController {
   // ── State machine transitions ──────────────────────────────────────
 
   @PostMapping("/{id}/dispatch")
-  public ResponseEntity<ApiResponse<LoadView>> dispatch(
+  public ResponseEntity<ApiResponse<LoadResponse>> dispatch(
       @PathVariable UUID id, HttpServletRequest request) {
-    LoadView data = loadService.dispatch(id);
+    LoadResponse data = loadService.dispatch(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping("/{id}/pick-up")
-  public ResponseEntity<ApiResponse<LoadView>> pickUp(
+  public ResponseEntity<ApiResponse<LoadResponse>> pickUp(
       @PathVariable UUID id, HttpServletRequest request) {
-    LoadView data = loadService.pickUp(id);
+    LoadResponse data = loadService.pickUp(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping("/{id}/deliver")
-  public ResponseEntity<ApiResponse<LoadView>> deliver(
+  public ResponseEntity<ApiResponse<LoadResponse>> deliver(
       @PathVariable UUID id, HttpServletRequest request) {
-    LoadView data = loadService.deliver(id);
+    LoadResponse data = loadService.deliver(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping("/{id}/cancel")
-  public ResponseEntity<ApiResponse<LoadView>> cancel(
+  public ResponseEntity<ApiResponse<LoadResponse>> cancel(
       @PathVariable UUID id, HttpServletRequest request) {
-    LoadView data = loadService.cancel(id);
+    LoadResponse data = loadService.cancel(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 }

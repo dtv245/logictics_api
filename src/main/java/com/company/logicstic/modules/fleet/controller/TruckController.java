@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.fleet.controller;
 
-import com.company.logicstic.modules.fleet.dto.CreateTruckRequest;
-import com.company.logicstic.modules.fleet.dto.TruckView;
+import com.company.logicstic.modules.fleet.dto.request.CreateTruckRequest;
+import com.company.logicstic.modules.fleet.dto.response.TruckResponse;
 import com.company.logicstic.modules.fleet.service.TruckService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,7 +38,7 @@ public class TruckController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<TruckView>>> search(
+  public ResponseEntity<ApiResponse<PagedResponse<TruckResponse>>> search(
       @RequestParam(required = false) String search,
       @RequestParam(required = false) String status,
       @RequestParam(required = false) String type,
@@ -50,31 +50,31 @@ public class TruckController {
       @RequestParam(defaultValue = Constants.DEFAULT_SORT_FIELD_NUMBER) String orderBy,
       @RequestParam(defaultValue = "false") boolean descending,
       HttpServletRequest request) {
-    PagedResponse<TruckView> data =
+    PagedResponse<TruckResponse> data =
         truckService.search(search, status, type, page, pageSize, orderBy, descending);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<TruckView>> getById(
+  public ResponseEntity<ApiResponse<TruckResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    TruckView data = truckService.getById(id);
+    TruckResponse data = truckService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<TruckView>> create(
+  public ResponseEntity<ApiResponse<TruckResponse>> create(
       @Valid @RequestBody CreateTruckRequest body, HttpServletRequest request) {
-    TruckView data = truckService.create(body);
+    TruckResponse data = truckService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<TruckView>> update(
+  public ResponseEntity<ApiResponse<TruckResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreateTruckRequest body,
       HttpServletRequest request) {
-    TruckView data = truckService.update(id, body);
+    TruckResponse data = truckService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

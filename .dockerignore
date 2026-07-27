@@ -1,0 +1,33 @@
+# Everything here either bloats the build context, invalidates layer caching on
+# every build, or must never end up inside an image.
+
+# Secrets — the image reads configuration from the environment, never from a file.
+.env
+.env.*
+!.env.example
+
+# Build output. The image builds from source in its own stage; copying a host
+# build in would make the image depend on whatever the last local `mvn` produced.
+target/
+bin/
+*.jar
+*.war
+
+# VCS and IDE
+.git/
+.gitignore
+.gitattributes
+.idea/
+*.iml
+.vscode/
+.claude/
+.mcp.json
+
+# Docs and other non-runtime material: 100+ MB of screenshots that no build step reads.
+docs/
+*.md
+!README.md
+
+# Local tooling
+scripts/
+sql.md

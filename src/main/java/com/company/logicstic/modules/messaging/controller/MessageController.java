@@ -1,9 +1,9 @@
 package com.company.logicstic.modules.messaging.controller;
 
-import com.company.logicstic.modules.messaging.dto.ConversationView;
-import com.company.logicstic.modules.messaging.dto.CreateConversationRequest;
-import com.company.logicstic.modules.messaging.dto.MessageView;
-import com.company.logicstic.modules.messaging.dto.SendMessageRequest;
+import com.company.logicstic.modules.messaging.dto.request.CreateConversationRequest;
+import com.company.logicstic.modules.messaging.dto.request.SendMessageRequest;
+import com.company.logicstic.modules.messaging.dto.response.ConversationResponse;
+import com.company.logicstic.modules.messaging.dto.response.MessageResponse;
 import com.company.logicstic.modules.messaging.service.ConversationService;
 import com.company.logicstic.modules.messaging.service.MessageService;
 import com.company.logicstic.shared.common.Constants;
@@ -43,7 +43,7 @@ public class MessageController {
   // Conversations
 
   @GetMapping("/conversations")
-  public ResponseEntity<ApiResponse<PagedResponse<ConversationView>>> listConversations(
+  public ResponseEntity<ApiResponse<PagedResponse<ConversationResponse>>> listConversations(
       @RequestParam UUID employeeId,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE_SIZE)
@@ -51,42 +51,42 @@ public class MessageController {
           @Max(Constants.MAX_PAGE_SIZE)
           int pageSize,
       HttpServletRequest request) {
-    PagedResponse<ConversationView> data =
+    PagedResponse<ConversationResponse> data =
         conversationService.listByParticipant(employeeId, page, pageSize);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/conversations/{id}")
-  public ResponseEntity<ApiResponse<ConversationView>> getConversation(
+  public ResponseEntity<ApiResponse<ConversationResponse>> getConversation(
       @PathVariable UUID id, HttpServletRequest request) {
-    ConversationView data = conversationService.getById(id);
+    ConversationResponse data = conversationService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping("/conversations")
-  public ResponseEntity<ApiResponse<ConversationView>> createConversation(
+  public ResponseEntity<ApiResponse<ConversationResponse>> createConversation(
       @Valid @RequestBody CreateConversationRequest body, HttpServletRequest request) {
-    ConversationView data = conversationService.create(body);
+    ConversationResponse data = conversationService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   // Messages
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<MessageView>>> listMessages(
+  public ResponseEntity<ApiResponse<PagedResponse<MessageResponse>>> listMessages(
       @RequestParam UUID conversationId,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
       @RequestParam(defaultValue = "50") @Min(1) @Max(Constants.MAX_PAGE_SIZE) int pageSize,
       HttpServletRequest request) {
-    PagedResponse<MessageView> data =
+    PagedResponse<MessageResponse> data =
         messageService.listByConversation(conversationId, page, pageSize);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<MessageView>> sendMessage(
+  public ResponseEntity<ApiResponse<MessageResponse>> sendMessage(
       @Valid @RequestBody SendMessageRequest body, HttpServletRequest request) {
-    MessageView data = messageService.create(body);
+    MessageResponse data = messageService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 

@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.messaging.mapper;
 
-import com.company.logicstic.modules.messaging.dto.MessageView;
-import com.company.logicstic.modules.messaging.dto.SendMessageRequest;
+import com.company.logicstic.modules.messaging.dto.request.SendMessageRequest;
+import com.company.logicstic.modules.messaging.dto.response.MessageResponse;
 import com.company.logicstic.modules.messaging.entity.Message;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -36,5 +36,5 @@ public interface MessageMapper {
       target = "senderName",
       expression =
           "java(message.getSender() != null ? message.getSender().getFirstName() + \" \" + message.getSender().getLastName() : null)")
-  MessageView toView(Message message);
+  MessageResponse toResponse(Message message);
 }

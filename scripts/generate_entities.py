@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate JPA entities from the PostgreSQL DDL in sql.md."""
+"""Generate JPA entities from the PostgreSQL DDL in docs/docs/architecture/database-schema.sql."""
 
 from __future__ import annotations
 
@@ -9,9 +9,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DDL_FILE = ROOT / "sql.md"
+DDL_FILE = ROOT / "docs/docs/architecture/database-schema.sql"
 OUTPUT_DIR = ROOT / "src/main/java/com/company/logicstic/entity"
-RELATIONSHIP_REPORT = ROOT / "docs/entity-relationships.md"
+RELATIONSHIP_REPORT = ROOT / "docs/docs/architecture/entity-relationships.md"
 
 TABLE_TO_CLASS = {
     "ai_dispatch_sessions": "AiDispatchSession",

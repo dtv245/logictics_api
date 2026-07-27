@@ -1,0 +1,55 @@
+# Shared development environment (deployed, not a laptop).
+#
+# Differs from `local`: SQL echoing is off because the logs are shared and persisted, Flyway is
+# strict, and Swagger stays on so front-end and mobile developers can explore the contract.
+#
+# Activate explicitly:  --spring.profiles.active=dev
+spring:
+  jpa:
+    show-sql: false
+    hibernate:
+      # §10: validate everywhere. `update` would let a forgotten migration pass unnoticed here and
+      # then fail in production, which is the exact failure this setting exists to prevent.
+      ddl-auto: validate
+  flyway:
+    clean-disabled: true
+    validate-on-migrate: true
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.company.logicstic: DEBUG
+    org.springframework.web: INFO
+
+app:
+  cache:
+    enabled: ${CACHE_ENABLED:true}
+    # Shorter than production: a shared dev database is edited out-of-band often enough that long
+    # TTLs read as bugs.
+    default-ttl: 5m
+    ttl:
+      terminal: 30m
+      role: 15m
+      customer: 10m
+      employee: 5m
+      truck: 5m

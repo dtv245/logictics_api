@@ -1,5 +1,6 @@
 HELP.md
 target/
+bin/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -35,9 +36,13 @@ build/
 ### Build server / Metals ###
 .bloop/
 .metals/
+*.class
 
 ### Local environment ###
 .env
+
+### Local runtime storage ###
+data/
 
 ### Python cache ###
 __pycache__/

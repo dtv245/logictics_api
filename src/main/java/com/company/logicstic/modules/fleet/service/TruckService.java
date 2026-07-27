@@ -1,101 +1,30 @@
 package com.company.logicstic.modules.fleet.service;
 
-import com.company.logicstic.modules.employee.entity.Employee;
-import com.company.logicstic.modules.employee.repository.EmployeeRepository;
-import com.company.logicstic.modules.fleet.dto.CreateTruckRequest;
-import com.company.logicstic.modules.fleet.dto.TruckView;
+import com.company.logicstic.modules.fleet.dto.request.CreateTruckRequest;
+import com.company.logicstic.modules.fleet.dto.response.TruckResponse;
 import com.company.logicstic.modules.fleet.entity.Truck;
-import com.company.logicstic.modules.fleet.mapper.TruckMapper;
-import com.company.logicstic.modules.fleet.repository.TruckRepository;
-import com.company.logicstic.shared.AbstractBaseService;
 import com.company.logicstic.shared.dto.PagedResponse;
-import com.company.logicstic.shared.exception.ConflictException;
-import com.company.logicstic.shared.exception.ResourceNotFoundException;
-import java.util.Objects;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.company.logicstic.shared.service.CrudService;
 
-@Profile("!nodb")
-@Service
-@Transactional(readOnly = true)
-public class TruckService extends AbstractBaseService<Truck, TruckView, CreateTruckRequest> {
+/**
+ * Public API of the fleet feature.
+ *
+ * <p>A truck carries its main and secondary driver as associations resolved through {@code
+ * EmployeeService}; load and trip obtain a {@link Truck} through {@link #getEntityById}.
+ */
+public interface TruckService extends CrudService<Truck, TruckResponse, CreateTruckRequest> {
 
-  private final TruckRepository truckRepository;
-  private final EmployeeRepository employeeRepository;
-  private final TruckMapper truckMapper;
-
-  public TruckService(
-      TruckRepository truckRepository,
-      EmployeeRepository employeeRepository,
-      TruckMapper truckMapper) {
-    super(truckRepository, truckMapper::toView, truckMapper::toEntity, truckMapper::updateEntity);
-    this.truckRepository = truckRepository;
-    this.employeeRepository = employeeRepository;
-    this.truckMapper = truckMapper;
-  }
-
-  @Override
-  protected String entityName() {
-    return "Truck";
-  }
-
-  public PagedResponse<TruckView> search(
+  /**
+   * Searches trucks with optional free-text, status and type filters.
+   *
+   * @param page 1-based page number
+   */
+  PagedResponse<TruckResponse> search(
       String search,
       String status,
       String type,
       int page,
       int pageSize,
       String orderBy,
-      boolean descending) {
-    var pageable = pageRequest(page, pageSize, orderBy, descending);
-    return toPagedResponse(truckRepository.search(search, status, type, pageable));
-  }
-
-  @Override
-  protected void beforeCreate(Truck truck, CreateTruckRequest request) {
-    if (truckRepository.existsByNumber(request.number())) {
-      throw new ConflictException("Truck with number '" + request.number() + "' already exists");
-    }
-    resolveDrivers(truck, request);
-  }
-
-  @Override
-  protected void beforeMapUpdate(Truck truck, CreateTruckRequest request) {
-    if (!Objects.equals(truck.getNumber(), request.number())
-        && truckRepository.existsByNumber(request.number())) {
-      throw new ConflictException("Truck with number '" + request.number() + "' already exists");
-    }
-  }
-
-  @Override
-  protected void beforeUpdate(Truck truck, CreateTruckRequest request) {
-    resolveDrivers(truck, request);
-  }
-
-  private void resolveDrivers(Truck truck, CreateTruckRequest req) {
-    if (req.mainDriverId() != null) {
-      Employee driver =
-          employeeRepository
-              .findById(req.mainDriverId())
-              .orElseThrow(
-                  () -> new ResourceNotFoundException("Driver not found: " + req.mainDriverId()));
-      truck.setMainDriver(driver);
-    } else {
-      truck.setMainDriver(null);
-    }
-
-    if (req.secondaryDriverId() != null) {
-      Employee driver =
-          employeeRepository
-              .findById(req.secondaryDriverId())
-              .orElseThrow(
-                  () ->
-                      new ResourceNotFoundException(
-                          "Driver not found: " + req.secondaryDriverId()));
-      truck.setSecondaryDriver(driver);
-    } else {
-      truck.setSecondaryDriver(null);
-    }
-  }
+      boolean descending);
 }

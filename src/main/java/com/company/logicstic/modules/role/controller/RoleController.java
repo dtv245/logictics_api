@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.role.controller;
 
-import com.company.logicstic.modules.role.dto.CreateRoleRequest;
-import com.company.logicstic.modules.role.dto.RoleView;
+import com.company.logicstic.modules.role.dto.request.CreateRoleRequest;
+import com.company.logicstic.modules.role.dto.response.RoleResponse;
 import com.company.logicstic.modules.role.service.RoleService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
@@ -38,37 +38,37 @@ public class RoleController {
   }
 
   @GetMapping
-  public ResponseEntity<ApiResponse<PagedResponse<RoleView>>> list(
+  public ResponseEntity<ApiResponse<PagedResponse<RoleResponse>>> list(
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE) @Min(1) int page,
       @RequestParam(defaultValue = "" + Constants.DEFAULT_PAGE_SIZE)
           @Min(1)
           @Max(Constants.MAX_PAGE_SIZE)
           int pageSize,
       HttpServletRequest request) {
-    PagedResponse<RoleView> data = roleService.list(page, pageSize);
+    PagedResponse<RoleResponse> data = roleService.list(page, pageSize);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<RoleView>> getById(
+  public ResponseEntity<ApiResponse<RoleResponse>> getById(
       @PathVariable UUID id, HttpServletRequest request) {
-    RoleView data = roleService.getById(id);
+    RoleResponse data = roleService.getById(id);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping
-  public ResponseEntity<ApiResponse<RoleView>> create(
+  public ResponseEntity<ApiResponse<RoleResponse>> create(
       @Valid @RequestBody CreateRoleRequest body, HttpServletRequest request) {
-    RoleView data = roleService.create(body);
+    RoleResponse data = roleService.create(body);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<ApiResponse<RoleView>> update(
+  public ResponseEntity<ApiResponse<RoleResponse>> update(
       @PathVariable UUID id,
       @Valid @RequestBody CreateRoleRequest body,
       HttpServletRequest request) {
-    RoleView data = roleService.update(id, body);
+    RoleResponse data = roleService.update(id, body);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

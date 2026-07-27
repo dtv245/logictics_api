@@ -21,9 +21,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
       """
             SELECT e FROM Employee e
             WHERE (:search IS NULL
-                   OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%')))
+                   OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                   OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                   OR LOWER(e.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
               AND (:status IS NULL OR e.status = :status)
               AND (:roleId IS NULL OR e.role.id = :roleId)
             """)
@@ -38,9 +38,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
       """
             SELECT e FROM Employee e
             WHERE (:search IS NULL
-                   OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%')))
+                   OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                   OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                   OR LOWER(e.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
               AND (:status IS NULL OR e.status = :status)
               AND EXISTS (
                   SELECT claim FROM TenantRoleClaim claim

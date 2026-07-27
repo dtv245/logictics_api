@@ -1,7 +1,7 @@
 package com.company.logicstic.modules.fleet.mapper;
 
-import com.company.logicstic.modules.fleet.dto.CreateTruckRequest;
-import com.company.logicstic.modules.fleet.dto.TruckView;
+import com.company.logicstic.modules.fleet.dto.request.CreateTruckRequest;
+import com.company.logicstic.modules.fleet.dto.response.TruckResponse;
 import com.company.logicstic.modules.fleet.entity.Truck;
 import com.company.logicstic.shared.config.MapperConfiguration;
 import org.mapstruct.Mapper;
@@ -13,9 +13,9 @@ import org.mapstruct.MappingTarget;
  *
  * <p>Driver FK relations ({@code mainDriver}, {@code secondaryDriver}) are ignored during entity
  * mapping — the service resolves them from {@link
- * com.company.logicstic.repository.EmployeeRepository}.
+ * com.company.logicstic.modules.employee.repository.EmployeeRepository}.
  *
- * <p>Note: {@link Truck} does NOT extend {@link com.company.logicstic.entity.BaseAuditableEntity},
+ * <p>Note: {@link Truck} does NOT extend {@link com.company.logicstic.shared.BaseAuditableEntity},
  * so no audit-field ignore annotations are needed.
  */
 @Mapper(config = MapperConfiguration.class)
@@ -86,5 +86,5 @@ public interface TruckMapper {
       target = "secondaryDriverName",
       expression =
           "java(truck.getSecondaryDriver() != null ? truck.getSecondaryDriver().getFirstName() + \" \" + truck.getSecondaryDriver().getLastName() : null)")
-  TruckView toView(Truck truck);
+  TruckResponse toResponse(Truck truck);
 }
