@@ -1,6 +1,7 @@
 package com.company.logicstic.modules.messaging.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.company.logicstic.modules.employee.entity.Employee;
 import com.company.logicstic.modules.employee.service.EmployeeService;
@@ -16,6 +17,8 @@ import com.company.logicstic.modules.messaging.repository.ConversationRepository
 import com.company.logicstic.modules.messaging.repository.MessageReadReceiptRepository;
 import com.company.logicstic.modules.messaging.repository.MessageRepository;
 import com.company.logicstic.modules.messaging.service.impl.MessageServiceImpl;
+import com.company.logicstic.shared.exception.ApiException;
+import com.company.logicstic.shared.exception.ResourceNotFoundException;
 import java.lang.reflect.Proxy;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -88,7 +91,7 @@ class MessageServiceTest {
             messageMapper);
 
     OffsetDateTime before = OffsetDateTime.now();
-    MessageResponse view = service.create(request);
+    MessageResponse view = service.sendAsParticipant(senderId, request);
     Message message = saved.get();
 
     assertThat(view.content()).isEqualTo("hello");
@@ -99,6 +102,58 @@ class MessageServiceTest {
     assertThat(message.getIsDeleted()).isFalse();
     assertThat(message.getDeletedAt()).isNull();
     assertThat(conversation.getLastMessageAt()).isEqualTo(message.getSentAt());
+  }
+
+  @Test
+  void sendAsParticipantRejectsMismatchedLegacySenderBeforeDataAccess() {
+    UUID currentEmployeeId = UUID.randomUUID();
+    SendMessageRequest request =
+        new SendMessageRequest(UUID.randomUUID(), UUID.randomUUID(), "forged");
+    MessageService service =
+        new MessageServiceImpl(
+            unused(MessageRepository.class),
+            unused(ConversationRepository.class),
+            unused(ConversationParticipantRepository.class),
+            unused(MessageReadReceiptRepository.class),
+            unused(EmployeeService.class),
+            Mappers.getMapper(MessageMapper.class));
+
+    assertThatThrownBy(() -> service.sendAsParticipant(currentEmployeeId, request))
+        .isInstanceOfSatisfying(
+            ApiException.class,
+            exception -> {
+              assertThat(exception.getStatus().value()).isEqualTo(403);
+              assertThat(exception.getCode()).isEqualTo("ACCESS_DENIED");
+            });
+  }
+
+  @Test
+  void listByConversationHidesConversationFromNonParticipant() {
+    UUID conversationId = UUID.randomUUID();
+    UUID employeeId = UUID.randomUUID();
+    ConversationParticipantRepository participantRepository =
+        proxy(
+            ConversationParticipantRepository.class,
+            (method, args) -> {
+              if (method.equals("existsByConversationIdAndEmployeeId")) {
+                return false;
+              }
+              throw new AssertionError(
+                  "Unexpected ConversationParticipantRepository call: " + method);
+            });
+    MessageService service =
+        new MessageServiceImpl(
+            unused(MessageRepository.class),
+            unused(ConversationRepository.class),
+            participantRepository,
+            unused(MessageReadReceiptRepository.class),
+            unused(EmployeeService.class),
+            Mappers.getMapper(MessageMapper.class));
+
+    assertThatThrownBy(
+            () -> service.listByConversationForParticipant(conversationId, employeeId, 1, 50))
+        .isInstanceOf(ResourceNotFoundException.class)
+        .hasMessage("Conversation not found: " + conversationId);
   }
 
   @Test

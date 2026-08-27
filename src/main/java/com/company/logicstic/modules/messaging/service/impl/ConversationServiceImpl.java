@@ -11,8 +11,11 @@ import com.company.logicstic.modules.messaging.mapper.ConversationMapper;
 import com.company.logicstic.modules.messaging.repository.ConversationRepository;
 import com.company.logicstic.modules.messaging.service.ConversationService;
 import com.company.logicstic.shared.dto.PagedResponse;
+import com.company.logicstic.shared.exception.ResourceNotFoundException;
 import com.company.logicstic.shared.service.AbstractBaseService;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -60,6 +63,27 @@ public class ConversationServiceImpl
         conversationRepository
             .findByParticipant(employeeId, pageable)
             .map(conversationMapper::toResponse));
+  }
+
+  @Override
+  public ConversationResponse getByIdForParticipant(UUID conversationId, UUID employeeId) {
+    return conversationRepository
+        .findByIdAndParticipant(conversationId, employeeId)
+        .map(conversationMapper::toResponse)
+        .orElseThrow(
+            () -> new ResourceNotFoundException("Conversation not found: " + conversationId));
+  }
+
+  @Override
+  @Transactional
+  public ConversationResponse createForParticipant(
+      CreateConversationRequest request, UUID currentEmployeeId) {
+    Set<UUID> participantIds = new LinkedHashSet<>(request.participantIds());
+    participantIds.add(currentEmployeeId);
+    CreateConversationRequest trustedRequest =
+        new CreateConversationRequest(
+            request.name(), request.loadId(), request.isTenantChat(), Set.copyOf(participantIds));
+    return super.create(trustedRequest);
   }
 
   @Override

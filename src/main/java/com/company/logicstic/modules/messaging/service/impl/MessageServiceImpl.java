@@ -14,7 +14,8 @@ import com.company.logicstic.modules.messaging.repository.MessageReadReceiptRepo
 import com.company.logicstic.modules.messaging.repository.MessageRepository;
 import com.company.logicstic.modules.messaging.service.MessageService;
 import com.company.logicstic.shared.dto.PagedResponse;
-import com.company.logicstic.shared.exception.BadRequestException;
+import com.company.logicstic.shared.exception.ApiException;
+import com.company.logicstic.shared.exception.ErrorCode;
 import com.company.logicstic.shared.exception.ResourceNotFoundException;
 import com.company.logicstic.shared.service.AbstractBaseService;
 import java.time.OffsetDateTime;
@@ -68,6 +69,25 @@ public class MessageServiceImpl
         messageRepository
             .findByConversationIdOrderBySentAtAsc(conversationId, pageable)
             .map(messageMapper::toResponse));
+  }
+
+  @Override
+  public PagedResponse<MessageResponse> listByConversationForParticipant(
+      UUID conversationId, UUID employeeId, int page, int pageSize) {
+    requireParticipant(conversationId, employeeId);
+    return listByConversation(conversationId, page, pageSize);
+  }
+
+  @Override
+  @Transactional
+  public MessageResponse sendAsParticipant(UUID employeeId, SendMessageRequest request) {
+    if (!employeeId.equals(request.senderId())) {
+      throw new ApiException(
+          ErrorCode.ACCESS_DENIED, "Message sender does not match the authenticated employee");
+    }
+    SendMessageRequest trustedRequest =
+        new SendMessageRequest(request.conversationId(), employeeId, request.content());
+    return super.create(trustedRequest);
   }
 
   @Override
@@ -125,12 +145,15 @@ public class MessageServiceImpl
                         "Conversation not found: " + request.conversationId()));
     message.setConversation(conversation);
 
-    if (!participantRepository.existsByConversationIdAndEmployeeId(
-        request.conversationId(), request.senderId())) {
-      throw new BadRequestException("Sender is not a participant of this conversation");
-    }
+    requireParticipant(request.conversationId(), request.senderId());
 
     Employee sender = employeeService.getEntityById(request.senderId());
     message.setSender(sender);
+  }
+
+  private void requireParticipant(UUID conversationId, UUID employeeId) {
+    if (!participantRepository.existsByConversationIdAndEmployeeId(conversationId, employeeId)) {
+      throw new ResourceNotFoundException("Conversation not found: " + conversationId);
+    }
   }
 }

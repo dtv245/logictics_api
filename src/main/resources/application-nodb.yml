@@ -24,7 +24,6 @@ app:
       audience: logisticsx.api
       jwk-set-uri: https://localhost:7001/.well-known/openid-configuration/jwks
 
-app:
   cache:
     # nodb boots without infrastructure; caching would drag in a Redis connection factory that the
     # excluded auto-configuration above never creates.

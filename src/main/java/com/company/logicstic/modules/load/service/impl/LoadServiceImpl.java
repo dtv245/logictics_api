@@ -1,6 +1,7 @@
 package com.company.logicstic.modules.load.service.impl;
 
 import com.company.logicstic.modules.customer.service.CustomerService;
+import com.company.logicstic.modules.employee.entity.Employee;
 import com.company.logicstic.modules.employee.service.EmployeeService;
 import com.company.logicstic.modules.fleet.service.ContainerService;
 import com.company.logicstic.modules.fleet.service.TruckService;
@@ -12,8 +13,11 @@ import com.company.logicstic.modules.load.event.LoadDispatchedEvent;
 import com.company.logicstic.modules.load.mapper.LoadMapper;
 import com.company.logicstic.modules.load.repository.LoadRepository;
 import com.company.logicstic.modules.load.service.LoadService;
+import com.company.logicstic.modules.role.entity.TenantRoleClaim;
 import com.company.logicstic.modules.terminal.service.TerminalService;
 import com.company.logicstic.shared.dto.PagedResponse;
+import com.company.logicstic.shared.exception.ApiException;
+import com.company.logicstic.shared.exception.ErrorCode;
 import com.company.logicstic.shared.exception.InvalidStateTransitionException;
 import com.company.logicstic.shared.exception.ResourceNotFoundException;
 import com.company.logicstic.shared.service.AbstractBaseService;
@@ -28,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class LoadServiceImpl extends AbstractBaseService<Load, LoadResponse, CreateLoadRequest>
     implements LoadService {
+
+  private static final String CONFIRM_STATUS_PERMISSION = "load.confirm_status";
 
   private final LoadRepository loadRepository;
   private final CustomerService customerService;
@@ -164,22 +170,24 @@ public class LoadServiceImpl extends AbstractBaseService<Load, LoadResponse, Cre
 
   /** Marks a Load as Picked Up (Dispatched → PickedUp). */
   @Transactional
-  public LoadResponse pickUp(UUID id) {
+  public LoadResponse pickUp(UUID id, UUID actorEmployeeId) {
     Load load =
         loadRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Load not found: " + id));
+    authorizeAction(load, actorEmployeeId);
     load.pickUp();
     return loadMapper.toResponse(loadRepository.save(load));
   }
 
   /** Marks a Load as Delivered (PickedUp → Delivered). */
   @Transactional
-  public LoadResponse deliver(UUID id) {
+  public LoadResponse deliver(UUID id, UUID actorEmployeeId) {
     Load load =
         loadRepository
             .findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Load not found: " + id));
+    authorizeAction(load, actorEmployeeId);
     load.deliver();
     return loadMapper.toResponse(loadRepository.save(load));
   }
@@ -193,5 +201,44 @@ public class LoadServiceImpl extends AbstractBaseService<Load, LoadResponse, Cre
             .orElseThrow(() -> new ResourceNotFoundException("Load not found: " + id));
     load.cancel();
     return loadMapper.toResponse(loadRepository.save(load));
+  }
+
+  private void authorizeAction(Load load, UUID actorEmployeeId) {
+    if (actorEmployeeId == null) {
+      throw new ApiException(ErrorCode.ACCESS_DENIED, "A tenant Employee is required");
+    }
+
+    var truck = load.getAssignedTruck();
+    if (truck == null || (truck.getMainDriver() == null && truck.getSecondaryDriver() == null)) {
+      throw new ApiException(ErrorCode.ACCESS_DENIED, "Load has no assigned driver");
+    }
+
+    Employee actor;
+    try {
+      actor = employeeService.getEntityById(actorEmployeeId);
+    } catch (ResourceNotFoundException exception) {
+      throw new ApiException(ErrorCode.ACCESS_DENIED, "Authenticated Employee is unavailable");
+    }
+
+    boolean assignedDriver =
+        (truck.getMainDriver() != null && actorEmployeeId.equals(truck.getMainDriver().getId()))
+            || (truck.getSecondaryDriver() != null
+                && actorEmployeeId.equals(truck.getSecondaryDriver().getId()));
+    boolean operatorBypass = hasConfirmStatusPermission(actor);
+    if (!assignedDriver && !operatorBypass) {
+      throw new ApiException(ErrorCode.ACCESS_DENIED, "Employee is not authorized for this Load");
+    }
+  }
+
+  private boolean hasConfirmStatusPermission(Employee employee) {
+    if (employee.getRole() == null || employee.getRole().getClaims() == null) {
+      return false;
+    }
+    return employee.getRole().getClaims().stream().anyMatch(this::isConfirmStatusPermission);
+  }
+
+  private boolean isConfirmStatusPermission(TenantRoleClaim claim) {
+    return "permission".equalsIgnoreCase(claim.getClaimType())
+        && CONFIRM_STATUS_PERMISSION.equals(claim.getClaimValue());
   }
 }

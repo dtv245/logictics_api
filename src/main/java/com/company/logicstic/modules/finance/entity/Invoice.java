@@ -2,6 +2,7 @@ package com.company.logicstic.modules.finance.entity;
 
 import com.company.logicstic.modules.customer.entity.Customer;
 import com.company.logicstic.modules.employee.entity.Employee;
+import com.company.logicstic.modules.finance.enums.InvoiceDispatchStatus;
 import com.company.logicstic.modules.load.entity.Load;
 import com.company.logicstic.shared.BaseAuditableEntity;
 import jakarta.persistence.CascadeType;
@@ -148,4 +149,20 @@ public class Invoice extends BaseAuditableEntity {
 
   @Column(name = "billing_period_end")
   private OffsetDateTime billingPeriodEnd;
+
+  /**
+   * Issues this invoice as part of Load dispatch when its stored status represents Draft.
+   *
+   * <p>Matching is case-insensitive for legacy rows, while successful writes use the canonical
+   * lowercase database value. Every non-Draft value is an intentional no-op.
+   *
+   * @return {@code true} when the status changed and the caller should persist the entity
+   */
+  public boolean transitionToIssuedOnLoadDispatch() {
+    if (!InvoiceDispatchStatus.DRAFT.matches(status)) {
+      return false;
+    }
+    status = InvoiceDispatchStatus.ISSUED.dbValue();
+    return true;
+  }
 }

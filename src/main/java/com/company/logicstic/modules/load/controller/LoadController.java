@@ -1,5 +1,6 @@
 package com.company.logicstic.modules.load.controller;
 
+import com.company.logicstic.modules.identity.service.CurrentUserService;
 import com.company.logicstic.modules.load.dto.request.CreateLoadRequest;
 import com.company.logicstic.modules.load.dto.response.LoadResponse;
 import com.company.logicstic.modules.load.service.LoadService;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,9 +34,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class LoadController {
 
   private final LoadService loadService;
+  private final CurrentUserService currentUserService;
 
-  public LoadController(LoadService loadService) {
+  public LoadController(LoadService loadService, CurrentUserService currentUserService) {
     this.loadService = loadService;
+    this.currentUserService = currentUserService;
   }
 
   @GetMapping
@@ -99,15 +103,17 @@ public class LoadController {
 
   @PostMapping("/{id}/pick-up")
   public ResponseEntity<ApiResponse<LoadResponse>> pickUp(
-      @PathVariable UUID id, HttpServletRequest request) {
-    LoadResponse data = loadService.pickUp(id);
+      @PathVariable UUID id, JwtAuthenticationToken authentication, HttpServletRequest request) {
+    UUID currentEmployeeId = currentUserService.requireCurrentEmployeeId(authentication);
+    LoadResponse data = loadService.pickUp(id, currentEmployeeId);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 
   @PostMapping("/{id}/deliver")
   public ResponseEntity<ApiResponse<LoadResponse>> deliver(
-      @PathVariable UUID id, HttpServletRequest request) {
-    LoadResponse data = loadService.deliver(id);
+      @PathVariable UUID id, JwtAuthenticationToken authentication, HttpServletRequest request) {
+    UUID currentEmployeeId = currentUserService.requireCurrentEmployeeId(authentication);
+    LoadResponse data = loadService.deliver(id, currentEmployeeId);
     return ResponseEntity.ok(ApiResponse.success(data, request));
   }
 

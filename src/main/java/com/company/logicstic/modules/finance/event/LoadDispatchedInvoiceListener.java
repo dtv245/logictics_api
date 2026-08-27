@@ -30,10 +30,10 @@ public class LoadDispatchedInvoiceListener {
   @EventListener
   public void issueDraftInvoice(LoadDispatchedEvent event) {
     invoiceRepository
-        .findByLoadIdAndStatus(event.loadId(), "Draft")
+        .findByLoadId(event.loadId())
+        .filter(invoice -> invoice.transitionToIssuedOnLoadDispatch())
         .ifPresent(
             invoice -> {
-              invoice.setStatus("Issued");
               invoiceRepository.save(invoice);
               log.info(
                   "Invoice issued on dispatch load={} invoice={}", event.loadId(), invoice.getId());

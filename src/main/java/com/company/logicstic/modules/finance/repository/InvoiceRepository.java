@@ -28,11 +28,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
       @Param("employeeId") UUID employeeId,
       Pageable pageable);
 
-  /**
-   * Finds an Invoice linked to a specific Load with a given status. Used by
-   * LoadService.autoFlipInvoice() to flip Invoice from Draft to Issued on dispatch.
-   */
-  @Query("SELECT i FROM Invoice i WHERE i.load.id = :loadId AND i.status = :status")
-  Optional<Invoice> findByLoadIdAndStatus(
-      @Param("loadId") UUID loadId, @Param("status") String status);
+  /** Finds the single Invoice linked to a Load for the dispatch-owned domain transition. */
+  @Query("SELECT i FROM Invoice i WHERE i.load.id = :loadId")
+  Optional<Invoice> findByLoadId(@Param("loadId") UUID loadId);
 }

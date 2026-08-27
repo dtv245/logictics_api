@@ -42,11 +42,11 @@ public interface LoadService extends CrudService<Load, LoadResponse, CreateLoadR
    */
   LoadResponse dispatch(UUID id);
 
-  /** Moves a load from {@code Dispatched} to {@code PickedUp} and stamps {@code pickedUpAt}. */
-  LoadResponse pickUp(UUID id);
+  /** Moves an authorized load from {@code Dispatched} to {@code PickedUp}. */
+  LoadResponse pickUp(UUID id, UUID actorEmployeeId);
 
-  /** Moves a load from {@code PickedUp} to {@code Delivered} and stamps {@code deliveredAt}. */
-  LoadResponse deliver(UUID id);
+  /** Moves an authorized load from {@code PickedUp} to {@code Delivered}. */
+  LoadResponse deliver(UUID id, UUID actorEmployeeId);
 
   /** Cancels a non-terminal load and stamps {@code cancelledAt}. */
   LoadResponse cancel(UUID id);

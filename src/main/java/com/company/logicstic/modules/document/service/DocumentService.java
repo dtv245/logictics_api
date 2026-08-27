@@ -44,7 +44,8 @@ public interface DocumentService {
    * Stores the uploaded file in blob storage and records its metadata against the referenced load,
    * truck or employee.
    */
-  DocumentResponse upload(MultipartFile file, DocumentUploadRequest request);
+  DocumentResponse upload(
+      UUID currentEmployeeId, MultipartFile file, DocumentUploadRequest request);
 
   /** Reads the stored bytes together with the file name and content type. */
   DocumentDownloadResponse download(UUID id);

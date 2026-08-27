@@ -20,4 +20,11 @@ public interface ConversationService
    * @param page 1-based page number
    */
   PagedResponse<ConversationResponse> listByParticipant(UUID employeeId, int page, int pageSize);
+
+  /** Returns a conversation only when the employee is an explicit participant. */
+  ConversationResponse getByIdForParticipant(UUID conversationId, UUID employeeId);
+
+  /** Creates a conversation and adds the authenticated employee to its participant set. */
+  ConversationResponse createForParticipant(
+      CreateConversationRequest request, UUID currentEmployeeId);
 }

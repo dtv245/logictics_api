@@ -12,11 +12,14 @@ import com.company.logicstic.modules.employee.service.EmployeeService;
 import com.company.logicstic.modules.fleet.service.TruckService;
 import com.company.logicstic.modules.load.service.LoadService;
 import com.company.logicstic.shared.dto.PagedResponse;
+import com.company.logicstic.shared.exception.ApiException;
 import com.company.logicstic.shared.exception.BadRequestException;
+import com.company.logicstic.shared.exception.ErrorCode;
 import com.company.logicstic.shared.exception.ResourceNotFoundException;
 import com.company.logicstic.shared.service.AbstractBaseService;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -75,13 +78,20 @@ public class DocumentServiceImpl extends AbstractBaseService<Document, DocumentR
   }
 
   @Transactional
-  public DocumentResponse upload(MultipartFile file, DocumentUploadRequest request) {
+  public DocumentResponse upload(
+      UUID currentEmployeeId, MultipartFile file, DocumentUploadRequest request) {
+    if (!Objects.equals(currentEmployeeId, request.uploadedById())) {
+      throw new ApiException(
+          ErrorCode.ACCESS_DENIED, "Document uploader does not match the authenticated employee");
+    }
     if (file.isEmpty()) {
       throw new BadRequestException("Document file must not be empty");
     }
     String originalName = safeOriginalName(file.getOriginalFilename());
     String storedName = UUID.randomUUID() + extension(originalName);
-    String blobPath = request.uploadedById() + "/" + storedName;
+    String blobPath = currentEmployeeId + "/" + storedName;
+    Document document =
+        buildDocument(currentEmployeeId, file, request, originalName, storedName, blobPath);
 
     try {
       documentStorage.store(BLOB_CONTAINER, blobPath, file.getBytes());
@@ -90,7 +100,6 @@ public class DocumentServiceImpl extends AbstractBaseService<Document, DocumentR
     }
 
     try {
-      Document document = buildDocument(file, request, originalName, storedName, blobPath);
       return documentMapper.toResponse(documentRepository.saveAndFlush(document));
     } catch (RuntimeException exception) {
       documentStorage.delete(BLOB_CONTAINER, blobPath);
@@ -116,6 +125,7 @@ public class DocumentServiceImpl extends AbstractBaseService<Document, DocumentR
   }
 
   private Document buildDocument(
+      UUID currentEmployeeId,
       MultipartFile file,
       DocumentUploadRequest request,
       String originalName,
@@ -138,7 +148,7 @@ public class DocumentServiceImpl extends AbstractBaseService<Document, DocumentR
     document.setCaptureLatitude(request.captureLatitude());
     document.setCaptureLongitude(request.captureLongitude());
     document.setNotes(request.notes());
-    document.setUploadedBy(employeeService.getEntityById(request.uploadedById()));
+    document.setUploadedBy(employeeService.getEntityById(currentEmployeeId));
     if (request.employeeId() != null) {
       document.setEmployee(employeeService.getEntityById(request.employeeId()));
     }
@@ -161,6 +171,9 @@ public class DocumentServiceImpl extends AbstractBaseService<Document, DocumentR
     if (originalName == null || originalName.isBlank()) {
       throw new BadRequestException("Document file name must not be blank");
     }
+    if (hasUnsafeFileNameCharacter(originalName)) {
+      throw new BadRequestException("Invalid document file name");
+    }
     Path fileName = Path.of(originalName).getFileName();
     if (fileName == null) {
       throw new BadRequestException("Invalid document file name");
@@ -170,6 +183,13 @@ public class DocumentServiceImpl extends AbstractBaseService<Document, DocumentR
       throw new BadRequestException("Invalid document file name");
     }
     return safeName;
+  }
+
+  private boolean hasUnsafeFileNameCharacter(String fileName) {
+    if (fileName.contains("/") || fileName.contains("\\") || fileName.contains("..")) {
+      return true;
+    }
+    return fileName.chars().anyMatch(character -> character <= 0x1F || character == 0x7F);
   }
 
   private String extension(String fileName) {

@@ -17,6 +17,13 @@ public interface MessageService extends CrudService<Message, MessageResponse, Se
    */
   PagedResponse<MessageResponse> listByConversation(UUID conversationId, int page, int pageSize);
 
+  /** Lists messages only when the employee is an explicit conversation participant. */
+  PagedResponse<MessageResponse> listByConversationForParticipant(
+      UUID conversationId, UUID employeeId, int page, int pageSize);
+
+  /** Sends as the authenticated employee after validating the legacy sender assertion. */
+  MessageResponse sendAsParticipant(UUID employeeId, SendMessageRequest request);
+
   /** Counts messages the employee has not read yet, across all their conversations. */
   long countUnread(UUID employeeId);
 

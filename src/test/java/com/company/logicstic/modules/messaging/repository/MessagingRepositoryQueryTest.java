@@ -46,6 +46,9 @@ class MessagingRepositoryQueryTest {
         String conversations =
             queryValue(
                 ConversationRepository.class, "findByParticipant", UUID.class, Pageable.class);
+        String conversationForParticipant =
+            queryValue(
+                ConversationRepository.class, "findByIdAndParticipant", UUID.class, UUID.class);
         String unread = queryValue(MessageRepository.class, "countUnread", UUID.class);
         String unreadMessages =
             queryValue(MessageRepository.class, "findUnread", UUID.class, UUID.class);
@@ -59,6 +62,8 @@ class MessagingRepositoryQueryTest {
         String driverById = queryValue(EmployeeRepository.class, "findDriverById", UUID.class);
 
         assertThatCode(() -> translator.translate(conversations, Conversation.class))
+            .doesNotThrowAnyException();
+        assertThatCode(() -> translator.translate(conversationForParticipant, Conversation.class))
             .doesNotThrowAnyException();
         assertThatCode(() -> translator.translate(unread, Long.class)).doesNotThrowAnyException();
         assertThatCode(() -> translator.translate(unreadMessages, Message.class))

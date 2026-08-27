@@ -4,9 +4,12 @@ import com.company.logicstic.modules.document.dto.request.DocumentUploadRequest;
 import com.company.logicstic.modules.document.dto.response.DocumentDownloadResponse;
 import com.company.logicstic.modules.document.dto.response.DocumentResponse;
 import com.company.logicstic.modules.document.service.DocumentService;
+import com.company.logicstic.modules.identity.service.CurrentUserService;
 import com.company.logicstic.shared.common.Constants;
 import com.company.logicstic.shared.dto.ApiResponse;
 import com.company.logicstic.shared.dto.PagedResponse;
+import com.company.logicstic.shared.exception.ApiException;
+import com.company.logicstic.shared.exception.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -17,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,9 +39,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentController {
 
   private final DocumentService documentService;
+  private final CurrentUserService currentUserService;
 
-  public DocumentController(DocumentService documentService) {
+  public DocumentController(
+      DocumentService documentService, CurrentUserService currentUserService) {
     this.documentService = documentService;
+    this.currentUserService = currentUserService;
   }
 
   @GetMapping
@@ -72,8 +79,10 @@ public class DocumentController {
   public ResponseEntity<ApiResponse<DocumentResponse>> upload(
       @RequestPart("file") MultipartFile file,
       @Valid @RequestPart("metadata") DocumentUploadRequest metadata,
+      JwtAuthenticationToken authentication,
       HttpServletRequest request) {
-    DocumentResponse data = documentService.upload(file, metadata);
+    UUID currentEmployeeId = requireMatchingUploader(authentication, metadata.uploadedById());
+    DocumentResponse data = documentService.upload(currentEmployeeId, file, metadata);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data, request));
   }
 
@@ -93,5 +102,15 @@ public class DocumentController {
       @PathVariable UUID id, HttpServletRequest request) {
     documentService.delete(id);
     return ResponseEntity.ok(ApiResponse.success(null, request));
+  }
+
+  private UUID requireMatchingUploader(
+      JwtAuthenticationToken authentication, UUID assertedUploaderId) {
+    UUID currentEmployeeId = currentUserService.requireCurrentEmployeeId(authentication);
+    if (!currentEmployeeId.equals(assertedUploaderId)) {
+      throw new ApiException(
+          ErrorCode.ACCESS_DENIED, "Document uploader does not match the authenticated employee");
+    }
+    return currentEmployeeId;
   }
 }
