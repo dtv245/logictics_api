@@ -1,0 +1,33 @@
+package com.company.logicstic.messaging.message;
+
+import com.company.logicstic.shared.persistence.CrudService;
+import com.company.logicstic.shared.web.PagedResponse;
+import java.util.UUID;
+
+/** Public API of the message feature — messages inside a conversation and their read receipts. */
+public interface MessageService extends CrudService<Message, MessageResponse, SendMessageRequest> {
+
+  /**
+   * Lists the messages of a conversation, newest first.
+   *
+   * @param page 1-based page number
+   */
+  PagedResponse<MessageResponse> listByConversation(UUID conversationId, int page, int pageSize);
+
+  /** Lists messages only when the employee is an explicit conversation participant. */
+  PagedResponse<MessageResponse> listByConversationForParticipant(
+      UUID conversationId, UUID employeeId, int page, int pageSize);
+
+  /** Sends as the authenticated employee after validating the legacy sender assertion. */
+  MessageResponse sendAsParticipant(UUID employeeId, SendMessageRequest request);
+
+  /** Counts messages the employee has not read yet, across all their conversations. */
+  long countUnread(UUID employeeId);
+
+  /**
+   * Marks every unread message of a conversation as read by the employee.
+   *
+   * @return the number of messages newly marked as read
+   */
+  int markRead(UUID conversationId, UUID employeeId);
+}

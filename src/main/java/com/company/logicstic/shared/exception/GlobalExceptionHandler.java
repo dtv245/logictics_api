@@ -1,7 +1,7 @@
 package com.company.logicstic.shared.exception;
 
-import com.company.logicstic.shared.dto.ApiError;
-import com.company.logicstic.shared.dto.ApiResponse;
+import com.company.logicstic.shared.web.ApiError;
+import com.company.logicstic.shared.web.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;

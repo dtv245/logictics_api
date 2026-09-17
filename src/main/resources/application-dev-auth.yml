@@ -1,0 +1,8 @@
+# Explicit local-only authentication profile. Never activate this profile in a deployed environment.
+app:
+  dev-auth:
+    username: ${DEV_AUTH_USERNAME}
+    password: ${DEV_AUTH_PASSWORD}
+    access-token: ${DEV_AUTH_ACCESS_TOKEN}
+    tenant-id: ${DEV_AUTH_TENANT_ID:local-development}
+    token-ttl: ${DEV_AUTH_TOKEN_TTL:8h}

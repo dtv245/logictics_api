@@ -9,21 +9,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.company.logicstic.modules.customer.dto.request.CreateCustomerRequest;
-import com.company.logicstic.modules.employee.dto.request.CreateEmployeeRequest;
-import com.company.logicstic.modules.finance.dto.request.CreateInvoiceRequest;
-import com.company.logicstic.modules.finance.dto.request.CreatePaymentRequest;
-import com.company.logicstic.modules.fleet.dto.request.CreateTruckRequest;
-import com.company.logicstic.modules.inspection.dto.request.CreateInspectionRequest;
-import com.company.logicstic.modules.inspection.dto.request.DefectRequest;
-import com.company.logicstic.modules.load.dto.request.CreateLoadRequest;
-import com.company.logicstic.modules.messaging.dto.request.CreateConversationRequest;
-import com.company.logicstic.modules.messaging.dto.request.SendMessageRequest;
-import com.company.logicstic.modules.role.dto.request.CreateRoleRequest;
-import com.company.logicstic.modules.terminal.dto.request.CreateTerminalRequest;
-import com.company.logicstic.modules.terminal.enums.TerminalType;
-import com.company.logicstic.modules.trip.dto.request.CreateTripRequest;
-import com.company.logicstic.modules.trip.dto.request.TripStopRequest;
+import com.company.logicstic.customer.CreateCustomerRequest;
+import com.company.logicstic.employee.employee.CreateEmployeeRequest;
+import com.company.logicstic.finance.invoice.CreateInvoiceRequest;
+import com.company.logicstic.finance.payment.CreatePaymentRequest;
+import com.company.logicstic.fleet.truck.CreateTruckRequest;
+import com.company.logicstic.inspection.CreateInspectionRequest;
+import com.company.logicstic.inspection.DefectRequest;
+import com.company.logicstic.load.core.CreateLoadRequest;
+import com.company.logicstic.messaging.conversation.CreateConversationRequest;
+import com.company.logicstic.messaging.message.SendMessageRequest;
+import com.company.logicstic.role.CreateRoleRequest;
+import com.company.logicstic.terminal.CreateTerminalRequest;
+import com.company.logicstic.terminal.TerminalType;
+import com.company.logicstic.trip.CreateTripRequest;
+import com.company.logicstic.trip.TripStopRequest;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -507,7 +507,7 @@ class ApiFunctionalIT {
             "metadata",
             "",
             MediaType.APPLICATION_JSON_VALUE,
-            json(new com.company.logicstic.modules.document.dto.request.DocumentUploadRequest(
+            json(new com.company.logicstic.document.DocumentUploadRequest(
                     "load",
                     "pod",
                     "Proof of delivery",
@@ -527,7 +527,7 @@ class ApiFunctionalIT {
             "metadata",
             "",
             MediaType.APPLICATION_JSON_VALUE,
-            json(new com.company.logicstic.modules.document.dto.request.DocumentUploadRequest(
+            json(new com.company.logicstic.document.DocumentUploadRequest(
                     "load",
                     "pod",
                     "Proof of delivery",

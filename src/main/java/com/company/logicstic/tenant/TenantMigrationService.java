@@ -1,6 +1,5 @@
 package com.company.logicstic.tenant;
 
-import com.company.logicstic.shared.config.TenancyProperties;
 import com.company.logicstic.tenant.dto.TenantMigrationReport;
 import com.company.logicstic.tenant.dto.TenantRegistryRecord;
 import java.util.ArrayList;
