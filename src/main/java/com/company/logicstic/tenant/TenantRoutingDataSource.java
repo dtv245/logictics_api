@@ -47,7 +47,7 @@ public class TenantRoutingDataSource extends AbstractRoutingDataSource implement
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
     tenantDataSources
         .values()
         .forEach(
