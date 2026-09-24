@@ -29,7 +29,11 @@ class EntityMappingTest {
   @Test
   void shouldDiscoverAndBuildMetadataForAllEntities() {
     Set<Class<?>> entities = scanEntities();
-    assertEquals(50, entities.size(), "modules phải chứa đúng 50 entity nghiệp vụ");
+    assertEquals(
+        51,
+        entities.size(),
+        "modules phải chứa đúng 51 entity nghiệp vụ "
+            + "(50 gốc + VehicleMileageReading thêm ở V4__add_reporting_inputs)");
 
     entities.forEach(this::verifyEntityFields);
 

@@ -39,7 +39,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
 
-@WebMvcTest(DocumentController.class)
+@WebMvcTest(DocumentUploadController.class)
 @ImportAutoConfiguration({
   SecurityAutoConfiguration.class,
   ServletWebSecurityAutoConfiguration.class
@@ -55,7 +55,8 @@ import tools.jackson.databind.ObjectMapper;
     properties = {
       "app.security.jwt.issuer=https://issuer.example",
       "app.security.jwt.audience=logisticsx.api",
-      "app.security.jwt.jwk-set-uri=https://issuer.example/jwks"
+      "app.security.jwt.jwk-set-uri=https://issuer.example/jwks",
+      "app.documents.upload.enabled=true"
     })
 class DocumentControllerTest {
 

@@ -45,6 +45,17 @@ class LogisticsJwtAuthenticationConverterTest {
         .contains("ROLE_SUPERADMIN", "ROLE_DISPATCHER");
   }
 
+  @Test
+  void ignoresUnsupportedRoleClaims() {
+    JwtAuthenticationToken authentication =
+        (JwtAuthenticationToken)
+            converter.convert(jwt("user@example.com", "database-admin", List.of()));
+
+    assertThat(authentication.getAuthorities())
+        .extracting("authority")
+        .doesNotContain("ROLE_DATABASE_ADMIN");
+  }
+
   private Jwt jwt(String email, String role, List<String> scopes) {
     Instant now = Instant.now();
     return Jwt.withTokenValue("token")

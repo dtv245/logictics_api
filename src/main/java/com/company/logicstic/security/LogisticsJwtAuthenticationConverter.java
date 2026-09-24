@@ -17,6 +17,8 @@ public class LogisticsJwtAuthenticationConverter
     implements Converter<Jwt, AbstractOAuth2TokenAuthenticationToken<Jwt>> {
 
   private static final String ROLE_PREFIX = "ROLE_";
+  private static final Set<String> SUPPORTED_ROLES =
+      Set.of("SUPERADMIN", "OWNER", "MANAGER", "DISPATCHER", "DRIVER");
 
   private final JwtGrantedAuthoritiesConverter scopeAuthoritiesConverter =
       new JwtGrantedAuthoritiesConverter();
@@ -61,6 +63,8 @@ public class LogisticsJwtAuthenticationConverter
     if ("SUPER_ADMIN".equals(normalized)) {
       normalized = "SUPERADMIN";
     }
-    authorities.add(new SimpleGrantedAuthority(ROLE_PREFIX + normalized));
+    if (SUPPORTED_ROLES.contains(normalized)) {
+      authorities.add(new SimpleGrantedAuthority(ROLE_PREFIX + normalized));
+    }
   }
 }

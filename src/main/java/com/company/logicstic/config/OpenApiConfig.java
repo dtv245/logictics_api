@@ -23,10 +23,8 @@ import org.springframework.context.annotation.Configuration;
  * ({@code docs/docs/api/overview.md} §API Client Generation), so it is a build output, not only a
  * browsing aid.
  *
- * <p>Two things every operation inherits from here: the {@code bearerAuth} scheme, because all of
- * {@code /api/**} is an OAuth2 resource server, and the {@code X-Tenant} header, because a request
- * that resolves to no tenant is rejected rather than served from a default database ({@code
- * docs/docs/architecture/multi-tenancy.md}).
+ * <p>Every operation inherits the {@code bearerAuth} scheme because {@code /api/**} is an OAuth2
+ * resource server. Tenant scope is derived exclusively from the validated JWT {@code tenant} claim.
  */
 @Configuration
 public class OpenApiConfig {
@@ -69,9 +67,8 @@ public class OpenApiConfig {
                     (`success`, `code`, `message`, `data`, `errors`, `meta`); list endpoints wrap a \
                     `PagedResponse`. Pagination is 1-based (`page`, `pageSize`).
 
-                    Tenant scope is resolved per request from the MCP API key, the `X-Tenant` \
-                    header, or the JWT `tenant` claim, in that order. A request that resolves to no \
-                    tenant is rejected.
+                    Tenant scope is derived from the validated JWT `tenant` claim. Requests without \
+                    that claim are rejected. This API does not accept `X-Tenant` or MCP API keys.
 
                     Application: %s
                     """

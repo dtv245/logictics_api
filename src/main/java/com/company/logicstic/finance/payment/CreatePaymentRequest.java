@@ -1,5 +1,7 @@
 package com.company.logicstic.finance.payment;
 
+import com.company.logicstic.shared.validation.CurrencyCodes;
+import com.company.logicstic.shared.validation.IsoCurrency;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -10,7 +12,7 @@ public record CreatePaymentRequest(
     @NotBlank String status,
     UUID invoiceId,
     @NotNull BigDecimal amountAmount,
-    @NotBlank String amountCurrency,
+    @NotBlank @IsoCurrency String amountCurrency,
     String description,
     String referenceNumber,
     String stripePaymentMethodId,
@@ -22,4 +24,8 @@ public record CreatePaymentRequest(
     @NotBlank String billingAddressCity,
     @NotBlank String billingAddressState,
     @NotBlank String billingAddressZipCode,
-    @NotBlank String billingAddressCountry) {}
+    @NotBlank String billingAddressCountry) {
+  public CreatePaymentRequest {
+    amountCurrency = CurrencyCodes.normalize(amountCurrency);
+  }
+}

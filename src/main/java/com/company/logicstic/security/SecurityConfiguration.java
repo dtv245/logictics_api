@@ -18,6 +18,9 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
@@ -38,8 +41,10 @@ public class SecurityConfiguration {
       RestAuthenticationEntryPoint authenticationEntryPoint,
       RestAccessDeniedHandler accessDeniedHandler)
       throws Exception {
-    http.csrf(csrf -> csrf.disable())
+    http.cors(cors -> {})
+        .csrf(csrf -> csrf.disable())
         .formLogin(form -> form.disable())
+        .logout(logout -> logout.disable())
         .httpBasic(basic -> basic.disable())
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -67,6 +72,8 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/roles/**", "/api/employees/**")
                     .hasAnyRole(OWNER_ROLES)
                     .requestMatchers("/api/customers/**")
+                    .hasAnyRole(MANAGEMENT_ROLES)
+                    .requestMatchers("/api/reports/**")
                     .hasAnyRole(MANAGEMENT_ROLES)
                     .requestMatchers(HttpMethod.GET, "/api/invoices/**", "/api/payments/**")
                     .hasAnyRole(OPERATIONS_ROLES)
@@ -105,6 +112,25 @@ public class SecurityConfiguration {
                     .authenticationEntryPoint(authenticationEntryPoint)
                     .accessDeniedHandler(accessDeniedHandler));
     return http.build();
+  }
+
+  /**
+   * Bearer-token clients do not need cookies, so CORS credentials intentionally remain disabled.
+   * Origins are explicit rather than wildcarded to avoid granting browser access to arbitrary
+   * sites.
+   */
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Request-Id"));
+    configuration.setExposedHeaders(List.of("Content-Disposition"));
+    configuration.setAllowCredentials(false);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 
   @Bean

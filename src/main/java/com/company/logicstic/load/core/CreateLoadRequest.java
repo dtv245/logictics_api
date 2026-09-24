@@ -1,5 +1,7 @@
 package com.company.logicstic.load.core;
 
+import com.company.logicstic.shared.validation.CurrencyCodes;
+import com.company.logicstic.shared.validation.IsoCurrency;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -29,7 +31,7 @@ public record CreateLoadRequest(
     String externalSourceId,
     String externalBrokerReference,
     @NotNull BigDecimal deliveryCostAmount,
-    @NotBlank String deliveryCostCurrency,
+    @NotBlank @IsoCurrency String deliveryCostCurrency,
     // Origin address
     @NotBlank String originAddressLine1,
     String originAddressLine2,
@@ -47,4 +49,8 @@ public record CreateLoadRequest(
     @NotBlank String destinationAddressZipCode,
     @NotBlank String destinationAddressCountry,
     @NotNull Double destinationLocationLatitude,
-    @NotNull Double destinationLocationLongitude) {}
+    @NotNull Double destinationLocationLongitude) {
+  public CreateLoadRequest {
+    deliveryCostCurrency = CurrencyCodes.normalize(deliveryCostCurrency);
+  }
+}

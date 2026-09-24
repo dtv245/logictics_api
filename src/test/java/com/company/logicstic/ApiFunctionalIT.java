@@ -123,6 +123,7 @@ class ApiFunctionalIT {
     registry.add("spring.data.redis.host", REDIS::getHost);
     registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
     registry.add("app.cache.enabled", () -> "true");
+    registry.add("app.documents.upload.enabled", () -> "true");
     // The resource server never contacts these: jwt() injects an already-authenticated token.
     // They exist because application.yml deliberately gives them no defaults.
     registry.add("app.security.jwt.issuer", () -> "https://issuer.test");

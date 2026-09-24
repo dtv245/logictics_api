@@ -87,6 +87,47 @@ public class MaintenanceRecord extends BaseAuditableEntity {
   @Column(name = "total_cost", nullable = false, precision = 18, scale = 2)
   private BigDecimal totalCost;
 
+  /**
+   * Currency of {@link #totalCost}, or {@code null} when it was never recorded.
+   *
+   * <p>Every other monetary column in this schema carries its currency beside it; this one never
+   * did, which is why maintenance spend could not be added to anything. A null here means unknown,
+   * so an aggregate excludes the row and counts the exclusion rather than assuming the requested
+   * currency.
+   */
+  @Column(name = "total_cost_currency", length = 3)
+  private String totalCostCurrency;
+
+  /** When the vehicle went out of service, or {@code null} if that was never recorded. */
+  @Column(name = "downtime_start_at")
+  private OffsetDateTime downtimeStartAt;
+
+  /**
+   * When the vehicle returned to service, or {@code null} if it has not, or the end was never
+   * recorded.
+   */
+  @Column(name = "downtime_end_at")
+  private OffsetDateTime downtimeEndAt;
+
+  /**
+   * Whether this work was unplanned, or {@code null} when unclassified.
+   *
+   * <p>Boxed rather than primitive. A primitive {@code boolean} defaults to {@code false}, which
+   * would silently classify every row written before this column existed as planned maintenance and
+   * quietly deflate the unplanned-downtime figure. {@code null} makes "not known" a state the
+   * aggregate has to handle explicitly, and it handles it by dropping the row and reporting the
+   * count.
+   */
+  @Column(name = "is_unplanned")
+  private Boolean isUnplanned;
+
+  /**
+   * Whether this record was a breakdown, or {@code null} when unclassified. Boxed for the same
+   * reason as {@link #isUnplanned}: a default of {@code false} is an assertion, not a value.
+   */
+  @Column(name = "is_breakdown")
+  private Boolean isBreakdown;
+
   @Column(name = "description", length = 1000)
   private String description;
 

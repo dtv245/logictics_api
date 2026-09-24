@@ -1,5 +1,7 @@
 package com.company.logicstic.finance.invoice;
 
+import com.company.logicstic.shared.validation.CurrencyCodes;
+import com.company.logicstic.shared.validation.IsoCurrency;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -16,11 +18,17 @@ public record CreateInvoiceRequest(
     UUID customerId,
     UUID employeeId,
     @NotNull BigDecimal subtotalAmount,
-    @NotBlank String subtotalCurrency,
+    @NotBlank @IsoCurrency String subtotalCurrency,
     @NotNull BigDecimal taxTotalAmount,
-    @NotBlank String taxTotalCurrency,
+    @NotBlank @IsoCurrency String taxTotalCurrency,
     @NotNull BigDecimal totalAmount,
-    @NotBlank String totalCurrency,
+    @NotBlank @IsoCurrency String totalCurrency,
     OffsetDateTime periodStart,
     OffsetDateTime periodEnd,
-    Double totalDistanceDriven) {}
+    Double totalDistanceDriven) {
+  public CreateInvoiceRequest {
+    subtotalCurrency = CurrencyCodes.normalize(subtotalCurrency);
+    taxTotalCurrency = CurrencyCodes.normalize(taxTotalCurrency);
+    totalCurrency = CurrencyCodes.normalize(totalCurrency);
+  }
+}

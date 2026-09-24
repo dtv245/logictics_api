@@ -57,6 +57,11 @@ app:
       audience: ${AUTH_AUDIENCE}
       jwk-set-uri: ${AUTH_JWK_SET_URI}
 
+  documents:
+    # Upload stays fail-closed until size, MIME/sniffing, malware and storage policies are approved.
+    upload:
+      enabled: ${DOCUMENT_UPLOAD_ENABLED:false}
+
   cache:
     # Same switch style as tenancy below: every cache bean is
     # @ConditionalOnProperty(app.cache.enabled=true). Off by default so caching is opted into per

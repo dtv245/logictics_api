@@ -1,0 +1,71 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'task**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+      - 'task**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, Quality Checks & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+      - name: Check code formatting (Spotless) and style (Checkstyle)
+        run: ./mvnw spotless:check checkstyle:check
+
+      - name: Run SpotBugs static analysis
+        run: ./mvnw compile spotbugs:check
+
+      - name: Run unit & architecture tests
+        run: ./mvnw test
+
+      - name: Run integration tests with Testcontainers
+        run: ./mvnw verify
+
+      - name: Package application artifact
+        run: ./mvnw package -DskipTests
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: logistics-api-jar
+          path: target/*.jar
+          retention-days: 7
+
+      - name: Upload test reports on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+            target/spotbugsXml.xml
+            target/checkstyle-result.xml
+          retention-days: 7

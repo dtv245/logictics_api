@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @Profile("!nodb")
@@ -60,6 +61,7 @@ public class EmployeeController {
   }
 
   @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
   public ResponseEntity<ApiResponse<EmployeeResponse>> create(
       @Valid @RequestBody CreateEmployeeRequest body, HttpServletRequest request) {
     EmployeeResponse data = employeeService.create(body);

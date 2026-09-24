@@ -112,4 +112,20 @@ public class Truck {
 
   @Column(name = "current_location_longitude")
   private Double currentLocationLongitude;
+
+  /**
+   * The last odometer reading known for this truck, or {@code null} when none was ever recorded.
+   *
+   * <p>Boxed rather than primitive on purpose. A primitive {@code int} would read {@code 0} for
+   * "never recorded" and make an unused truck look like one that has driven nothing — the same
+   * wrong-number failure the reporting layer's {@code MetricValue} exists to prevent. The reading
+   * is only meaningful together with {@link #currentOdometerRecordedAt}: a distance is a difference
+   * between two readings, and a value with no date cannot be differenced against anything.
+   */
+  @Column(name = "current_odometer")
+  private Integer currentOdometer;
+
+  /** When {@link #currentOdometer} was taken, or {@code null} if the reading has no known date. */
+  @Column(name = "current_odometer_recorded_at")
+  private OffsetDateTime currentOdometerRecordedAt;
 }

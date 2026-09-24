@@ -10,9 +10,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
@@ -63,6 +67,28 @@ public class GlobalExceptionHandler {
       HttpMessageNotReadableException exception, HttpServletRequest request) {
     log.warn("Unreadable request body for {} {}", request.getMethod(), request.getRequestURI());
     return badRequest(ErrorCode.MALFORMED_REQUEST, List.of(), request);
+  }
+
+  @ExceptionHandler({
+    MethodArgumentTypeMismatchException.class,
+    MissingServletRequestParameterException.class
+  })
+  public ResponseEntity<ApiResponse<Void>> handleInvalidRequestParameter(
+      Exception exception, HttpServletRequest request) {
+    log.warn("Invalid request parameter for {} {}", request.getMethod(), request.getRequestURI());
+    return badRequest(ErrorCode.BAD_REQUEST, List.of(), request);
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
+      HttpRequestMethodNotSupportedException exception, HttpServletRequest request) {
+    return failure(ErrorCode.METHOD_NOT_ALLOWED, request);
+  }
+
+  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<ApiResponse<Void>> handleMediaTypeNotSupported(
+      HttpMediaTypeNotSupportedException exception, HttpServletRequest request) {
+    return failure(ErrorCode.UNSUPPORTED_MEDIA_TYPE, request);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)

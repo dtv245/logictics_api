@@ -30,6 +30,13 @@ public enum ErrorCode {
   /** A state machine refused the transition — see {@link InvalidStateTransitionException}. */
   INVALID_STATE_TRANSITION(HttpStatus.BAD_REQUEST, "Invalid state transition"),
 
+  // ── 405 / 415 — the HTTP contract is wrong ──────────────────────────────────
+  /** No handler supports the requested HTTP method for this route. */
+  METHOD_NOT_ALLOWED(
+      HttpStatus.METHOD_NOT_ALLOWED, "HTTP method is not supported for this resource"),
+  /** The request content type is not accepted by the selected endpoint. */
+  UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Content type is not supported"),
+
   // ── 401 / 403 — the caller is wrong ──────────────────────────────────────────
   /** No token, an expired token, or a signature/issuer/audience mismatch. */
   UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "Authentication is required"),
