@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Đăng nhập vào Logicstic — nền tảng vận hành logistics hiện đại."
+    />
+    <title>Đăng nhập | Logicstic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/login.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#login-form">Bỏ qua phần giới thiệu</a>
+
+    <main class="auth-shell">
+      <section class="intro-panel" aria-labelledby="intro-title">
+        <div class="brand-mark" aria-label="Logicstic">
+          <span class="brand-mark__icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32" role="img">
+              <path d="M4 9.5 16 3l12 6.5v13L16 29 4 22.5v-13Z" />
+              <path d="m4.6 9.7 11.4 6.1 11.4-6.1M16 15.8V28" />
+            </svg>
+          </span>
+          <span>logicstic</span>
+        </div>
+
+        <div class="intro-copy">
+          <p class="eyebrow">Vận hành nhẹ nhàng hơn</p>
+          <h1 id="intro-title">Mọi chuyến hàng,<br /><em>một nơi.</em></h1>
+          <p class="intro-copy__body">
+            Kết nối đội ngũ, phương tiện và khách hàng trong một không gian vận
+            hành rõ ràng, nhanh chóng.
+          </p>
+        </div>
+
+        <div class="intro-footer">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Hệ thống đang hoạt động ổn định</span>
+        </div>
+        <div class="decorative-grid" aria-hidden="true"></div>
+      </section>
+
+      <section class="form-panel" aria-labelledby="form-title">
+        <div class="form-wrap">
+          <div class="avatar-stage" data-state="idle" aria-hidden="true">
+            <div class="avatar-glow"></div>
+            <svg class="avatar" viewBox="0 0 220 220" role="img">
+              <defs>
+                <linearGradient id="avatar-sky" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0" stop-color="#d5f4ff" />
+                  <stop offset="1" stop-color="#8dd9ee" />
+                </linearGradient>
+                <linearGradient id="avatar-fur" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0" stop-color="#fff" />
+                  <stop offset="1" stop-color="#eef8fb" />
+                </linearGradient>
+                <filter id="avatar-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#31536b" flood-opacity=".16" />
+                </filter>
+              </defs>
+
+              <circle cx="110" cy="110" r="100" fill="url(#avatar-sky)" />
+              <g filter="url(#avatar-shadow)">
+                <path class="avatar-body" d="M29 205v-33c0-18 14-33 32-33h98c18 0 32 15 32 33v33Z" />
+                <path class="avatar-belly" d="M61 205c6-23 24-37 49-37s43 14 49 37Z" />
+                <circle class="avatar-ear" cx="57" cy="77" r="20" />
+                <circle class="avatar-ear" cx="163" cy="77" r="20" />
+                <circle class="avatar-ear-inner" cx="57" cy="77" r="10" />
+                <circle class="avatar-ear-inner" cx="163" cy="77" r="10" />
+                <path class="avatar-face" d="M64 78c0-37 20-56 46-56s46 19 46 56v27c0 28-20 52-46 52s-46-24-46-52Z" />
+                <path class="avatar-hair" d="M77 43c7-20 23-29 36-29 17 0 31 9 39 29-12-6-24-8-37-5-13-3-25-1-38 5Z" />
+                <path class="avatar-brow" d="M77 72c9-6 18-7 27-3M116 69c9-4 18-3 27 3" />
+                <g class="avatar-eye eye-left">
+                  <circle cx="91" cy="91" r="6" fill="#31536b" />
+                  <circle cx="89" cy="89" r="2" fill="#fff" />
+                </g>
+                <g class="avatar-eye eye-right">
+                  <circle cx="129" cy="91" r="6" fill="#31536b" />
+                  <circle cx="127" cy="89" r="2" fill="#fff" />
+                </g>
+                <path class="avatar-nose" d="M104 112c2-3 10-3 12 0-1 5-3 7-6 7s-5-2-6-7Z" />
+                <path class="avatar-smile" d="M98 126c8 6 16 6 24 0" />
+                <g class="avatar-paws">
+                  <path d="M53 182c-5-19 1-38 14-42 11-4 18 7 17 20l-2 31Z" />
+                  <path d="M167 182c5-19-1-38-14-42-11-4-18 7-17 20l2 31Z" />
+                  <path class="paw-line" d="M66 158v18m9-15v17m79-17v17m-9-15v18" />
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <div class="form-heading">
+            <p class="eyebrow">Chào mừng trở lại</p>
+            <h2 id="form-title">Đăng nhập tài khoản</h2>
+            <p>Nhập thông tin để tiếp tục đến bảng điều khiển của bạn.</p>
+          </div>
+
+          <form id="login-form" novalidate>
+            <div class="field">
+              <label for="email">Email công việc</label>
+              <div class="input-shell">
+                <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 6.5h16v11H4zM4.5 7 12 13l7.5-6" />
+                </svg>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autocomplete="username"
+                  placeholder="ban@congty.vn"
+                  required
+                />
+              </div>
+              <small class="field-error" data-error-for="email"></small>
+            </div>
+
+            <div class="field">
+              <div class="field-label-row">
+                <label for="password">Mật khẩu</label>
+                <a href="#" class="subtle-link" id="forgot-link">Quên mật khẩu?</a>
+              </div>
+              <div class="input-shell">
+                <svg class="input-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="5" y="10" width="14" height="10" rx="2" />
+                  <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" />
+                </svg>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Tối thiểu 8 ký tự"
+                  minlength="8"
+                  required
+                />
+                <button class="password-toggle" type="button" aria-label="Hiện mật khẩu" aria-pressed="false">
+                  <svg class="eye-icon eye-icon--show" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                    <circle cx="12" cy="12" r="2.5" />
+                  </svg>
+                  <svg class="eye-icon eye-icon--hide" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m3 3 18 18M10.6 6.2A10.7 10.7 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-3 3.7M6.3 6.7C3.9 8.5 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3.4-.6" />
+                  </svg>
+                </button>
+              </div>
+              <small class="field-error" data-error-for="password"></small>
+            </div>
+
+            <label class="remember-me">
+              <input type="checkbox" name="remember" />
+              <span class="checkmark" aria-hidden="true"></span>
+              <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+            </label>
+
+            <button class="submit-button" type="submit">
+              <span>Đăng nhập</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5" /></svg>
+            </button>
+            <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          </form>
+
+          <p class="form-note">Được bảo vệ bằng xác thực bảo mật của Logicstic</p>
+        </div>
+        <p class="copyright">© 2026 Logicstic · <a href="#">Trợ giúp</a></p>
+      </section>
+    </main>
+
+    <script src="/login.js" defer></script>
+  </body>
+</html>

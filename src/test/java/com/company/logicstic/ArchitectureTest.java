@@ -2,7 +2,6 @@ package com.company.logicstic;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.importer.ImportOption;
@@ -29,7 +28,9 @@ import com.tngtech.archunit.library.GeneralCodingRules;
     importOptions = {ImportOption.DoNotIncludeTests.class, ImportOption.DoNotIncludeJars.class})
 class ArchitectureTest {
 
-  private static final String MODULES = "com.company.logicstic.modules.";
+  private static final String BASE = "com.company.logicstic.";
+  private static final java.util.Set<String> NON_FEATURE_PACKAGES =
+      java.util.Set.of("shared", "tenant", "security", "cache", "config", "devtools");
 
   // ---------------------------------------------------------------------------------------------
   // §2 — allowed direction: controller -> service -> repository -> entity
@@ -84,28 +85,15 @@ class ArchitectureTest {
               "docs/docs/development/engineering-conventions.md §2: cross-feature access goes through the owning feature's public"
                   + " service interface, not its repository");
 
-  /**
-   * Cycles are checked across the <em>behavioural</em> packages only.
-   *
-   * <p>§2 makes an explicit carve-out: "Cross-feature JPA associations ({@code Load.customer},
-   * {@code Trip.truck}) are allowed — the schema is one relational database and the associations
-   * mirror it." A bidirectional association such as {@code Document.employee} / {@code
-   * Employee.documents} is therefore permitted, and it necessarily forms an entity-package cycle.
-   * Running {@code beFreeOfCycles()} over {@code modules.(*)..} reports those 650 allowed entity
-   * edges as failures, so the rule would have to be deleted to go green — which §15.6 calls worse
-   * than no rule.
-   *
-   * <p>Scoping to {@code service} keeps the rule enforcing what §2 actually forbids: a cycle in
-   * behaviour, where two features call into each other. Reaching into another feature's data layer
-   * is caught separately and more precisely by {@link
-   * #FEATURES_MUST_NOT_USE_ANOTHER_FEATURES_REPOSITORY}.
-   */
+  /** Cycles are checked across the <em>behavioural</em> service layers only. */
   @ArchTest
   static final ArchRule SERVICES_MUST_BE_FREE_OF_CYCLES =
-      slices()
-          .matching("com.company.logicstic.modules.(*).service..")
-          .should()
-          .beFreeOfCycles()
+      classes()
+          .that()
+          .haveSimpleNameEndingWith("Service")
+          .or()
+          .haveSimpleNameEndingWith("ServiceImpl")
+          .should(neverHaveCyclicServiceDependencies())
           .because(
               "docs/docs/development/engineering-conventions.md §2: two features must never call into each other");
 
@@ -142,14 +130,93 @@ class ArchitectureTest {
   // helpers
   // ---------------------------------------------------------------------------------------------
 
-  /** Returns the feature name for a class inside {@code modules.<feature>}, else {@code null}. */
+  /**
+   * Returns the feature name for a class inside {@code com.company.logicstic.<feature>}, else
+   * {@code null}.
+   */
   private static String featureOf(String packageName) {
-    if (!packageName.startsWith(MODULES)) {
+    if (!packageName.startsWith(BASE)) {
       return null;
     }
-    String rest = packageName.substring(MODULES.length());
+    String rest = packageName.substring(BASE.length());
     int dot = rest.indexOf('.');
-    return dot < 0 ? rest : rest.substring(0, dot);
+    String feature = dot < 0 ? rest : rest.substring(0, dot);
+    if (NON_FEATURE_PACKAGES.contains(feature) || feature.isEmpty()) {
+      return null;
+    }
+    return feature;
+  }
+
+  private static ArchCondition<JavaClass> neverHaveCyclicServiceDependencies() {
+    return new ArchCondition<>("never have cyclic service dependencies between features") {
+      private final java.util.Map<String, java.util.Set<String>> featureGraph =
+          new java.util.concurrent.ConcurrentHashMap<>();
+
+      @Override
+      public void check(JavaClass origin, ConditionEvents events) {
+        String ownFeature = featureOf(origin.getPackageName());
+        if (ownFeature == null) {
+          return;
+        }
+        origin.getDirectDependenciesFromSelf().stream()
+            .map(dependency -> dependency.getTargetClass())
+            .filter(
+                target ->
+                    target.getSimpleName().endsWith("Service")
+                        || target.getSimpleName().endsWith("ServiceImpl"))
+            .forEach(
+                target -> {
+                  String targetFeature = featureOf(target.getPackageName());
+                  if (targetFeature != null && !targetFeature.equals(ownFeature)) {
+                    featureGraph
+                        .computeIfAbsent(
+                            ownFeature,
+                            k -> java.util.Collections.synchronizedSet(new java.util.HashSet<>()))
+                        .add(targetFeature);
+                  }
+                });
+      }
+
+      @Override
+      public void finish(ConditionEvents events) {
+        java.util.Set<String> visited = new java.util.HashSet<>();
+        java.util.Set<String> recStack = new java.util.HashSet<>();
+        for (String node : featureGraph.keySet()) {
+          if (detectCycle(node, visited, recStack, new java.util.ArrayList<>(), events)) {
+            break;
+          }
+        }
+      }
+
+      private boolean detectCycle(
+          String current,
+          java.util.Set<String> visited,
+          java.util.Set<String> recStack,
+          java.util.List<String> path,
+          ConditionEvents events) {
+        if (recStack.contains(current)) {
+          path.add(current);
+          events.add(
+              SimpleConditionEvent.violated(
+                  current, "Cycle detected in service dependencies: " + String.join(" -> ", path)));
+          return true;
+        }
+        if (visited.contains(current)) {
+          return false;
+        }
+        visited.add(current);
+        recStack.add(current);
+        path.add(current);
+
+        for (String neighbor : featureGraph.getOrDefault(current, java.util.Set.of())) {
+          if (detectCycle(neighbor, visited, recStack, new java.util.ArrayList<>(path), events)) {
+            return true;
+          }
+        }
+        recStack.remove(current);
+        return false;
+      }
+    };
   }
 
   private static ArchCondition<JavaClass> neverDependOnAnotherFeaturesRepository() {
@@ -162,7 +229,7 @@ class ArchitectureTest {
         }
         origin.getDirectDependenciesFromSelf().stream()
             .map(dependency -> dependency.getTargetClass())
-            .filter(target -> target.getPackageName().endsWith(".repository"))
+            .filter(target -> target.getSimpleName().endsWith("Repository"))
             .forEach(
                 target -> {
                   String targetFeature = featureOf(target.getPackageName());

@@ -1,6 +1,5 @@
 package com.company.logicstic.tenant;
 
-import com.company.logicstic.shared.config.TenancyProperties;
 import com.company.logicstic.tenant.dto.TenantProvisionRequest;
 import com.company.logicstic.tenant.dto.TenantProvisionResult;
 import com.company.logicstic.tenant.dto.TenantRegistryRecord;

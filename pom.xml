@@ -28,6 +28,9 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<!-- Shared by Surefire, Failsafe and IDE-imported JUnit runs. Keeping the agent in one
+		     property prevents IntelliJ from adding it once per test plugin. -->
+		<argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar</argLine>
 		<!-- Testcontainers is NOT pinned here. Boot 4.1.0's BOM manages testcontainers 2.0.5; the
 		     previous local pin to 1.20.6 silently downgraded it, and 1.20.x negotiates Docker API
 		     1.32, which Docker Engine 29+ rejects ("client version 1.32 is too old"). The result was
@@ -212,9 +215,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar</argLine>
-				</configuration>
 			</plugin>
 
 			<!-- docs/docs/development/engineering-conventions.md §15.1 names integration tests *IT, but surefire only runs *Test, so
@@ -223,9 +223,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
-				<configuration>
-					<argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar</argLine>
-				</configuration>
 				<executions>
 					<execution>
 						<goals>

@@ -1,48 +1,52 @@
 package com.company.logicstic.devtools.seed;
 
-import com.company.logicstic.modules.customer.dto.request.CreateCustomerRequest;
-import com.company.logicstic.modules.customer.dto.response.CustomerResponse;
-import com.company.logicstic.modules.customer.repository.CustomerRepository;
-import com.company.logicstic.modules.customer.service.CustomerService;
-import com.company.logicstic.modules.document.entity.Document;
-import com.company.logicstic.modules.document.repository.DocumentRepository;
-import com.company.logicstic.modules.employee.dto.request.CreateEmployeeRequest;
-import com.company.logicstic.modules.employee.dto.response.EmployeeResponse;
-import com.company.logicstic.modules.employee.entity.Employee;
-import com.company.logicstic.modules.employee.repository.EmployeeRepository;
-import com.company.logicstic.modules.employee.service.EmployeeService;
-import com.company.logicstic.modules.finance.dto.request.CreateInvoiceRequest;
-import com.company.logicstic.modules.finance.dto.request.CreatePaymentRequest;
-import com.company.logicstic.modules.finance.dto.response.InvoiceResponse;
-import com.company.logicstic.modules.finance.service.InvoiceService;
-import com.company.logicstic.modules.finance.service.PaymentService;
-import com.company.logicstic.modules.fleet.dto.request.CreateTruckRequest;
-import com.company.logicstic.modules.fleet.dto.response.TruckResponse;
-import com.company.logicstic.modules.fleet.entity.Truck;
-import com.company.logicstic.modules.fleet.repository.TruckRepository;
-import com.company.logicstic.modules.fleet.service.TruckService;
-import com.company.logicstic.modules.inspection.dto.request.CreateInspectionRequest;
-import com.company.logicstic.modules.inspection.service.InspectionService;
-import com.company.logicstic.modules.load.dto.request.CreateLoadRequest;
-import com.company.logicstic.modules.load.dto.response.LoadResponse;
-import com.company.logicstic.modules.load.entity.Load;
-import com.company.logicstic.modules.load.entity.LoadStatus;
-import com.company.logicstic.modules.load.repository.LoadRepository;
-import com.company.logicstic.modules.load.service.LoadService;
-import com.company.logicstic.modules.messaging.dto.request.SendMessageRequest;
-import com.company.logicstic.modules.messaging.entity.Conversation;
-import com.company.logicstic.modules.messaging.entity.ConversationParticipant;
-import com.company.logicstic.modules.messaging.repository.ConversationRepository;
-import com.company.logicstic.modules.messaging.service.ConversationService;
-import com.company.logicstic.modules.messaging.service.MessageService;
-import com.company.logicstic.modules.role.dto.request.CreateRoleRequest;
-import com.company.logicstic.modules.role.dto.response.RoleResponse;
-import com.company.logicstic.modules.role.repository.TenantRoleRepository;
-import com.company.logicstic.modules.role.service.RoleService;
-import com.company.logicstic.modules.terminal.entity.Terminal;
-import com.company.logicstic.modules.trip.dto.request.CreateTripRequest;
-import com.company.logicstic.modules.trip.repository.TripRepository;
-import com.company.logicstic.modules.trip.service.TripService;
+import com.company.logicstic.customer.CreateCustomerRequest;
+import com.company.logicstic.customer.CustomerRepository;
+import com.company.logicstic.customer.CustomerResponse;
+import com.company.logicstic.customer.CustomerService;
+import com.company.logicstic.document.Document;
+import com.company.logicstic.document.DocumentRepository;
+import com.company.logicstic.employee.employee.CreateEmployeeRequest;
+import com.company.logicstic.employee.employee.Employee;
+import com.company.logicstic.employee.employee.EmployeeRepository;
+import com.company.logicstic.employee.employee.EmployeeResponse;
+import com.company.logicstic.employee.employee.EmployeeService;
+import com.company.logicstic.finance.invoice.CreateInvoiceRequest;
+import com.company.logicstic.finance.invoice.InvoiceResponse;
+import com.company.logicstic.finance.invoice.InvoiceService;
+import com.company.logicstic.finance.payment.CreatePaymentRequest;
+import com.company.logicstic.finance.payment.PaymentService;
+import com.company.logicstic.fleet.maintenance.MaintenanceRecord;
+import com.company.logicstic.fleet.maintenance.MaintenanceSchedule;
+import com.company.logicstic.fleet.truck.CreateTruckRequest;
+import com.company.logicstic.fleet.truck.Expense;
+import com.company.logicstic.fleet.truck.Truck;
+import com.company.logicstic.fleet.truck.TruckRepository;
+import com.company.logicstic.fleet.truck.TruckResponse;
+import com.company.logicstic.fleet.truck.TruckService;
+import com.company.logicstic.fleet.truck.VehicleMileageReading;
+import com.company.logicstic.inspection.CreateInspectionRequest;
+import com.company.logicstic.inspection.InspectionService;
+import com.company.logicstic.load.core.CreateLoadRequest;
+import com.company.logicstic.load.core.Load;
+import com.company.logicstic.load.core.LoadRepository;
+import com.company.logicstic.load.core.LoadResponse;
+import com.company.logicstic.load.core.LoadService;
+import com.company.logicstic.load.core.LoadStatus;
+import com.company.logicstic.messaging.conversation.Conversation;
+import com.company.logicstic.messaging.conversation.ConversationParticipant;
+import com.company.logicstic.messaging.conversation.ConversationRepository;
+import com.company.logicstic.messaging.conversation.ConversationService;
+import com.company.logicstic.messaging.message.MessageService;
+import com.company.logicstic.messaging.message.SendMessageRequest;
+import com.company.logicstic.role.CreateRoleRequest;
+import com.company.logicstic.role.RoleResponse;
+import com.company.logicstic.role.RoleService;
+import com.company.logicstic.role.TenantRoleRepository;
+import com.company.logicstic.terminal.Terminal;
+import com.company.logicstic.trip.CreateTripRequest;
+import com.company.logicstic.trip.TripRepository;
+import com.company.logicstic.trip.TripService;
 import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -108,6 +112,38 @@ public class DataSeeder implements CommandLineRunner {
   private static final long MIN_LOAD_COST = 5_000_000;
   private static final long MAX_LOAD_COST = 50_000_000;
 
+  // --- Fleet Cost & Health Fixture Constants ---
+  // Toàn bộ dữ liệu dưới đây là fixture tổng hợp phục vụ màn hình Executive Overview, KHÔNG phải
+  // giao dịch thật. Trước khi có chúng, `expenses` và `maintenance_records` rỗng ở mọi môi trường
+  // nên các chỉ số chi phí trả về unavailable — đúng, nhưng không kiểm chứng được phép tính nào.
+  // Ngày tháng trải khắp cửa sổ báo cáo mặc định (12 tháng) để endpoint tổng hợp thật sự có gì đó
+  // để cộng theo từng tháng.
+  private static final int COST_FIXTURE_WINDOW_DAYS = 330;
+  private static final int EXPENSES_PER_TRUCK_MIN = 2;
+  private static final int EXPENSES_PER_TRUCK_MAX = 5;
+
+  // Số lần đọc odometer cho mỗi xe. Phải >= 2: bộ tổng hợp tính quãng đường bằng hiệu giữa hai
+  // lần đọc, nên một lần đọc đơn lẻ bị loại khỏi phép tính chứ không được coi là "xe không chạy".
+  private static final int MILEAGE_READINGS_PER_TRUCK = 13;
+  private static final int MILEAGE_READING_INTERVAL_DAYS = 28;
+  private static final int BASE_ODOMETER = 120_000;
+  private static final int MAX_ODOMETER_OFFSET = 40_000;
+  private static final int MIN_DISTANCE_PER_INTERVAL = 4_000;
+  private static final int MAX_DISTANCE_PER_INTERVAL = 7_500;
+
+  private static final int MAINTENANCE_RECORDS_PER_TRUCK = 3;
+  private static final long MIN_LABOR_COST = 1_500_000;
+  private static final long MAX_LABOR_COST = 9_000_000;
+  private static final long MIN_PARTS_COST = 500_000;
+  private static final long MAX_PARTS_COST = 14_000_000;
+
+  // Một lịch bảo trì định kỳ cho mỗi xe theo lịch. Cố ý để cả lịch quá hạn lẫn lịch chưa tới hạn:
+  // nếu mọi lịch đều chưa tới hạn thì `pmCompliancePct` luôn bằng 100%, một con số trông đẹp nhưng
+  // không kiểm chứng được phép chia.
+  private static final int PM_INTERVAL_DAYS = 90;
+  private static final int PM_DUE_SOON_DAYS = 30;
+  private static final int PM_OVERDUE_DAYS = 15;
+
   // --- Document Constants ---
   private static final long MIN_DOC_SIZE_BYTES = 50_000;
   private static final long MAX_DOC_SIZE_BYTES = 5_000_000;
@@ -125,6 +161,19 @@ public class DataSeeder implements CommandLineRunner {
   private static final String DOCUMENT_OWNER_TYPE_LOAD = "load";
   private static final String DOCUMENT_STATUS_ACTIVE = "active";
   private static final String SEED_BLOB_CONTAINER = "seed-demo";
+  private static final String EXPENSE_STATUS_APPROVED = "Approved";
+  private static final String MAINTENANCE_TYPE_PREVENTIVE = "preventive";
+  private static final String MAINTENANCE_INTERVAL_CALENDAR = "calendar";
+
+  /**
+   * Dấu nhận biết dữ liệu fixture tổng hợp.
+   *
+   * <p>Ghi vào trường ghi chú / số hoá đơn của mọi bản ghi chi phí và bảo trì do seeder tạo. Khi
+   * một con số chi phí xuất hiện trên màn hình điều hành, người đọc phải phân biệt được nó đến từ
+   * fixture dev hay từ giao dịch thật — nếu không thì "dữ liệu tổng hợp" và "dữ liệu thật" trông
+   * giống hệt nhau trên màn hình.
+   */
+  private static final String SEED_FIXTURE_MARKER = "SEED-FIXTURE";
 
   // ===============================================================================================
   // Static Seed Data
@@ -153,6 +202,29 @@ public class DataSeeder implements CommandLineRunner {
   private static final List<String> DOCUMENT_CONTENT_TYPES =
       List.of("application/pdf", "image/jpeg", "image/png");
   private static final List<String> INVOICE_TYPES = List.of("standard", "credit_note");
+
+  /** Một loại chi phí fixture: chuỗi `type` ghi vào entity và khoảng tiền VND. */
+  private record ExpenseFixture(String type, long minAmount, long maxAmount) {}
+
+  /**
+   * Các loại chi phí fixture, chọn sao cho {@code CostCategory.classify(type, null, null)} xếp được
+   * từng dòng vào đúng nhóm hiển thị.
+   *
+   * <p>Chuỗi ở đây không phải nhãn hiển thị mà là khoá phân loại: {@code classify} so khớp từ khoá
+   * con trên chính chuỗi này. Đổi một chuỗi thành giá trị lạ sẽ đẩy cả nhóm vào {@code
+   * UNCLASSIFIED} — bản ghi vẫn được tính vào tổng nhưng biến mất khỏi nhóm mà người đọc đang xem,
+   * nên phải giữ đúng các từ khoá mà enum nhận.
+   */
+  private static final List<ExpenseFixture> EXPENSE_FIXTURES =
+      List.of(
+          new ExpenseFixture("fuel", 8_000_000, 24_000_000),
+          new ExpenseFixture("driver pay", 15_000_000, 32_000_000),
+          new ExpenseFixture("maintenance", 2_000_000, 18_000_000),
+          new ExpenseFixture("tire", 3_000_000, 15_000_000),
+          new ExpenseFixture("toll", 500_000, 4_500_000),
+          new ExpenseFixture("insurance", 5_000_000, 12_000_000),
+          new ExpenseFixture("permit", 1_000_000, 5_000_000));
+
   private static final List<String> BILLING_CITIES =
       List.of("Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ");
 
@@ -232,6 +304,10 @@ public class DataSeeder implements CommandLineRunner {
   private int countPayments;
   private int countConversations;
   private int countMessages;
+  private int countExpenses;
+  private int countMaintenanceRecords;
+  private int countMaintenanceSchedules;
+  private int countMileageReadings;
 
   public DataSeeder(
       RoleService roleService,
@@ -290,6 +366,7 @@ public class DataSeeder implements CommandLineRunner {
       seedDocuments();
       seedInspections();
       seedInvoicesAndPayments();
+      seedFleetCostsAndHealth();
       seedConversationsAndMessages();
 
       printSummary();
@@ -421,10 +498,11 @@ public class DataSeeder implements CommandLineRunner {
 
       Optional<Employee> uploaderOpt = randomAdmin().flatMap(employeeRepository::findById);
       if (uploaderOpt.isEmpty()) continue;
+      Employee uploader = uploaderOpt.orElseThrow();
 
       int docsForThisLoad = FAKER.number().numberBetween(1, 4);
       for (int i = 0; i < docsForThisLoad; i++) {
-        createAndPersistDocument(load, uploaderOpt.get());
+        createAndPersistDocument(load, uploader);
       }
     }
   }
@@ -436,8 +514,9 @@ public class DataSeeder implements CommandLineRunner {
     for (Load load : loads) {
       if (FAKER.random().nextInt(0, 9) >= 4) continue; // 60% chance to skip
 
-      Optional<UUID> inspectorId = randomDriver();
-      if (inspectorId.isEmpty()) continue;
+      Optional<UUID> inspectorIdOpt = randomDriver();
+      if (inspectorIdOpt.isEmpty()) continue;
+      UUID inspectorId = inspectorIdOpt.orElseThrow();
 
       String inspectionType =
           FAKER.bool().bool() ? INSPECTION_TYPE_PRE_TRIP : INSPECTION_TYPE_POST_TRIP;
@@ -457,10 +536,10 @@ public class DataSeeder implements CommandLineRunner {
               null,
               FAKER.lorem().sentence(),
               null,
-              Double.parseDouble(FAKER.address().latitude()),
-              Double.parseDouble(FAKER.address().longitude()),
+              parseLocalisedDecimal(FAKER.address().latitude()),
+              parseLocalisedDecimal(FAKER.address().longitude()),
               inspectedAt,
-              inspectorId.get(),
+              inspectorId,
               List.of());
 
       inspectionService.create(request);
@@ -504,6 +583,162 @@ public class DataSeeder implements CommandLineRunner {
       }
       countConversations++;
     }
+  }
+
+  // ===============================================================================================
+  // Fleet Cost & Health Fixtures (Executive Overview)
+  // ===============================================================================================
+
+  /**
+   * Tạo dữ liệu nguồn cho các chỉ số chi phí và sức khoẻ đội xe của màn hình Executive Overview.
+   *
+   * <p>Đây là <b>fixture tổng hợp</b>, không phải giao dịch thật: mọi bản ghi đều mang dấu {@link
+   * #SEED_FIXTURE_MARKER}. Trước khi có phương thức này, {@code expenses} và {@code
+   * maintenance_records} rỗng ở mọi môi trường, nên các endpoint báo cáo trả về {@code
+   * NO_SOURCE_ROWS} cho mọi chỉ số chi phí và {@code NO_PM_SCHEDULE} cho tỷ lệ tuân thủ bảo trì.
+   * Cách trả lời đó đúng, nhưng nó cũng có nghĩa là không phép tính nào ở tầng báo cáo từng được
+   * chạy trên dữ liệu thật.
+   *
+   * <p>Dữ liệu ở đây KHÔNG làm sống lại những chỉ số mà tầng service cố ý giữ ở trạng thái
+   * unavailable. {@code unplannedDowntimePct} và {@code breakdownsPer100kMiles} vẫn trả về
+   * unavailable vì chính {@code ReportServiceImpl} ghi cứng như vậy, bất kể seeder có điền cột
+   * {@code downtime_start_at} hay {@code is_unplanned} hay không. Điền vào một cột không ai đọc chỉ
+   * tạo ra thứ trông có ý nghĩa mà thực ra không có ý nghĩa nào.
+   */
+  private void seedFleetCostsAndHealth() {
+    log.info("── Seeding Fleet Costs, Maintenance & Odometer (SYNTHETIC FIXTURES) ──");
+    OffsetDateTime now = OffsetDateTime.now(VIETNAM_ZONE_OFFSET);
+
+    for (int tenantIndex = 0; tenantIndex < TENANTS.size(); tenantIndex++) {
+      for (int truckNum = 0; truckNum < TRUCKS_PER_TENANT; truckNum++) {
+        Truck truck =
+            entityManager.find(
+                Truck.class, truckIds.get(tenantIndex * TRUCKS_PER_TENANT + truckNum));
+        if (truck == null) {
+          continue;
+        }
+
+        createMileageReadingsFixture(truck, now);
+        createExpensesFixture(truck, now);
+        createMaintenanceRecordsFixture(truck, now);
+        createMaintenanceScheduleFixture(truck, now, truckNum);
+      }
+    }
+  }
+
+  /**
+   * Lịch sử đọc công tơ cho một xe.
+   *
+   * <p>Phải có ít nhất hai lần đọc trong cửa sổ báo cáo: quãng đường được tính bằng hiệu giữa lần
+   * đọc cao nhất và thấp nhất của từng xe, nên xe chỉ có một lần đọc bị loại khỏi phép cộng và được
+   * đếm riêng — một điểm dữ liệu không phải là "xe không chạy".
+   */
+  private void createMileageReadingsFixture(Truck truck, OffsetDateTime now) {
+    // Lần đọc mới nhất lùi lại 2 ngày để mọi bản ghi chắc chắn nằm trong cửa sổ báo cáo, kể cả khi
+    // mốc `to` của client được tính theo múi giờ khác.
+    OffsetDateTime newest = now.minusDays(2);
+    int odometer = BASE_ODOMETER + FAKER.number().numberBetween(0, MAX_ODOMETER_OFFSET);
+
+    // Ghi từ cũ nhất tới mới nhất: chỉ số công tơ chỉ tăng theo thời gian. Ghi ngược lại sẽ tạo ra
+    // hiệu số âm, và tầng báo cáo loại bỏ hiệu số âm như một lỗi dữ liệu chứ không cộng nó vào.
+    for (int i = MILEAGE_READINGS_PER_TRUCK - 1; i >= 0; i--) {
+      VehicleMileageReading reading = new VehicleMileageReading();
+      reading.setTruck(truck);
+      reading.setReadingValue(odometer);
+      reading.setRecordedAt(newest.minusDays((long) i * MILEAGE_READING_INTERVAL_DAYS));
+      reading.setSource(SEED_FIXTURE_MARKER);
+      entityManager.persist(reading);
+      countMileageReadings++;
+
+      odometer +=
+          FAKER.number().numberBetween(MIN_DISTANCE_PER_INTERVAL, MAX_DISTANCE_PER_INTERVAL + 1);
+    }
+  }
+
+  /**
+   * Chi phí vận hành theo xe.
+   *
+   * <p>Chỉ đặt liên kết xe thứ nhất. {@code Expense} có hai khoá ngoại trỏ tới xe; đặt cả hai sẽ
+   * khiến dòng đó được báo là "không quy được về một xe" nếu hai giá trị khác nhau, và bị đếm hai
+   * lần nếu tầng báo cáo cộng gộp cả hai.
+   */
+  private void createExpensesFixture(Truck truck, OffsetDateTime now) {
+    int rows = FAKER.number().numberBetween(EXPENSES_PER_TRUCK_MIN, EXPENSES_PER_TRUCK_MAX + 1);
+    for (int i = 0; i < rows; i++) {
+      ExpenseFixture fixture = randomFromList(EXPENSE_FIXTURES).orElseThrow();
+
+      Expense expense = new Expense();
+      expense.setType(fixture.type());
+      expense.setStatus(EXPENSE_STATUS_APPROVED);
+      expense.setVendorName(FAKER.company().name());
+      expense.setExpenseDate(
+          now.minusDays(FAKER.number().numberBetween(0, COST_FIXTURE_WINDOW_DAYS + 1)));
+      expense.setAmountAmount(
+          BigDecimal.valueOf(
+                  FAKER.number().numberBetween(fixture.minAmount(), fixture.maxAmount() + 1))
+              .setScale(2, RoundingMode.HALF_UP));
+      expense.setAmountCurrency(VND_CURRENCY);
+      expense.setTruck(truck);
+      expense.setNotes(SEED_FIXTURE_MARKER + " — dữ liệu dev tổng hợp, không phải giao dịch thật");
+      entityManager.persist(expense);
+      countExpenses++;
+    }
+  }
+
+  /** Bảo trì đã thực hiện, có phí tổn và số công tơ tại thời điểm làm. */
+  private void createMaintenanceRecordsFixture(Truck truck, OffsetDateTime now) {
+    for (int i = 0; i < MAINTENANCE_RECORDS_PER_TRUCK; i++) {
+      BigDecimal labor =
+          BigDecimal.valueOf(FAKER.number().numberBetween(MIN_LABOR_COST, MAX_LABOR_COST + 1))
+              .setScale(2, RoundingMode.HALF_UP);
+      BigDecimal parts =
+          BigDecimal.valueOf(FAKER.number().numberBetween(MIN_PARTS_COST, MAX_PARTS_COST + 1))
+              .setScale(2, RoundingMode.HALF_UP);
+
+      MaintenanceRecord record = new MaintenanceRecord();
+      record.setTruck(truck);
+      record.setMaintenanceType(MAINTENANCE_TYPE_PREVENTIVE);
+      record.setServiceDate(
+          now.minusDays(FAKER.number().numberBetween(0, COST_FIXTURE_WINDOW_DAYS + 1)));
+      record.setOdometerReading(
+          FAKER.number().numberBetween(BASE_ODOMETER, BASE_ODOMETER + MAX_ODOMETER_OFFSET));
+      record.setVendorName(FAKER.company().name());
+      record.setVendorAddress(FAKER.address().streetAddress());
+      record.setInvoiceNumber(SEED_FIXTURE_MARKER + "-" + truck.getNumber() + "-" + (i + 1));
+      record.setLaborCost(labor);
+      record.setPartsCost(parts);
+      record.setTotalCost(labor.add(parts));
+      record.setTotalCostCurrency(VND_CURRENCY);
+      record.setDescription("Bảo trì định kỳ — dữ liệu dev tổng hợp");
+      record.setWorkPerformed("Thay dầu, kiểm tra phanh, vệ sinh lọc gió");
+      // Cố ý để isUnplanned, isBreakdown, downtimeStartAt và downtimeEndAt là null. Cột nullable
+      // này nghĩa là "chưa phân loại"; tầng báo cáo loại các dòng đó khỏi cả tử lẫn mẫu và báo cáo
+      // số lượng. Điền false sẽ là khẳng định mọi bản ghi đều "đã lên kế hoạch và không hỏng" —
+      // một khẳng định seeder không có bằng chứng để đưa ra, kể cả với dữ liệu tự sinh.
+      entityManager.persist(record);
+      countMaintenanceRecords++;
+    }
+  }
+
+  /** Lịch bảo trì định kỳ theo lịch cho một xe. */
+  private void createMaintenanceScheduleFixture(Truck truck, OffsetDateTime now, int truckNum) {
+    MaintenanceSchedule schedule = new MaintenanceSchedule();
+    schedule.setTruck(truck);
+    schedule.setMaintenanceType(MAINTENANCE_TYPE_PREVENTIVE);
+    schedule.setIntervalType(MAINTENANCE_INTERVAL_CALENDAR);
+    schedule.setDaysInterval(PM_INTERVAL_DAYS);
+    schedule.setLastServiceDate(now.minusDays(PM_INTERVAL_DAYS));
+    // Xen kẽ xe quá hạn và xe chưa tới hạn. Nếu mọi lịch cùng nằm một phía thì tỷ lệ tuân thủ luôn
+    // là 0% hoặc 100% — một con số trông hợp lý nhưng không kiểm chứng được phép chia nào.
+    schedule.setNextDueDate(
+        truckNum % 2 == 0 ? now.plusDays(PM_DUE_SOON_DAYS) : now.minusDays(PM_OVERDUE_DAYS));
+    schedule.setIsActive(true);
+    schedule.setNotes(SEED_FIXTURE_MARKER + " — lịch bảo trì dev tổng hợp");
+    // Không đặt mileageInterval: lịch theo lịch không cần mốc công tơ, và đặt mileageInterval mà
+    // bỏ trống nextDueMileage sẽ tự đẩy lịch này vào schedulesRequiringOdometerCount — một cảnh báo
+    // chỉ vì seeder điền nửa vời.
+    entityManager.persist(schedule);
+    countMaintenanceSchedules++;
   }
 
   // ===============================================================================================
@@ -648,7 +883,9 @@ public class DataSeeder implements CommandLineRunner {
     VietnamCity destination = locations.destination;
 
     UUID customerId = randomCustomer(tenantIndex).orElseThrow();
-    UUID truckId = randomTruck(tenantIndex).orElseThrow();
+    int truckIndexInTenant = FAKER.number().numberBetween(0, TRUCKS_PER_TENANT - 1);
+    UUID truckId = truckIds.get(tenantIndex * TRUCKS_PER_TENANT + truckIndexInTenant);
+    UUID driverId = driverIds.get(tenantIndex * DRIVERS_PER_TENANT + truckIndexInTenant);
     UUID dispatcherId = randomDispatcher(tenantIndex).orElseThrow();
 
     String loadType = randomFromList(LOAD_TYPES).orElse("general_freight");
@@ -657,7 +894,7 @@ public class DataSeeder implements CommandLineRunner {
     BigDecimal cost =
         BigDecimal.valueOf(FAKER.number().numberBetween(MIN_LOAD_COST, MAX_LOAD_COST));
 
-    String status = determineLoadStatusForSeeding(loadNum);
+    String targetStatus = determineLoadStatusForSeeding(loadNum);
     OffsetDateTime now = OffsetDateTime.now(VIETNAM_ZONE_OFFSET);
     OffsetDateTime pickupDate = now.plusDays(FAKER.number().numberBetween(1, 14));
     OffsetDateTime deliveryDate = pickupDate.plusDays(FAKER.number().numberBetween(1, 5));
@@ -670,7 +907,7 @@ public class DataSeeder implements CommandLineRunner {
         new CreateLoadRequest(
             FAKER.commerce().productName(),
             loadType,
-            status,
+            LoadStatus.DRAFT.dbValue(),
             distance,
             false,
             customerId,
@@ -709,6 +946,18 @@ public class DataSeeder implements CommandLineRunner {
             destination.longitude());
 
     LoadResponse load = loadService.create(request);
+    if (targetStatus.equals(LoadStatus.DISPATCHED.dbValue())) {
+      loadService.dispatch(load.id());
+    } else if (targetStatus.equals(LoadStatus.PICKED_UP.dbValue())) {
+      loadService.dispatch(load.id());
+      loadService.pickUp(load.id(), driverId);
+    } else if (targetStatus.equals(LoadStatus.DELIVERED.dbValue())) {
+      loadService.dispatch(load.id());
+      loadService.pickUp(load.id(), driverId);
+      loadService.deliver(load.id(), driverId);
+    } else if (targetStatus.equals(LoadStatus.CANCELLED.dbValue())) {
+      loadService.cancel(load.id());
+    }
     loadIds.add(load.id());
   }
 
@@ -851,6 +1100,18 @@ public class DataSeeder implements CommandLineRunner {
   // Logic & Randomization Helper Methods
   // ===============================================================================================
 
+  /**
+   * Đọc một số thập phân do Faker sinh ra theo ngôn ngữ đang dùng.
+   *
+   * <p>Faker được dựng với {@code Locale("vi")}, nên {@code address().latitude()} trả về chuỗi dùng
+   * dấu phẩy làm dấu thập phân ("-21,56260295"). {@code Double.parseDouble} chỉ hiểu dấu chấm và
+   * ném {@code NumberFormatException} — lỗi này làm hỏng cả tiến trình seed, không chỉ một dòng, vì
+   * nó ném ra từ trong {@code CommandLineRunner}.
+   */
+  private static double parseLocalisedDecimal(String value) {
+    return Double.parseDouble(value.replace(',', '.'));
+  }
+
   private <T> Optional<T> randomFromList(List<T> list) {
     if (list == null || list.isEmpty()) {
       return Optional.empty();
@@ -966,6 +1227,12 @@ public class DataSeeder implements CommandLineRunner {
     log.info("║  Payments:           {}", padRight(String.valueOf(countPayments), 25));
     log.info("║  Conversations:      {}", padRight(String.valueOf(countConversations), 25));
     log.info("║  Messages:           {}", padRight(String.valueOf(countMessages), 25));
+    log.info("╠══════════════════════════════════════════════════════════╣");
+    log.info("║  SYNTHETIC fixtures (not real transactions):             ║");
+    log.info("║    • Expenses:       {}", padRight(String.valueOf(countExpenses), 25));
+    log.info("║    • Maintenance:    {}", padRight(String.valueOf(countMaintenanceRecords), 25));
+    log.info("║    • PM schedules:   {}", padRight(String.valueOf(countMaintenanceSchedules), 25));
+    log.info("║    • Odometer reads: {}", padRight(String.valueOf(countMileageReadings), 25));
     log.info("╚══════════════════════════════════════════════════════════╝");
     log.info("");
 

@@ -1,7 +1,5 @@
 package com.company.logicstic.tenant;
 
-import com.company.logicstic.shared.config.TenancyProperties;
-import com.company.logicstic.shared.config.TenantRoutingDataSource;
 import com.company.logicstic.tenant.dto.TenantRegistryRecord;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;

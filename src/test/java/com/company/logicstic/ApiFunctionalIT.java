@@ -9,21 +9,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.company.logicstic.modules.customer.dto.request.CreateCustomerRequest;
-import com.company.logicstic.modules.employee.dto.request.CreateEmployeeRequest;
-import com.company.logicstic.modules.finance.dto.request.CreateInvoiceRequest;
-import com.company.logicstic.modules.finance.dto.request.CreatePaymentRequest;
-import com.company.logicstic.modules.fleet.dto.request.CreateTruckRequest;
-import com.company.logicstic.modules.inspection.dto.request.CreateInspectionRequest;
-import com.company.logicstic.modules.inspection.dto.request.DefectRequest;
-import com.company.logicstic.modules.load.dto.request.CreateLoadRequest;
-import com.company.logicstic.modules.messaging.dto.request.CreateConversationRequest;
-import com.company.logicstic.modules.messaging.dto.request.SendMessageRequest;
-import com.company.logicstic.modules.role.dto.request.CreateRoleRequest;
-import com.company.logicstic.modules.terminal.dto.request.CreateTerminalRequest;
-import com.company.logicstic.modules.terminal.enums.TerminalType;
-import com.company.logicstic.modules.trip.dto.request.CreateTripRequest;
-import com.company.logicstic.modules.trip.dto.request.TripStopRequest;
+import com.company.logicstic.customer.CreateCustomerRequest;
+import com.company.logicstic.employee.employee.CreateEmployeeRequest;
+import com.company.logicstic.finance.invoice.CreateInvoiceRequest;
+import com.company.logicstic.finance.payment.CreatePaymentRequest;
+import com.company.logicstic.fleet.truck.CreateTruckRequest;
+import com.company.logicstic.inspection.CreateInspectionRequest;
+import com.company.logicstic.inspection.DefectRequest;
+import com.company.logicstic.load.core.CreateLoadRequest;
+import com.company.logicstic.messaging.conversation.CreateConversationRequest;
+import com.company.logicstic.messaging.message.SendMessageRequest;
+import com.company.logicstic.role.CreateRoleRequest;
+import com.company.logicstic.terminal.CreateTerminalRequest;
+import com.company.logicstic.terminal.TerminalType;
+import com.company.logicstic.trip.CreateTripRequest;
+import com.company.logicstic.trip.TripStopRequest;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -123,6 +123,7 @@ class ApiFunctionalIT {
     registry.add("spring.data.redis.host", REDIS::getHost);
     registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
     registry.add("app.cache.enabled", () -> "true");
+    registry.add("app.documents.upload.enabled", () -> "true");
     // The resource server never contacts these: jwt() injects an already-authenticated token.
     // They exist because application.yml deliberately gives them no defaults.
     registry.add("app.security.jwt.issuer", () -> "https://issuer.test");
@@ -339,21 +340,53 @@ class ApiFunctionalIT {
 
   @Test
   @Order(9)
-  @DisplayName("loads: dispatch -> pick-up -> deliver, with timestamps stamped")
+  @DisplayName("loads: only the assigned driver can pick-up, then deliver")
   void loadLifecycle() throws Exception {
     perform(post("/api/loads/{id}/dispatch", loadId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.status").value("dispatched"))
         .andExpect(jsonPath("$.data.dispatchedAt").isNotEmpty());
 
-    perform(post("/api/loads/{id}/pick-up", loadId))
+    String outsiderEmail = "outsider.load.it@example.com";
+    perform(
+            post("/api/employees")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json(employeeRequest(outsiderEmail))))
+        .andExpect(status().isCreated());
+
+    performAsEmployee(post("/api/loads/{id}/pick-up", loadId), outsiderEmail, "ROLE_DRIVER")
+        .andExpect(status().isForbidden());
+
+    performAsEmployee(
+            post("/api/loads/{id}/pick-up", loadId), "driver.it@example.com", "ROLE_DRIVER")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.status").value("picked_up"));
 
-    perform(post("/api/loads/{id}/deliver", loadId))
+    performAsEmployee(
+            post("/api/loads/{id}/deliver", loadId), "driver.it@example.com", "ROLE_DRIVER")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.status").value("delivered"))
         .andExpect(jsonPath("$.data.deliveredAt").isNotEmpty());
+
+    String deliveredAt =
+        objectMapper
+            .readTree(
+                perform(get("/api/loads/{id}", loadId))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString())
+            .get("data")
+            .get("deliveredAt")
+            .asText();
+    performAsEmployee(
+            post("/api/loads/{id}/deliver", loadId), "driver.it@example.com", "ROLE_DRIVER")
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("INVALID_STATE_TRANSITION"));
+    perform(get("/api/loads/{id}", loadId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.status").value("delivered"))
+        .andExpect(jsonPath("$.data.deliveredAt").value(deliveredAt));
   }
 
   @Test
@@ -419,6 +452,29 @@ class ApiFunctionalIT {
 
     perform(get("/api/invoices/{id}", invoiceId)).andExpect(status().isOk());
     perform(get("/api/invoices")).andExpect(status().isOk());
+
+    UUID dispatchLoadId =
+        createdId(
+            perform(
+                    post("/api/loads")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(loadRequest("draft"))))
+                .andExpect(status().isCreated()));
+    UUID dispatchInvoiceId =
+        createdId(
+            perform(
+                    post("/api/invoices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(invoiceRequestForLoad(dispatchLoadId))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.status").value("draft")));
+
+    perform(post("/api/loads/{id}/dispatch", dispatchLoadId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.status").value("dispatched"));
+    perform(get("/api/invoices/{id}", dispatchInvoiceId))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.status").value("issued"));
   }
 
   @Test
@@ -446,13 +502,33 @@ class ApiFunctionalIT {
     byte[] content = "proof-of-delivery".getBytes();
     MockMultipartFile file =
         new MockMultipartFile("file", "pod.pdf", MediaType.APPLICATION_PDF_VALUE, content);
+    UUID forgedUploadedById = UUID.randomUUID();
+    MockMultipartFile forgedMetadata =
+        new MockMultipartFile(
+            "metadata",
+            "",
+            MediaType.APPLICATION_JSON_VALUE,
+            json(new com.company.logicstic.document.DocumentUploadRequest(
+                    "load",
+                    "pod",
+                    "Proof of delivery",
+                    forgedUploadedById,
+                    loadId,
+                    null,
+                    null,
+                    "Recipient",
+                    OffsetDateTime.now(),
+                    10.0,
+                    20.0,
+                    null))
+                .getBytes());
     MockMultipartFile metadata =
         new MockMultipartFile(
             // The controller declares @RequestPart("metadata"); naming it anything else is a 500.
             "metadata",
             "",
             MediaType.APPLICATION_JSON_VALUE,
-            json(new com.company.logicstic.modules.document.dto.request.DocumentUploadRequest(
+            json(new com.company.logicstic.document.DocumentUploadRequest(
                     "load",
                     "pod",
                     "Proof of delivery",
@@ -467,10 +543,21 @@ class ApiFunctionalIT {
                     null))
                 .getBytes());
 
+    performAsEmployee(
+            multipart("/api/documents").file(file).file(forgedMetadata),
+            "driver.it@example.com",
+            "ROLE_DRIVER")
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+
     UUID documentId =
         createdId(
-            perform(multipart("/api/documents").file(file).file(metadata))
-                .andExpect(status().isCreated()));
+            performAsEmployee(
+                    multipart("/api/documents").file(file).file(metadata),
+                    "driver.it@example.com",
+                    "ROLE_DRIVER")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.uploadedById").value(employeeId.toString())));
 
     perform(get("/api/documents")).andExpect(status().isOk());
     mockMvc
@@ -492,36 +579,133 @@ class ApiFunctionalIT {
 
   @Test
   @Order(15)
-  @DisplayName("messaging: conversation, send, unread count, mark read")
+  @DisplayName("messaging: principal identity, participant access, unread count, mark read")
   void messaging() throws Exception {
-    conversationId =
+    String senderEmail = "driver.it@example.com";
+    String recipientEmail = "recipient.it@example.com";
+    String outsiderEmail = "outsider.it@example.com";
+    UUID recipientId =
         createdId(
             perform(
+                    post("/api/employees")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(employeeRequest(recipientEmail))))
+                .andExpect(status().isCreated()));
+    UUID outsiderId =
+        createdId(
+            perform(
+                    post("/api/employees")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(employeeRequest(outsiderEmail))))
+                .andExpect(status().isCreated()));
+
+    conversationId =
+        createdId(
+            performAsEmployee(
                     post("/api/messages/conversations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
                             json(
                                 new CreateConversationRequest(
-                                    "IT thread", loadId, false, Set.of(employeeId)))))
-                .andExpect(status().isCreated()));
+                                    "IT thread", loadId, false, Set.of(recipientId)))),
+                    senderEmail,
+                    "ROLE_DRIVER")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.participantIds.length()").value(2)));
 
-    perform(
+    performAsEmployee(
             post("/api/messages")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json(new SendMessageRequest(conversationId, employeeId, "hello"))))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.data.content").value("hello"));
+                .content(json(new SendMessageRequest(conversationId, recipientId, "forged"))),
+            senderEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
 
-    perform(get("/api/messages").param("conversationId", conversationId.toString()))
+    performAsEmployee(
+            post("/api/messages")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json(new SendMessageRequest(conversationId, employeeId, "hello"))),
+            senderEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.data.content").value("hello"))
+        .andExpect(jsonPath("$.data.senderId").value(employeeId.toString()));
+
+    performAsEmployee(
+            get("/api/messages/conversations").param("employeeId", recipientId.toString()),
+            senderEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+
+    performAsEmployee(
+            get("/api/messages/unread-count").param("employeeId", employeeId.toString()),
+            senderEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").value(0));
+
+    performAsEmployee(
+            get("/api/messages/conversations/{id}", conversationId), recipientEmail, "ROLE_DRIVER")
         .andExpect(status().isOk());
-    perform(get("/api/messages/conversations").param("employeeId", employeeId.toString()))
-        .andExpect(status().isOk());
-    perform(get("/api/messages/unread-count").param("employeeId", employeeId.toString()))
-        .andExpect(status().isOk());
-    perform(
+    performAsEmployee(
+            get("/api/messages").param("conversationId", conversationId.toString()),
+            recipientEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items[0].content").value("hello"));
+    performAsEmployee(
+            get("/api/messages/unread-count").param("employeeId", recipientId.toString()),
+            recipientEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").value(1));
+    performAsEmployee(
             post("/api/messages/conversations/{id}/read", conversationId)
-                .param("employeeId", employeeId.toString()))
-        .andExpect(status().isOk());
+                .param("employeeId", recipientId.toString()),
+            recipientEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").value(1));
+    performAsEmployee(
+            post("/api/messages/conversations/{id}/read", conversationId)
+                .param("employeeId", recipientId.toString()),
+            recipientEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").value(0));
+    performAsEmployee(
+            get("/api/messages/unread-count").param("employeeId", recipientId.toString()),
+            recipientEmail,
+            "ROLE_DRIVER")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").value(0));
+
+    performAsEmployee(
+            get("/api/messages/conversations/{id}", conversationId),
+            outsiderEmail,
+            "ROLE_SUPERADMIN")
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
+    performAsEmployee(
+            get("/api/messages").param("conversationId", conversationId.toString()),
+            outsiderEmail,
+            "ROLE_SUPERADMIN")
+        .andExpect(status().isNotFound());
+    performAsEmployee(
+            post("/api/messages")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json(new SendMessageRequest(conversationId, outsiderId, "intrusion"))),
+            outsiderEmail,
+            "ROLE_SUPERADMIN")
+        .andExpect(status().isNotFound());
+    performAsEmployee(
+            post("/api/messages/conversations/{id}/read", conversationId)
+                .param("employeeId", outsiderId.toString()),
+            outsiderEmail,
+            "ROLE_SUPERADMIN")
+        .andExpect(status().isNotFound());
   }
 
   // ── 11. Inspections ─────────────────────────────────────────────────────────
@@ -619,8 +803,21 @@ class ApiFunctionalIT {
     return mockMvc.perform(request.with(superAdmin()));
   }
 
+  private ResultActions performAsEmployee(
+      AbstractMockHttpServletRequestBuilder<?> request, String email, String role)
+      throws Exception {
+    return mockMvc.perform(request.with(employeeJwt(email, role)));
+  }
+
   private static org.springframework.test.web.servlet.request.RequestPostProcessor superAdmin() {
     return jwt().authorities(() -> "ROLE_SUPERADMIN");
+  }
+
+  private static org.springframework.test.web.servlet.request.RequestPostProcessor employeeJwt(
+      String email, String role) {
+    return jwt()
+        .jwt(token -> token.subject(email).claim("email", email).claim("tenant", "tenant-it"))
+        .authorities(() -> role);
   }
 
   private String json(Object value) {
@@ -788,6 +985,27 @@ class ApiFunctionalIT {
         "functional test invoice",
         OffsetDateTime.now().plusDays(30),
         loadId,
+        customerId,
+        null,
+        new BigDecimal("1500.00"),
+        "USD",
+        new BigDecimal("150.00"),
+        "USD",
+        new BigDecimal("1650.00"),
+        "USD",
+        null,
+        null,
+        null);
+  }
+
+  private static CreateInvoiceRequest invoiceRequestForLoad(UUID targetLoadId) {
+    return new CreateInvoiceRequest(
+        "load",
+        "draft",
+        "exclusive",
+        "dispatch transition functional test invoice",
+        OffsetDateTime.now().plusDays(30),
+        targetLoadId,
         customerId,
         null,
         new BigDecimal("1500.00"),

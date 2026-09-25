@@ -1,6 +1,5 @@
 package com.company.logicstic.tenant;
 
-import com.company.logicstic.shared.config.TenancyProperties;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;

@@ -1,6 +1,5 @@
 package com.company.logicstic.tenant;
 
-import com.company.logicstic.shared.config.TenancyProperties;
 import com.company.logicstic.tenant.dto.TenantRegistryRecord;
 import jakarta.annotation.PostConstruct;
 import java.util.List;

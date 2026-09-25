@@ -81,7 +81,7 @@ services:
       # `local`, not `dev`: DataSeeder is @Profile({"dev","seed"}) and it currently aborts startup
       # on a fresh database (it creates loads with a non-DRAFT status, which LoadServiceImpl
       # rejects). A stack that cannot boot is worse than a stack without demo data.
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local,dev-auth}
       SERVER_PORT: 8080
 
       # Service names, not localhost: inside the compose network each service is
@@ -102,6 +102,13 @@ services:
       AUTH_ISSUER_URI: ${AUTH_ISSUER_URI:?AUTH_ISSUER_URI is required}
       AUTH_AUDIENCE: ${AUTH_AUDIENCE:?AUTH_AUDIENCE is required}
       AUTH_JWK_SET_URI: ${AUTH_JWK_SET_URI:?AUTH_JWK_SET_URI is required}
+
+      # Local full-access account. The dev-auth profile and these values must
+      # never be enabled in staging or production.
+      DEV_AUTH_USERNAME: ${DEV_AUTH_USERNAME:?DEV_AUTH_USERNAME is required}
+      DEV_AUTH_PASSWORD: ${DEV_AUTH_PASSWORD:?DEV_AUTH_PASSWORD is required}
+      DEV_AUTH_ACCESS_TOKEN: ${DEV_AUTH_ACCESS_TOKEN:?DEV_AUTH_ACCESS_TOKEN is required}
+      DEV_AUTH_TENANT_ID: ${DEV_AUTH_TENANT_ID:-local-development}
 
       TENANCY_ENABLED: ${TENANCY_ENABLED:-false}
     ports:

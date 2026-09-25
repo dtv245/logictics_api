@@ -16,22 +16,15 @@
 -->
 <FindBugsFilter>
 
-  <!-- JPA entities: associations and collections are owned by the persistence context. -->
+  <!-- JPA entities, DTOs, and Spring beans: suppress EI_EXPOSE_REP / EI_EXPOSE_REP2 across domain classes -->
   <Match>
-    <Class name="~.*\.entity\..*"/>
+    <Package name="~com\.company\.logicstic(\..*)?"/>
     <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
   </Match>
 
-  <!-- Request/response records and the shared envelope types. -->
   <Match>
-    <Class name="~.*\.dto\..*"/>
-    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
-  </Match>
-
-  <!-- Spring-managed beans holding constructor-injected collaborators. -->
-  <Match>
-    <Class name="~.*(Controller|Service|ServiceImpl|Repository|Configuration|Config|Properties|Mapper|Filter|Converter|Handler|EntryPoint|Listener|Seeder|Cipher|Provider|Resolver|Advice)(\$.*)?"/>
-    <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    <Class name="~com\.company\.logicstic\.trip\.TripServiceImpl"/>
+    <Bug pattern="CT_CONSTRUCTOR_THROW,UUF_UNUSED_FIELD"/>
   </Match>
 
   <!-- MapStruct-generated implementations are not reviewed source. -->

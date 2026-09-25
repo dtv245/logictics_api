@@ -1,0 +1,52 @@
+package com.company.logicstic.messaging.message;
+
+import com.company.logicstic.employee.employee.Employee;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
+
+@Entity
+@Table(
+    name = "message_read_receipts",
+    schema = "public",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "ix_message_read_receipts_message_id_read_by_id",
+          columnNames = {"message_id", "read_by_id"})
+    },
+    indexes = {@Index(name = "ix_message_read_receipts_read_by_id", columnList = "read_by_id")})
+@Getter
+@Setter
+@NoArgsConstructor
+public class MessageReadReceipt {
+
+  @Id
+  @GeneratedValue
+  @UuidGenerator
+  @Column(name = "id", nullable = false, updatable = false)
+  private UUID id;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "message_id", nullable = false)
+  private Message message;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "read_by_id", nullable = false)
+  private Employee readBy;
+
+  @Column(name = "read_at", nullable = false)
+  private OffsetDateTime readAt;
+}
