@@ -1,84 +1,66 @@
 package com.company.logicstic.config;
 
-import io.swagger.v3.oas.models.Components;
+// Các class dùng để cấu hình Swagger/OpenAPI
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
-import io.swagger.v3.oas.models.security.SecurityScheme;
-import io.swagger.v3.oas.models.servers.Server;
-import java.util.List;
-import org.springframework.beans.factory.annotation.Value;
+
+// Annotation của Spring
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * OpenAPI document served at {@code /v3/api-docs} and rendered by Swagger UI at {@code
- * /swagger-ui.html}.
+ * Class cấu hình Swagger/OpenAPI.
  *
- * <p>Both are enabled per profile and switched off in production (see {@code
- * application-prod.yml}). The Angular portals generate their TypeScript client from this document
- * ({@code docs/docs/api/overview.md} §API Client Generation), so it is a build output, not only a
- * browsing aid.
- *
- * <p>Every operation inherits the {@code bearerAuth} scheme because {@code /api/**} is an OAuth2
- * resource server. Tenant scope is derived exclusively from the validated JWT {@code tenant} claim.
+ * @Configuration:
+ *  - Đánh dấu đây là một class cấu hình của Spring.
+ *  - Spring sẽ tự động quét (scan) và khởi tạo class này khi ứng dụng chạy.
  */
 @Configuration
 public class OpenApiConfig {
 
-  private static final String BEARER_AUTH = "bearerAuth";
+    /**
+     * @Bean:
+     *  - Tạo một đối tượng OpenAPI và đưa vào Spring IoC Container.
+     *  - Spring chỉ tạo 1 instance duy nhất và sử dụng lại trong toàn bộ ứng dụng.
+     */
+    @Bean
+    public OpenAPI logisticsApi() {
 
-  private final String applicationName;
+        // Tạo đối tượng OpenAPI
+        return new OpenAPI()
 
-  public OpenApiConfig(@Value("${spring.application.name}") String applicationName) {
-    this.applicationName = applicationName;
-  }
+                // Thông tin hiển thị trên trang Swagger UI
+                .info(new Info()
 
-  @Bean
-  public OpenAPI logisticsApi() {
-    return new OpenAPI()
-        .components(
-            new Components()
-                .addSecuritySchemes(
-                    BEARER_AUTH,
-                    new SecurityScheme()
-                        .type(SecurityScheme.Type.HTTP)
-                        .scheme("bearer")
-                        .bearerFormat("JWT")
-                        .description(
-                            "Access token issued by the Identity Server. The 'tenant' claim is"
-                                + " mandatory.")))
-        .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH))
-        .servers(
-            List.of(
-                new Server().url("/").description("This instance"),
-                new Server().url("https://api.yourdomain.com").description("Production")))
-        .info(
-            new Info()
-                .title("LogisticsX API")
-                .description(
-                    """
-                    Multi-tenant Transportation Management System.
+                        // Tiêu đề của API
+                        .title("LogisticsX API")
 
-                    Every response is wrapped in an `ApiResponse` envelope \
-                    (`success`, `code`, `message`, `data`, `errors`, `meta`); list endpoints wrap a \
-                    `PagedResponse`. Pagination is 1-based (`page`, `pageSize`).
+                        // Mô tả ngắn về hệ thống
+                        .description("Transportation Management System API")
 
-                    Tenant scope is derived from the validated JWT `tenant` claim. Requests without \
-                    that claim are rejected. This API does not accept `X-Tenant` or MCP API keys.
+                        // Phiên bản API
+                        .version("v1.0")
 
-                    Application: %s
-                    """
-                        .formatted(applicationName))
-                .version("v1.0")
-                .contact(new Contact().name("DANG THE VU"))
-                .license(new License().name("MIT")))
-        .externalDocs(
-            new ExternalDocumentation()
-                .description("Architecture, business spec and API reference")
-                .url("https://github.com/suxrobgm/logistics-app/tree/main/docs"));
-  }
+                        // Thông tin người hoặc nhóm phát triển
+                        .contact(new Contact()
+                                // Tên team
+                                .name("DANG THE VU")
+                                // Email liên hệ
+                                .email("[EMAIL_ADDRESS]"))
+
+                        // License của dự án
+                        .license(new License()
+
+                                // Tên license
+                                .name("MIT")))
+
+                // Thông tin tài liệu bên ngoài (không bắt buộc)
+                .externalDocs(new ExternalDocumentation()
+
+                        // Mô tả tài liệu
+                        .description("Project Documentation"));
+    }
 }
