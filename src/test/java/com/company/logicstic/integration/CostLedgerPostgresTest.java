@@ -32,6 +32,7 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.payroll.DriverPayPolicyService payPolicies;
     @Autowired com.company.logicstic.service.payroll.DriverPayPolicyResolver payPolicyResolver;
     @Autowired com.company.logicstic.service.payroll.PayPeriodService payPeriods;
+    @Autowired com.company.logicstic.service.payroll.DriverPayEngine driverPay;
 
     @Test void contextLoadsWithEveryEntityAndController() {
         assertTrue(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Integer.class) >= 11);
@@ -260,6 +261,38 @@ class CostLedgerPostgresTest {
             java.time.LocalDate from, java.time.LocalDate to) {
         return new com.company.logicstic.dto.payroll.DriverPayPolicyRequest(code,"Mileage",driver,"PER_MILE",new java.math.BigDecimal(rate),
                 null,null,null,null,null,"ACTUAL_ALL_MILES",null,null,null,null,null,null,"USD",from,to);
+    }
+
+    @Test void mileageSettlementPersistsSelectedBasisInputsAndMissingActualCreatesNoFinancialRows() {
+        var fixture = fixture(); var start = java.time.LocalDate.of(2026,1,1); String code = UUID.randomUUID().toString();
+        var policy = payPolicies.create(payPolicyRequest(code,fixture.actor(),"0.625",start,null));
+        var period = payPeriods.create(code,start,start.plusDays(30),null);
+        UUID trip = UUID.randomUUID(), assignment = UUID.randomUUID();
+        jdbc.update("insert into trips(id,name,total_distance,status,completed_at) values (?,'Mileage',99999,'COMPLETED','2026-01-15T12:00:00Z')",trip);
+        jdbc.update("""
+                insert into trip_driver_assignments(id,trip_id,driver_id,effective_from,effective_to,actual_miles,planned_miles)
+                values (?,?,?,'2026-01-14T12:00:00Z','2026-01-15T12:00:00Z',123.456,200)
+                """,assignment,trip,fixture.actor());
+        var result = driverPay.calculate(fixture.actor(),period.getId());
+        assertEquals(new java.math.BigDecimal("77.16"),result.grossEarnings()); assertEquals(1,result.lines().size());
+        String input = jdbc.queryForObject("select s.input_json::text from calculation_snapshots s join settlements ds on ds.calculation_snapshot_id=s.id where ds.id=?",String.class,result.id());
+        var calculation = tools.jackson.databind.json.JsonMapper.builder().build().readTree(input).get("mileageCalculations").get(0);
+        assertEquals("ACTUAL_ALL_MILES",calculation.get("mileageBasis").asText());
+        assertEquals(assignment.toString(),calculation.get("assignmentId").asText()); assertEquals(policy.getId().toString(),calculation.get("policyId").asText());
+        assertEquals(1,calculation.get("policyVersion").intValue());
+        assertEquals(result.id(),driverPay.calculate(fixture.actor(),period.getId()).id());
+        var missing = fixture(); var missingCode = UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(missingCode,missing.actor(),"1",start,null));
+        var missingPeriod = payPeriods.create(missingCode,start,start.plusDays(30),null);
+        jdbc.update("""
+                insert into trip_driver_assignments(id,trip_id,driver_id,effective_from,effective_to,planned_miles)
+                values (?,?,?,'2026-01-14T12:00:00Z','2026-01-15T12:00:00Z',999)
+                """,UUID.randomUUID(),trip,missing.actor());
+        int snapshots = jdbc.queryForObject("select count(*) from calculation_snapshots",Integer.class);
+        assertEquals("MILEAGE_VALIDATION_REQUIRED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> driverPay.calculate(missing.actor(),missingPeriod.getId())).getCode());
+        assertEquals(snapshots,jdbc.queryForObject("select count(*) from calculation_snapshots",Integer.class));
+        assertEquals(0,jdbc.queryForObject("select count(*) from settlements where driver_id=?",Integer.class,missing.actor()));
     }
 
     private record Fixture(UUID actor, UUID load, UUID expense, String email) {}

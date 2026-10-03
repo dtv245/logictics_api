@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 26 |
+| Revision | 27 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
 | Last Updated | 2026-10-03T21:51:16+07:00 |
-| Current Phase | 7 — Backend Development / Phase 4B |
+| Current Phase | 7 — Backend Development / Phase 4C |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Complete Phase 4B assignment-mileage pay, explicit source validation and auditable inputs; then 4C–4F independently. Phase 3 and 4A passed; no schema recreation. |
-| Handoff Sequence | 26 |
+| Next Action | Complete Phase 4C per-load/hourly/daily/flat inputs/formulas/tests. Then 4D–4F and user-authorized MULTI_JURISDICTION neutral payroll; no guessed statutory rates. |
+| Handoff Sequence | 27 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-014 / Phase 4B
-- **Objective:** Complete explicit driver assignment mileage calculation and snapshot inputs.
-- **Acceptance Gate:** Miles × rate, no actual/planned fallback, unsupported loaded/practical/contract source fails closed, unit/integration/regression evidence.
-- **Allowed Change Scope:** Phase 4B mileage calculation slice; preserve completed Phase 0–3/4A; forward-only migrations when needed.
+- **Feature/Task ID:** BE-CALC-014 / Phase 4C
+- **Objective:** Complete per-load/hourly/daily/flat calculation inputs and tests.
+- **Acceptance Gate:** Explicit eligible load/hour source and rounding, no duplicate load/day pay, preserved independent monetary dimensions, unit/live/regression evidence.
+- **Allowed Change Scope:** Phase 4C pay calculator/engine integration; preserve completed slices; forward-only migrations when needed.
 
 ### Phase Status
 
@@ -706,6 +706,27 @@
 - **Next Required Action:** Complete/test assignment-mileage calculator, explicit unavailable source errors and full input snapshots; continue remaining Phase 4 slices only after per-task tests/checkpoint.
 - **Acceptance Gate:** Unit/integration/regression for selected mileage basis and no fallback; snapshot contains basis/rate/source IDs/version.
 - **Do Not Redo:** Existing V10/V11, policy version history, completed Phase 3 and 4A unless regression evidence changes.
+
+### HOFF-0027 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-03T21:55:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Phase 4B completion → 4C
+- **Status:** DONE
+- **Objective:** Calculate driver mileage from explicit selected assignment source and snapshot evidence.
+- **Inputs Read:** Progress/HOFF-0026, assignment entity/source, engine, rounding and snapshot architecture; existing timezone audit read only as dependency; latest user payroll steering.
+- **Completed:** MileagePayCalculator and engine integration; actual/planned source selection with no fallback; source/rate validation; versioned input/raw/rounded-result snapshot; missing actual creates no settlement/snapshot. Recorded MULTI_JURISDICTION neutral payroll architecture in progress file.
+- **Requirement IDs:** BE-CALC-014 / Phase 4B; subsequent 015B architecture steering.
+- **Files and Artifacts:** MileagePayCalculator, DriverPayEngine integration, mileage unit tests, additive live settlement test, progress/memory.
+- **Decisions:** Payroll core will use generic country/subdivision/locality and independent worker classification, jurisdiction resolution priority and versioned policy/tax ports; missing statutory inputs block finalization. No US/VN/legal-rate implementation guessed. Mileage uses assignment quantities only; no trip/legacy fallback.
+- **Assumptions:** No arbitrary loaded/practical/contract attribution. Period/assignment eligibility is separate remaining 4F work.
+- **Verification:** Full disposable PG clean regression on codex_classification_20261003145401 PASS: 119 tests, 0 failures/errors, 1 legacy skip; 12 live PG cases. Four mileage unit cases and persisted snapshot/source/rollback/sequential retry case PASS. No new migration; clean V1–V12 preserved. Memory validation required before next slice.
+- **Open Issues and Risks:** Remaining engine paths/work-date eligibility/cross-period source reuse/corrections/concurrency are not claimed complete. No statutory adapters configured; neutral payroll remains authorized to proceed after Phase 4.
+- **Blockers:** None for Phase 4C.
+- **Next Required Action:** Complete per-load/hourly/daily/flat calculator and input/snapshot tests; then independent 4D–4F gates.
+- **Acceptance Gate:** Formula/source/rounding/dedup unit and live integration/regression evidence before checkpoint.
+- **Do Not Redo:** Explicit mileage/no-fallback policy or completed Phase 3/4A absent regression evidence; no applied migration edits.
 
 ## 10. Final Readiness
 
