@@ -26,6 +26,7 @@ public class DriverPayEngine {
     private final MileagePayCalculator mileageCalculator;
     private final WorkPayCalculator workCalculator;
     private final PercentagePayCalculator percentageCalculator;
+    private final AccessorialDriverPayCalculator accessorialCalculator;
     private final TripDriverAssignmentRepository assignmentRepository;
     private final TimeEntryRepository timeEntryRepository;
     private final AccessorialChargeRepository accessorialRepository;
@@ -66,6 +67,7 @@ public class DriverPayEngine {
         List<MileagePayCalculator.Result> mileageCalculations = new ArrayList<>();
         List<WorkPayCalculator.Result> workCalculations = new ArrayList<>();
         List<PercentagePayCalculator.Result> percentageCalculations = new ArrayList<>();
+        List<AccessorialDriverPayCalculator.Result> accessorialCalculations = new ArrayList<>();
         DriverPayPolicy headerPolicy = resolveHeaderPolicy(driverId, from, through, assignments, timeEntries);
         policiesUsed.put(headerPolicy.getId(), headerPolicy);
         String currency = CurrencyGuard.canonical(headerPolicy.getCurrency());
@@ -113,13 +115,18 @@ public class DriverPayEngine {
             } else if ("HOURLY".equals(policy.getPayMethod()) || "DAILY".equals(policy.getPayMethod())) {
                 // Time-entry pay is calculated below, using the policy effective on each entry date.
             }
-            for (AccessorialCharge charge : accessorialRepository.findByTripId(trip.getId())) {
-                if (!"APPROVED".equalsIgnoreCase(charge.getStatus()) || !handledAccessorials.add(charge.getId().toString())) continue;
-                if (charge.getOccurredAt() != null && (charge.getOccurredAt().toLocalDate().isBefore(from) || charge.getOccurredAt().toLocalDate().isAfter(through))) continue;
-                CurrencyGuard.requireSameCurrency(currency, charge.getCurrency());
-                BigDecimal amount = charge.getDriverPayAmount();
+            List<AccessorialCharge> charges = new ArrayList<>(accessorialRepository.findByTripId(trip.getId()));
+            for (Load load : loads) charges.addAll(accessorialRepository.findByLoadId(load.getId()).stream().filter(c -> c.getTrip() == null).toList());
+            for (AccessorialCharge charge : charges) {
+                if (!handledAccessorials.add(charge.getId().toString())) continue;
+                var eligible = accessorialCalculator.calculate(charge,driverId,from,through,currency);
+                if (eligible.isEmpty()) continue;
+                var calculation = eligible.get(); accessorialCalculations.add(calculation);
+                BigDecimal amount = calculation.amount();
                 accessorialPay = accessorialPay.add(amount);
-                lines.add(line("ACCESSORIAL", "EARNING", trip, charge.getLoad(), "Approved driver accessorial", BigDecimal.ONE, "CHARGE", amount, amount, currency, "ACCESSORIAL", charge.getId()));
+                Trip attributedTrip = calculation.tripId() == null ? null : tripRepository.findById(calculation.tripId()).orElseThrow(() -> new BadRequestException("Accessorial trip missing"));
+                var payLine = line("ACCESSORIAL", "EARNING", attributedTrip, charge.getLoad(), "Approved driver accessorial", BigDecimal.ONE, "CHARGE", amount, amount, currency, "ACCESSORIAL", charge.getId());
+                payLine.setAccessorialCharge(charge); lines.add(payLine);
             }
         }
 
@@ -177,6 +184,7 @@ public class DriverPayEngine {
         input.put("mileageCalculations", mileageCalculations);
         input.put("workCalculations", workCalculations);
         input.put("percentageCalculations", percentageCalculations);
+        input.put("accessorialCalculations", accessorialCalculations);
         input.put("lines", lines.stream().map(l -> Map.of("type", l.getLineType(), "class", l.getLineClass(), "amount", l.getAmount(),
                 "currency", l.getCurrency(), "sourceType", Objects.toString(l.getSourceType(), ""),
                 "sourceId", Objects.toString(l.getSourceId(), ""), "loadId", l.getLoad() == null ? "" : l.getLoad().getId().toString(),

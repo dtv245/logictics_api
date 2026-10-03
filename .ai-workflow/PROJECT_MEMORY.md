@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 29 |
+| Revision | 30 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
 | Last Updated | 2026-10-03T21:51:16+07:00 |
-| Current Phase | 7 — Backend Development / Phase 4E |
+| Current Phase | 7 — Backend Development / Phase 4F |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Complete Phase 4E approved driver-pay amount/proven attribution; then 4F aggregation gates and neutral multi-jurisdiction payroll. |
-| Handoff Sequence | 29 |
+| Next Action | Finish 4F eligibility/source dedup/reconciliation/lock/correction/concurrency; close Phase 4 only after tests, then neutral multi-jurisdiction payroll. |
+| Handoff Sequence | 30 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-014 / Phase 4E
-- **Objective:** Complete approved accessorial driver-pay source with proven recipient attribution.
-- **Acceptance Gate:** Only approved driver_pay_amount, no customer amount inference, missing/ambiguous recipient validation, dedup/currency/source/snapshot tests.
-- **Allowed Change Scope:** Phase 4E reader/calculator/engine integration; preserve completed accessorial ledger subsystem.
+- **Feature/Task ID:** BE-CALC-014 / Phase 4F
+- **Objective:** Complete aggregation, eligibility, reconciliation, immutable workflow and append-only corrections.
+- **Acceptance Gate:** Single concurrent original, source dedup across periods, line-level approved cost projection, immutable locked money, idempotent corrections, reconciliation and unit/live/migration/regression evidence.
+- **Allowed Change Scope:** Phase 4F settlement workflow/calculation integration and next forward migration when needed; preserve applied schema and completed slices.
 
 ### Phase Status
 
@@ -769,6 +769,27 @@
 - **Next Required Action:** Approved driver_pay_amount reader with assignment/occurredAt evidence, currency guards, missing/ambiguous-source validation and tests.
 - **Acceptance Gate:** No guessed recipient/customer amount or duplicated driver pay; unit/live/regression evidence.
 - **Do Not Redo:** Completed Phase 3/4A–4D absent regression evidence; no migration renumbering.
+
+### HOFF-0030 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-03T22:04:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Phase 4E completion → 4F
+- **Status:** DONE
+- **Objective:** Use eligible approved driver-pay amounts with proven historical recipients.
+- **Inputs Read:** Progress/HOFF-0029, charge schema/approval contract, assignment intervals, trip-stop/load attribution and source tests.
+- **Completed:** AccessorialDriverPayCalculator and snapshot; approved amount only, half-open historical assignment evidence, missing/ambiguous validation, zero/nonapproved/out-of-period exclusion and charge dedup. No owning subsystem rewrite or schema change.
+- **Requirement IDs:** BE-CALC-014 / Phase 4E.
+- **Files and Artifacts:** AccessorialDriverPayCalculator/DriverPayEngine; attribution unit/live tests; settlement contracts; progress/memory.
+- **Decisions:** No charge-recipient column exists; use a uniquely proven historical assigned driver at occurred_at. Ambiguous/missing input blocks the affected calculation rather than guessing/splitting. Load-only charges resolve only with trip/assignment evidence; no customer amount fallback.
+- **Assumptions:** None for missing recipients; no tax rate or current truck/main-driver inference.
+- **Verification:** Clean PG regression codex_classification_20261003150336 PASS: 131 tests, 0 failures/errors, 1 legacy skip; 15 PG cases. Three unit and live approved/draft/ambiguous-driver cases PASS; prior cost/accessorial suites retained. No migration.
+- **Open Issues and Risks:** Original concurrency, work-date eligibility/source reuse, reconciliation, lock immutability and correction idempotency remain 4F gates.
+- **Blockers:** None for 4F; individual charges with missing/ambiguous history raise explicit validation errors.
+- **Next Required Action:** Harden/test settlement aggregation and lifecycle; next forward migration for genuine correction/immutability schema requirements, no V10/V11 rewrite.
+- **Acceptance Gate:** Unit/live/concurrency/lock mutation/idempotency/reconciliation/migration tests; full regression before Phase 4 COMPLETE.
+- **Do Not Redo:** Completed Phase 3/4A–4E absent regression evidence; do not guess charge recipients or rewrite applied migrations.
 
 ## 10. Final Readiness
 

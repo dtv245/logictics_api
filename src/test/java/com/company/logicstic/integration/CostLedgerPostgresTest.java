@@ -361,6 +361,27 @@ class CostLedgerPostgresTest {
                 new java.math.BigDecimal("0.25"),null,"INVOICE_SUBTOTAL",null,null,null,null,null,"USD",date,null);
     }
 
+    @Test void accessorialSettlementPaysApprovedDriverAmountOnceAndBlocksAmbiguousRecipient() {
+        var fixture = fixture(); var start = java.time.LocalDate.of(2026,1,1); String code = UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(code,fixture.actor(),"0",start,null)); var period = payPeriods.create(code,start,start.plusDays(30),null);
+        UUID trip = addAssignedTrip(fixture,"2026-01-15T12:00:00Z");
+        var request = new com.company.logicstic.dto.accessorial.CreateAccessorialChargeRequest(trip,null,"OTHER",null,null,null,null,
+                new java.math.BigDecimal("999"),java.math.BigDecimal.ZERO,new java.math.BigDecimal("25"),"USD",java.time.OffsetDateTime.parse("2026-01-14T15:00:00Z"),null,null);
+        var charge = accessorials.createAccessorial(fixture.load(),request); accessorials.approveAccessorial(charge.id(),fixture.email());
+        accessorials.createAccessorial(fixture.load(),request); // draft driver pay must remain ineligible
+        var result = driverPay.calculate(fixture.actor(),period.getId()); assertEquals(new java.math.BigDecimal("25.00"),result.grossEarnings());
+        assertEquals(1,result.lines().stream().filter(l -> l.lineType().equals("ACCESSORIAL")).count());
+        assertEquals(charge.id(),jdbc.queryForObject("select accessorial_charge_id from settlement_lines where settlement_id=? and line_type='ACCESSORIAL'",UUID.class,result.id()));
+        var other = fixture(); String otherCode = UUID.randomUUID().toString(); payPolicies.create(payPolicyRequest(otherCode,other.actor(),"0",start,null));
+        var otherPeriod = payPeriods.create(otherCode,start,start.plusDays(30),null);
+        jdbc.update("""
+                insert into trip_driver_assignments(id,trip_id,driver_id,effective_from,effective_to,actual_miles)
+                values (?,?,?,'2026-01-14T12:00:00Z','2026-01-15T12:00:00Z',100)
+                """,UUID.randomUUID(),trip,other.actor());
+        assertEquals("ACCESSORIAL_PAY_VALIDATION_REQUIRED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> driverPay.calculate(other.actor(),otherPeriod.getId())).getCode());
+    }
+
     private record Fixture(UUID actor, UUID load, UUID expense, String email) {}
 
     @Test void concurrentAccessorialApprovalsProjectOnlyCompanyCost() throws Exception {
