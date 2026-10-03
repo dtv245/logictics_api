@@ -1,6 +1,6 @@
 # LogisticsX implementation checkpoint
 
-Updated: 2026-10-03T21:44:54+07:00. Sources: convention plan, current code, Flyway resources and actual Maven/PostgreSQL results. This file was missing at continuation start; prior verified handoffs were retained in `.ai-workflow/PROJECT_MEMORY.md`.
+Updated: 2026-10-03T21:51:16+07:00. Sources: convention plan, current code, Flyway resources and actual Maven/PostgreSQL results. This file was missing at continuation start; prior verified handoffs were retained in `.ai-workflow/PROJECT_MEMORY.md`.
 
 ## Completed
 
@@ -10,11 +10,12 @@ Updated: 2026-10-03T21:44:54+07:00. Sources: convention plan, current code, Flyw
 - BE-CALC-011-COST-CLASSIFICATION: versioned domain policy V1, explicit metadata for maintenance, unknown semantics retained.
 - Task 3.3: actual variable/fixed/excluded/unclassified explanation, Contribution Margin, Allocated Profit, ratios, legacy percentage compatibility, currency/zero/unknown guards and grouped results.
 - **Phase 3 COMPLETE** at the specified availability-aware acceptance level. Recorded unknown costs suppress derived profits; no guessed history/backfill. Empty cost sets are complete; this does not assert all company overhead has been recorded.
+- Phase 4A / BE-CALC-013: versioned policies, effective resolver, explicit supported bases/rates/ratio/currency/precision validation and protected pay-period APIs. Concurrent versioning and locked historical references verified. Contract: docs/driver-pay-policy-contracts.md.
+- Phase 3 commits: 36b5c9e policy/calculator; ee17155 formulas/contracts/checkpoint.
 
 ## In progress
 
-- Phase 4A: existing V10 policy/pay-period schema and partial policy CRUD inspected; effective-date resolution, historical version protection, validation and dedicated tests still need verification.
-- Phase 4B–4F: existing partial DriverPayEngine/correction APIs are unverified foundation, not completed tasks.
+- Phase 4B–4F: existing partial DriverPayEngine/correction APIs are unverified foundation, not completed tasks. Mileage basis and resolver integration prepared during 4A; remaining monetary/workflow paths still need dedicated gates.
 
 ## Not started
 
@@ -30,6 +31,7 @@ Updated: 2026-10-03T21:44:54+07:00. Sources: convention plan, current code, Flyw
 - 9 live PostgreSQL integration cases executed, including startup/Flyway, ledger/accessorial concurrency, API authorization, no GET writes, classification formulas and ambiguous maintenance.
 - 3 policy unit tests; 9 calculator unit tests; existing profitability facts/service, shipment-cost, accessorial and other regression suites passed.
 - Existing cost/accessorial test expectations unchanged. Profitability expectations changed only for the newly authorized policy, known costs and empty eligible cost sets.
+- Phase 4A full regression on codex_classification_20261003145035: 114 tests, 0 failures/errors, 1 legacy skip; 11 live PG cases. Added 12 policy/resolver/period unit cases and 2 policy/period live cases, including concurrent version creation and retained locked-settlement policy reference.
 - `git diff --check` PASS. Runtime OpenAPI/controller mappings load with the full application context.
 
 ## Migrations applied
@@ -48,5 +50,5 @@ Updated: 2026-10-03T21:44:54+07:00. Sources: convention plan, current code, Flyw
 
 ## Next task
 
-- Complete and test Phase 4A using existing V10 schema. Do not recreate V10/V11 or reopen completed Phase 3 subsystems without regression evidence.
+- Complete Phase 4B mileage pay calculation with explicit assignment basis, missing-source validation and snapshot inputs, then 4C–4F in separate verified slices. Do not recreate V10/V11 or reopen completed Phase 3 subsystems without regression evidence.
 - Preserve unrelated pre-existing worktree/staged files. Commit each completed sub-task with explicit paths only.

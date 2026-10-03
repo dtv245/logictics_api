@@ -29,6 +29,9 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.cost.CostAllocator allocator;
     @Autowired com.company.logicstic.service.accessorial.AccessorialService accessorials;
     @Autowired org.springframework.web.context.WebApplicationContext webContext;
+    @Autowired com.company.logicstic.service.payroll.DriverPayPolicyService payPolicies;
+    @Autowired com.company.logicstic.service.payroll.DriverPayPolicyResolver payPolicyResolver;
+    @Autowired com.company.logicstic.service.payroll.PayPeriodService payPeriods;
 
     @Test void contextLoadsWithEveryEntityAndController() {
         assertTrue(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Integer.class) >= 11);
@@ -190,6 +193,73 @@ class CostLedgerPostgresTest {
                 values (?,?,'Test freight','FREIGHT',1,1,0,0,100,'USD')
                 """, UUID.randomUUID(),id);
         return id;
+    }
+
+    @Test void policyVersionConcurrencyPreservesLockedSettlementHistoricalPolicy() throws Exception {
+        var fixture = fixture(); var start = java.time.LocalDate.of(2026,1,1);
+        String code = UUID.randomUUID().toString();
+        var old = payPolicies.create(payPolicyRequest(code,fixture.actor(),"1",start,null));
+        var period = payPeriods.create(code,start,start.plusDays(30),null);
+        UUID settlement = UUID.randomUUID(), snapshot = UUID.randomUUID();
+        jdbc.update("""
+                insert into calculation_snapshots(id,entity_type,entity_id,calculation_type,engine_name,engine_version,input_json,result_json)
+                values (?,'SETTLEMENT',?,'DRIVER_PAY','Test','1','{}','{}')
+                """,snapshot,settlement);
+        jdbc.update("""
+                insert into settlements(id,settlement_number,driver_id,pay_period_id,pay_policy_id,pay_policy_version,status,currency,calculation_snapshot_id,settlement_net)
+                values (?, ?, ?, ?, ?, 1, 'LOCKED', 'USD', ?, 10)
+                """,settlement,settlement.toString(),fixture.actor(),period.getId(),old.getId(),snapshot);
+        var request = payPolicyRequest(code,fixture.actor(),"2",start.plusMonths(1),start.plusMonths(2));
+        var gate = new java.util.concurrent.CountDownLatch(1);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            java.util.concurrent.Callable<Object> create = () -> {
+                gate.await();
+                try { return payPolicies.newVersion(old.getId(),request); }
+                catch (com.company.logicstic.exception.BadRequestException e) { return e.getCode(); }
+            };
+            var first = pool.submit(create); var second = pool.submit(create); gate.countDown();
+            var results = java.util.List.of(first.get(20,TimeUnit.SECONDS),second.get(20,TimeUnit.SECONDS));
+            assertEquals(1,results.stream().filter(com.company.logicstic.entity.DriverPayPolicy.class::isInstance).count());
+            assertEquals(1,results.stream().filter("POLICY_VERSION_STALE"::equals).count());
+        }
+        assertEquals(2,jdbc.queryForObject("select count(*) from driver_pay_policies where policy_code=?",Integer.class,code));
+        assertEquals(0,new java.math.BigDecimal("1").compareTo(jdbc.queryForObject("select per_mile_rate from driver_pay_policies where id=?",java.math.BigDecimal.class,old.getId())));
+        assertNull(jdbc.queryForObject("select effective_to from driver_pay_policies where id=?",java.sql.Date.class,old.getId()));
+        assertEquals(old.getId(),jdbc.queryForObject("select pay_policy_id from settlements where id=?",UUID.class,settlement));
+        assertEquals(1,jdbc.queryForObject("select pay_policy_version from settlements where id=?",Integer.class,settlement));
+        assertEquals(old.getId(),payPolicyResolver.resolve(fixture.actor(),start.plusDays(15)).getId());
+        assertEquals(2,payPolicyResolver.resolve(fixture.actor(),start.plusMonths(1)).getPolicyVersion());
+        assertThrows(com.company.logicstic.exception.BadRequestException.class, () -> payPolicyResolver.resolve(fixture.actor(),start.plusMonths(2).plusDays(1)));
+    }
+
+    @Test void payPolicyAndPeriodEndpointsAreProtectedAndValidateActualContracts() throws Exception {
+        var fixture = fixture(); var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext)
+                .apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
+        for (String path : new String[]{"/api/driver-pay-policies","/api/pay-periods"}) {
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path)
+                    .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("driver").roles("DRIVER")))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+        }
+        String periodJson = "{\"periodCode\":\"" + UUID.randomUUID() + "\",\"startDate\":\"2026-01-01\",\"endDate\":\"2026-01-31\"}";
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/pay-periods").contentType("application/json").content(periodJson)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("PAYROLL_MANAGER")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isCreated())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value("OPEN"));
+        String policyJson = "{\"policyCode\":\""+UUID.randomUUID()+"\",\"name\":\"Contract\",\"driverId\":\""+fixture.actor()+"\",\"payMethod\":\"PERCENT_REVENUE\",\"revenuePercentage\":0.25,\"revenueBasis\":\"INVOICE_SUBTOTAL\",\"currency\":\"USD\",\"effectiveFrom\":\"2026-01-01\"}";
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/driver-pay-policies").contentType("application/json").content(policyJson)
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("PAYROLL_MANAGER")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isCreated())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.revenuePercentage").value(0.25));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/driver-pay-policies").contentType("application/json").content(policyJson.replace("0.25","25"))
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("PAYROLL_MANAGER")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    private com.company.logicstic.dto.payroll.DriverPayPolicyRequest payPolicyRequest(String code, UUID driver, String rate,
+            java.time.LocalDate from, java.time.LocalDate to) {
+        return new com.company.logicstic.dto.payroll.DriverPayPolicyRequest(code,"Mileage",driver,"PER_MILE",new java.math.BigDecimal(rate),
+                null,null,null,null,null,"ACTUAL_ALL_MILES",null,null,null,null,null,null,"USD",from,to);
     }
 
     private record Fixture(UUID actor, UUID load, UUID expense, String email) {}

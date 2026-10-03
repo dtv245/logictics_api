@@ -600,7 +600,8 @@ Chuyển đổi toàn bộ chi phí rời rạc thành một sổ cái chi phí 
 Xây dựng cơ chế tính toán thu nhập tài xế theo chuyến đi/kỳ làm việc minh bạch, tách bạch hoàn toàn khỏi Hóa đơn khách hàng (`invoices`), hỗ trợ đầy đủ các hình thức trả lương ngành vận tải (theo dặm, theo cuốc, % cước, theo giờ, tiền chờ detention).
 
 #### 2. Danh sách Task chi tiết:
-- [ ] **Task 4.1 (BE-CALC-013 - Chính sách Thù lao Tài xế có Phiên bản)**:
+- [x] **Task 4.1 (BE-CALC-013 - Chính sách Thù lao Tài xế có Phiên bản)**:
+  - **Phase 4A verified:** Existing V10 preserved; append-only/latest-row locked version creation, work-date resolver (scope/family/expiry/ambiguity), explicit sourced mileage/revenue bases, rate/ratio/precision/currency/date validation, protected pay-period APIs. Full regression 114 tests, 0 failures/errors, 1 legacy skip; 11 live PG cases include historical locked-policy reference and concurrent new-version. Contract: `docs/driver-pay-policy-contracts.md`.
   - Viết Flyway Migration `V10__create_driver_pay_and_settlement_tables.sql` (Phần 1: Bảng `driver_pay_policies` và `pay_periods`).
   - Hỗ trợ các phương thức: `PER_MILE`, `PER_LOAD`, `PERCENT_REVENUE`, `HOURLY`, `DAILY`, `FLAT_RATE`.
   - Thiết lập cơ chế hiệu lực theo ngày (`effective_from`, `effective_to`) và số phiên bản (`policy_version`).

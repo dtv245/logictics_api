@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 25 |
+| Revision | 26 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
-| Last Updated | 2026-10-03T21:44:54+07:00 |
-| Current Phase | 7 — Backend Development / Phase 4A |
+| Last Updated | 2026-10-03T21:51:16+07:00 |
+| Current Phase | 7 — Backend Development / Phase 4B |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Complete Phase 4A using existing V10 policies/pay periods: historical version safety, effective resolver, validation, unit/API/concurrency tests. Phase 3 gate passed; preserve policy V1 and unknown semantics. |
-| Handoff Sequence | 25 |
+| Next Action | Complete Phase 4B assignment-mileage pay, explicit source validation and auditable inputs; then 4C–4F independently. Phase 3 and 4A passed; no schema recreation. |
+| Handoff Sequence | 26 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-013 / Phase 4A
-- **Objective:** Complete existing driver policy/pay-period foundation after the verified Phase 3 gate.
-- **Acceptance Gate:** Append-only historical versions, explicit supported rate/basis/currency/date validation, deterministic effective-date resolution, API security and unit/live concurrency tests.
-- **Allowed Change Scope:** Phase 4A policy/pay-period slice; no rewrite of Phase 0–3; forward-only migrations when genuinely needed.
+- **Feature/Task ID:** BE-CALC-014 / Phase 4B
+- **Objective:** Complete explicit driver assignment mileage calculation and snapshot inputs.
+- **Acceptance Gate:** Miles × rate, no actual/planned fallback, unsupported loaded/practical/contract source fails closed, unit/integration/regression evidence.
+- **Allowed Change Scope:** Phase 4B mileage calculation slice; preserve completed Phase 0–3/4A; forward-only migrations when needed.
 
 ### Phase Status
 
@@ -72,7 +72,7 @@
 | BE-CALC-010 | Task 3.1 | Backend Developer | DONE | Atomic audited approval/projector with expense lock; historical mileage/truck allocation snapshots and retry immutability; real PostgreSQL concurrency/rollback/snapshot tests; full startup; 65 tests, 0 failures/errors, 1 legacy skip | Proceed to Task 3.2 |
 | BE-CALC-012 | Task 3.2 | Backend Developer | DONE | Precise block/hourly detention, independent amounts, RBAC/auth actor, reference validation, row-lock retry/audit and company-only ledger projection; PostgreSQL concurrency/endpoint tests; 74 tests PASS with 1 legacy skip | Proceed to Task 3.3 |
 | BE-CALC-011 | Task 3.3 | Backend Developer | DONE | LOGISTICSX_COST_CLASSIFICATION V1; explainable variable/fixed/excluded/unknown inputs, formulas and ratios; 100 tests, 0 failure/error, 1 legacy skip, 9 PG integration cases | Phase 4A; do not infer ambiguous maintenance or OTHER semantics |
-| BE-CALC-013 | Task 4.1 | Backend Developer | IN_PROGRESS | Policy/period entities, DTOs, repository and CRUD/new-version routes added | Add effective-date resolver, authorization, tests and PostgreSQL mapping verification |
+| BE-CALC-013 | Task 4.1 / 4A | Backend Developer | DONE | Append-only locked versioning, expiry/scope/ambiguity resolver, explicit validation and pay-period APIs; 114 regression tests incl. 11 live PG | Phase 4B mileage calculation |
 | BE-CALC-014 | Task 4.2 | Backend Developer | IN_PROGRESS | Calculation, snapshots, state transitions, append-only adjustment/reversal, and signed cost credits implemented | Add tests, runtime JPA mapping verification, auth checks, and evaluate source/attribution edge cases |
 | BE-CALC-015 | Task 5.1 | Database Engineer | DONE | V11 creates payroll runs/items, settlement join, payslips, and payments; local clean and upgrade succeeded | Continue Task 5.2 workflow without hardcoding jurisdiction tax rules |
 | BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | NOT_STARTED | Only schema and partial Invoice deprecation annotation exist | Implement payroll workflow, payment state reconciliation, driver payslip API, and stop use of legacy payroll invoice fields |
@@ -685,6 +685,27 @@
 - **Next Required Action:** Read progress checkpoint, then finish/test existing V10 driver policy/pay-period slice; preserve old versions and deterministic work-date resolution. Continue Phase 4 in separate verified sub-tasks.
 - **Acceptance Gate:** Phase 4A unit/integration/RBAC/concurrency validation; no renumbering/recreation of existing migrations; all regression suites remain green.
 - **Do Not Redo:** Phase 0–2 audits, Shipment Cost/Accessorial subsystems or classified-profit formulas unless new regression evidence appears. Do not guess OTHER/ambiguous maintenance, infer actual from estimate, write snapshots on GET or mix currencies.
+
+### HOFF-0026 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-03T21:51:16+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Phase 4A completion → 4B
+- **Status:** DONE
+- **Objective:** Complete existing V10 policy/pay-period slice without recreating schema or overwriting history.
+- **Inputs Read:** Progress/Control/HOFF-0025; V10; policy/entity/repositories/DTO/controller; assignment mileage source; existing engine resolver and security.
+- **Completed:** New-version locks/latest-family check and fixed scope; resolver chooses work-date family/version with explicit driver/default precedence, refuses ambiguity and prevents expired-version resurrection. Added rate/currency/precision/ratio/date and sourced-basis validation; protected pay-period create/list APIs. Prepared resolver/canonical basis engine integration for later monetary gates; does not claim full engine verified.
+- **Requirement IDs:** BE-CALC-013 / Phase 4A.
+- **Files and Artifacts:** DriverPayPolicyService/Resolver/Repository; PayPeriodService/Repository/Controller; SecurityConfig; policy/resolver/period unit tests; additive PG policy tests; driver-pay-policy-contracts; plan/progress/memory. Existing engine resolver/basis integration remains foundation for BE-CALC-014.
+- **Decisions:** Only assignment ACTUAL_ALL_MILES/PLANNED_ALL_MILES and reconciled INVOICE_SUBTOTAL have supported driver/revenue sources. Historical alias rows preserved. No arbitrary selection across policy families; no historical row mutation. No new migration.
+- **Assumptions:** None for unavailable per-driver loaded/practical/contract miles. Period overlaps are not newly forbidden; source eligibility is a later engine invariant.
+- **Verification:** ./mvnw -q -Dtest=DriverPayPolicyServiceTest,DriverPayPolicyResolverTest,PayPeriodServiceTest test PASS; full disposable PG clean test PASS: 114 tests, 0 failure/error, 1 legacy skip, 11 live PG cases. Concurrent versions produced one successor/one POLICY_VERSION_STALE; locked settlement retained old policy ID/version/rate. Endpoint 201/400/403 contracts PASS. git diff --check PASS; memory validator required before next slice.
+- **Open Issues and Risks:** Settlement engine monetary/reconciliation/idempotency/workflow tests still incomplete. Payroll jurisdiction/worker-classification question sent asynchronously; no statutory rates assumed. Production rollout/performance remain separate risks.
+- **Blockers:** None for Phase 4B.
+- **Next Required Action:** Complete/test assignment-mileage calculator, explicit unavailable source errors and full input snapshots; continue remaining Phase 4 slices only after per-task tests/checkpoint.
+- **Acceptance Gate:** Unit/integration/regression for selected mileage basis and no fallback; snapshot contains basis/rate/source IDs/version.
+- **Do Not Redo:** Existing V10/V11, policy version history, completed Phase 3 and 4A unless regression evidence changes.
 
 ## 10. Final Readiness
 
