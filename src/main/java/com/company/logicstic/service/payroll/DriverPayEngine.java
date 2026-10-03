@@ -25,6 +25,7 @@ public class DriverPayEngine {
     private final DriverPayPolicyResolver policyResolver;
     private final MileagePayCalculator mileageCalculator;
     private final WorkPayCalculator workCalculator;
+    private final PercentagePayCalculator percentageCalculator;
     private final TripDriverAssignmentRepository assignmentRepository;
     private final TimeEntryRepository timeEntryRepository;
     private final AccessorialChargeRepository accessorialRepository;
@@ -64,6 +65,7 @@ public class DriverPayEngine {
         Map<UUID, DriverPayPolicy> policiesUsed = new LinkedHashMap<>();
         List<MileagePayCalculator.Result> mileageCalculations = new ArrayList<>();
         List<WorkPayCalculator.Result> workCalculations = new ArrayList<>();
+        List<PercentagePayCalculator.Result> percentageCalculations = new ArrayList<>();
         DriverPayPolicy headerPolicy = resolveHeaderPolicy(driverId, from, through, assignments, timeEntries);
         policiesUsed.put(headerPolicy.getId(), headerPolicy);
         String currency = CurrencyGuard.canonical(headerPolicy.getCurrency());
@@ -71,6 +73,7 @@ public class DriverPayEngine {
         Set<String> handledAccessorials = new HashSet<>();
         Set<String> dailyPaid = new HashSet<>();
         Set<UUID> paidLoads = new HashSet<>();
+        Set<UUID> revenueLoads = new HashSet<>();
         for (TripDriverAssignment assignment : assignments) {
             LocalDate workDate = tripWorkDate(assignment, from, through);
             if (workDate.isBefore(from)) workDate = from;
@@ -96,11 +99,12 @@ public class DriverPayEngine {
                     lines.add(line("LOAD", "EARNING", trip, load, "Per-load pay", BigDecimal.ONE, "LOAD", amount, amount, currency, "TRIP_ASSIGNMENT", assignment.getId()));
                 }
             } else if ("PERCENT_REVENUE".equals(policy.getPayMethod())) {
+                if (loads.isEmpty()) throw new BadRequestException("REVENUE_PAY_VALIDATION_REQUIRED", "Trip has no attributable eligible load revenue");
                 for (Load load : loads) {
+                    if (!revenueLoads.add(load.getId())) continue;
                     Invoice invoice = invoiceRepository.findByLoadId(load.getId()).orElse(null);
-                    if (invoice == null || invoice.getSubtotalAmount() == null || !com.company.logicstic.common.enums.InvoiceStatus.fromString(invoice.getStatus()).countsAsRevenue()) continue;
-                    CurrencyGuard.requireSameCurrency(currency, invoice.getSubtotalCurrency());
-                    BigDecimal amount = invoice.getSubtotalAmount().multiply(policy.getRevenuePercentage());
+                    var calculation = percentageCalculator.calculate(invoice,policy); percentageCalculations.add(calculation);
+                    BigDecimal amount = calculation.amount();
                     percentPay = percentPay.add(amount);
                     lines.add(line("REVENUE_PERCENT", "EARNING", trip, load, "Percentage of invoiced revenue", invoice.getSubtotalAmount(), currency, policy.getRevenuePercentage(), amount, currency, "INVOICE", invoice.getId()));
                 }
@@ -172,6 +176,7 @@ public class DriverPayEngine {
                 "effectiveFrom", p.getEffectiveFrom(), "effectiveTo", Objects.toString(p.getEffectiveTo(), ""), "method", p.getPayMethod())).toList());
         input.put("mileageCalculations", mileageCalculations);
         input.put("workCalculations", workCalculations);
+        input.put("percentageCalculations", percentageCalculations);
         input.put("lines", lines.stream().map(l -> Map.of("type", l.getLineType(), "class", l.getLineClass(), "amount", l.getAmount(),
                 "currency", l.getCurrency(), "sourceType", Objects.toString(l.getSourceType(), ""),
                 "sourceId", Objects.toString(l.getSourceId(), ""), "loadId", l.getLoad() == null ? "" : l.getLoad().getId().toString(),

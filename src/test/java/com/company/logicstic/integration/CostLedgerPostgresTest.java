@@ -339,6 +339,28 @@ class CostLedgerPostgresTest {
         return trip;
     }
 
+    @Test void percentageSettlementUsesReconciledSubtotalOnceAndRejectsMissingInvoice() {
+        var start = java.time.LocalDate.of(2026,1,1); var fixture = fixture(); String code = UUID.randomUUID().toString();
+        payPolicies.create(percentagePolicy(code,fixture.actor(),start)); var period = payPeriods.create(code,start,start.plusDays(30),null);
+        UUID invoice = addInvoice(fixture.load()); jdbc.update("update invoices set tax_total_amount=10,total_amount=110 where id=?",invoice);
+        addAssignedTrip(fixture,"2026-01-15T12:00:00Z"); addAssignedTrip(fixture,"2026-01-15T13:00:00Z");
+        var result = driverPay.calculate(fixture.actor(),period.getId()); assertEquals(new java.math.BigDecimal("25.00"),result.grossEarnings()); assertEquals(1,result.lines().size());
+        String input = jdbc.queryForObject("select cs.input_json::text from calculation_snapshots cs join settlements s on s.calculation_snapshot_id=cs.id where s.id=?",String.class,result.id());
+        var data = tools.jackson.databind.json.JsonMapper.builder().build().readTree(input).get("percentageCalculations").get(0);
+        assertEquals("INVOICE_SUBTOTAL",data.get("revenueBasis").asText()); assertEquals(invoice.toString(),data.get("invoiceId").asText());
+        assertEquals(0,new java.math.BigDecimal("100").compareTo(data.get("eligibleRevenue").decimalValue()));
+        var missing = fixture(); String missingCode = UUID.randomUUID().toString(); payPolicies.create(percentagePolicy(missingCode,missing.actor(),start));
+        var missingPeriod = payPeriods.create(missingCode,start,start.plusDays(30),null); addAssignedTrip(missing,"2026-01-15T12:00:00Z");
+        assertEquals("REVENUE_PAY_VALIDATION_REQUIRED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> driverPay.calculate(missing.actor(),missingPeriod.getId())).getCode());
+        assertEquals(0,jdbc.queryForObject("select count(*) from settlements where driver_id=?",Integer.class,missing.actor()));
+    }
+
+    private com.company.logicstic.dto.payroll.DriverPayPolicyRequest percentagePolicy(String code, UUID driver, java.time.LocalDate date) {
+        return new com.company.logicstic.dto.payroll.DriverPayPolicyRequest(code,"Revenue",driver,"PERCENT_REVENUE",null,null,null,null,null,
+                new java.math.BigDecimal("0.25"),null,"INVOICE_SUBTOTAL",null,null,null,null,null,"USD",date,null);
+    }
+
     private record Fixture(UUID actor, UUID load, UUID expense, String email) {}
 
     @Test void concurrentAccessorialApprovalsProjectOnlyCompanyCost() throws Exception {

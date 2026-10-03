@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 28 |
+| Revision | 29 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
 | Last Updated | 2026-10-03T21:51:16+07:00 |
-| Current Phase | 7 — Backend Development / Phase 4D |
+| Current Phase | 7 — Backend Development / Phase 4E |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Complete Phase 4D reconciled explicit revenue-percentage calculation; then accessorial attribution and settlement aggregation gates, followed by neutral multi-jurisdiction payroll. |
-| Handoff Sequence | 28 |
+| Next Action | Complete Phase 4E approved driver-pay amount/proven attribution; then 4F aggregation gates and neutral multi-jurisdiction payroll. |
+| Handoff Sequence | 29 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-014 / Phase 4D
-- **Objective:** Complete explicit reconciled revenue-basis percentage pay.
-- **Acceptance Gate:** Ratio convention, invoice subtotal excluding tax, no missing-source bypass, reconciliation/currency/dedup/snapshot tests.
-- **Allowed Change Scope:** Phase 4D calculator/engine integration; preserve completed slices.
+- **Feature/Task ID:** BE-CALC-014 / Phase 4E
+- **Objective:** Complete approved accessorial driver-pay source with proven recipient attribution.
+- **Acceptance Gate:** Only approved driver_pay_amount, no customer amount inference, missing/ambiguous recipient validation, dedup/currency/source/snapshot tests.
+- **Allowed Change Scope:** Phase 4E reader/calculator/engine integration; preserve completed accessorial ledger subsystem.
 
 ### Phase Status
 
@@ -748,6 +748,27 @@
 - **Next Required Action:** Add percentage-pay calculator using explicit eligible reconciled subtotal, ratios/currency, unknown-source guard and tests.
 - **Acceptance Gate:** Unit/live/API/regression formulas and immutable input explanation before checkpoint.
 - **Do Not Redo:** Completed calculator/source mapping slices absent regression evidence; no applied migration edits.
+
+### HOFF-0029 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-03T22:01:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Phase 4D completion → 4E
+- **Status:** DONE
+- **Objective:** Calculate percentage pay from explicit reconciled eligible revenue.
+- **Inputs Read:** Progress/HOFF-0028, invoice eligibility/reconciliation, policy basis/ratio, engine and fixtures.
+- **Completed:** PercentagePayCalculator and snapshot inputs; explicit subtotal only, ratio/currency/reconciliation guards, missing-source validation and within-calculation load dedup. No tax/quote numerator or catch-and-skip zero wages.
+- **Requirement IDs:** BE-CALC-014 / Phase 4D.
+- **Files and Artifacts:** PercentagePayCalculator/DriverPayEngine; percentage unit/live tests; settlement contracts; progress/memory.
+- **Decisions:** Missing/noneligible invoice is validation required; subtotal must reconcile. Existing ratio and configured rounding boundaries retained.
+- **Assumptions:** No source inferred for linehaul or invoice total; no statutory rates.
+- **Verification:** Final clean PG regression codex_classification_20261003150051 PASS: 127 tests, 0 failures/errors, 1 legacy skip; 14 live cases. Three dedicated unit cases and live subtotal/tax exclusion/dedup/snapshot/missing-source case PASS. Initial test lambda compile error corrected before final run; no migration.
+- **Open Issues and Risks:** Remaining 4E/4F attribution, eligibility/source reuse, reconciliation/workflow/corrections/concurrency gates open.
+- **Blockers:** None for 4E implementation; current charge schema has no explicit driver recipient, so attribution must be proved from historical assignments or rejected as ambiguous.
+- **Next Required Action:** Approved driver_pay_amount reader with assignment/occurredAt evidence, currency guards, missing/ambiguous-source validation and tests.
+- **Acceptance Gate:** No guessed recipient/customer amount or duplicated driver pay; unit/live/regression evidence.
+- **Do Not Redo:** Completed Phase 3/4A–4D absent regression evidence; no migration renumbering.
 
 ## 10. Final Readiness
 

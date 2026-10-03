@@ -6,4 +6,6 @@ Phase 4C uses persisted time_entries.total_hours for HOURLY, not legacy Invoice 
 
 Current calendar dependency: existing audit specifies UTC persistence and LocalDate for periods/policy dates; settlement period boundaries currently use UTC. Region-specific payroll jurisdiction does not silently change historical settlement calendar semantics.
 
-Phase 4D–4F remain separate gates: invoice subtotal reconciliation, accessorial recipient attribution, work-date/source deduplication across periods, lock/reconciliation/concurrent original creation and append-only correction idempotency. No full Phase 4 completion is claimed at the calculator-only checkpoints.
+Phase 4D uses PERCENT_REVENUE + INVOICE_SUBTOTAL only: an eligible invoice must have a subtotal reconciled against currency-qualified lines. Ratio is in [0,1], tax/quoted freight never enters the numerator. Missing/noneligible invoice raises REVENUE_PAY_VALIDATION_REQUIRED, not zero wages. Revenue sources deduplicate by load within calculation and snapshot invoice ID, policy ID/version, basis, eligible subtotal, ratio and raw/rounded result.
+
+Phase 4E–4F remain separate gates: accessorial recipient attribution, work-date/source deduplication across periods, lock/reconciliation/concurrent original creation and append-only correction idempotency. No full Phase 4 completion is claimed at the calculator-only checkpoints.
