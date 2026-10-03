@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 31 |
+| Revision | 32 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
-| Last Updated | 2026-10-03T22:29:00+07:00 |
-| Current Phase | 7 — Backend Development / Phase 015B |
+| Last Updated | 2026-10-04T02:45:00+07:00 |
+| Current Phase | 7 — Backend Development / Phase 015C |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Implement jurisdiction-neutral 015B using V11 and V14; generic jurisdiction/profile/policy resolution, tax ports and fail-closed availability. |
-| Handoff Sequence | 31 |
+| Next Action | Separate 015C approval/lock with immutable financial inputs; 015D payslip then 015E–015G payment orchestration. |
+| Handoff Sequence | 32 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-015 / Phase 015B
-- **Objective:** Multi-jurisdiction neutral payroll aggregation, source mapping, policy/tax ports and reconciliation.
-- **Acceptance Gate:** Immutable source/policy/tax explanation, no guessed rates or zero bypass, jurisdiction priority and availability; unit/live/migration/regression evidence.
-- **Allowed Change Scope:** Jurisdiction-neutral 015B and forward V14; preserve V11 and completed Phase 3/4.
+- **Feature/Task ID:** BE-CALC-015 / Phase 015C
+- **Objective:** Add separate approved/locked payroll workflow with immutable monetary snapshots and no premature PAID state.
+- **Acceptance Gate:** Availability/reconciliation blocks finalization, authenticated audit, immutable locked header/items/source claims and concurrency/idempotency/migration/unit/live regression.
+- **Allowed Change Scope:** Separate 015C workflow and forward V15; preserve completed 015B and V11/V14.
 
 ### Phase Status
 
@@ -49,10 +49,10 @@
 | 4. System Architecture | Software Architect | Software Architect; Tech Lead; Security Engineer; Database Engineer | DONE | ADR-001 and ADR-002 |
 | 5. API Design | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer; Security Engineer | NOT_STARTED | — |
 | 6. Project Structure | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer | DONE | Existing Spring layout |
-| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 complete; 141 regression tests incl.21 PG; neutral 015B next |
+| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 and neutral 015B complete; 161 regression tests incl.29 PG; 015C next |
 | 8. Frontend Development | Frontend Developer | Frontend Developer; Tech Lead; QA / Tester; Security Engineer; Code Reviewer | NOT_APPLICABLE | API-only repository scope |
 | 9. Integration | Tech Lead | Tech Lead; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
-| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 141 tests, 0 failures/errors, 1 legacy skip; 21 live PostgreSQL cases; payroll/later phases incomplete |
+| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 161 tests, 0 failures/errors, 1 legacy skip; 29 live PostgreSQL cases; 015C–015G/later phases incomplete |
 | 11. Security Review | Security Engineer | Security Engineer; Software Architect; Backend Developer; Frontend Developer; Code Reviewer | NOT_STARTED | — |
 | 12. Performance Review | Tech Lead | Tech Lead; Database Engineer; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
 | 13. Code Review | Code Reviewer | Code Reviewer; Tech Lead; Security Engineer | NOT_STARTED | — |
@@ -75,7 +75,7 @@
 | BE-CALC-013 | Task 4.1 / 4A | Backend Developer | DONE | Append-only locked versioning, expiry/scope/ambiguity resolver, explicit validation and pay-period APIs; 114 regression tests incl. 11 live PG | Phase 4B mileage calculation |
 | BE-CALC-014 | Task 4.2 | Backend Developer | DONE | All 4A–4F gates; 141 regression tests incl.21 PG, V13 clean/upgrade, concurrency/reconciliation/history/idempotency | Jurisdiction-neutral 015B |
 | BE-CALC-015 | Task 5.1 | Database Engineer | DONE | V11 creates payroll runs/items, settlement join, payslips, and payments; local clean and upgrade succeeded | Continue Task 5.2 workflow without hardcoding jurisdiction tax rules |
-| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B neutral framework started; V11 reused, 015C–015G not started | Generic jurisdiction/profile/policy resolution and fail-closed tax port |
+| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B DONE with V14 neutral config/ports/snapshots/source claims; 015C in progress, 015D–015G not started | Separate availability-aware approval/lock |
 | BE-CALC-016–017 | Phases 6–8 | Backend Developer | NOT_STARTED | No implementation evidence in this handoff | Proceed after payroll and settlement gates |
 
 ## 4. Requirements and Scope
@@ -107,7 +107,7 @@
 - **Modules / Boundaries:** Controller → service → repository/entity.
 - **Dependency Direction:** HTTP depends on services; services depend on repositories/entities.
 - **Authentication / Authorization:** JWT tenant claim routes to a tenant data source.
-- **Data Model / Migration:** Flyway V1–V13 clean and populated V12–V13 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
+- **Data Model / Migration:** Flyway V1–V14 clean and populated V13–V14 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
 - **API / Integration Contract:** REST; Phase 1 and Task 3.1 unit/security/service integration contracts verified; documents linked below.
 - **Deployment / Runtime:** Docker assets exist but are unverified.
 
@@ -812,6 +812,27 @@
 - **Acceptance Gate:** Unit/live/concurrency/migration/regression evidence and fail-closed statutory availability before checkpoint.
 - **Do Not Redo:** Completed Phase 3/4; do not edit applied V1–V13 or infer legal rates, trip allocation or historical dates.
 
+### HOFF-0032 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T02:45:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / 015B completion → 015C
+- **Status:** DONE
+- **Objective:** Implement jurisdiction-neutral payroll without inferred statutory rates.
+- **Inputs Read:** Progress/HOFF-0031, V11, existing JPA/rounding/snapshot/security conventions and user MULTI_JURISDICTION requirements.
+- **Completed:** Generic country/subdivision/locality config and independent classification, effective profile/policy resolver, adapter dispatch ports, immutable versions and snapshots; signed reversal economic gross, reconciliation, unique settlement/supplement mapping; explicit recalculation history and UNAVAILABLE/VALIDATION_REQUIRED gates. Protected configuration/calculation/read APIs. V14 forward migration.
+- **Requirement IDs:** BE-CALC-015B and user multi-jurisdiction steering.
+- **Files and Artifacts:** Payroll domain/policy/tax ports and services, JPA config/run/item/supplement mappings/repos, protected controllers/DTOs; V14; 12 unit and 8 live cases; contracts/progress/memory.
+- **Decisions:** Work/payroll override → effective profile → tenant default; exact jurisdiction policy scope, no implicit country fallback. CONTRACTOR does not imply zero tax. Missing profile/policy/adapter leaves tax/net null and blocks APPROVED/LOCKED/PAYMENT_SCHEDULED. Reversal follows parent economic line signs, not reversed payment class. Unpaired recovery keeps signed components and requires validation. Dispatcher is Primary to select adapters through versioned key. Mapping test now recognizes explicit assigned financial IDs and tenant INTEGER singleton; real JPA metadata/PG validation retained.
+- **Assumptions:** No statutory adapter/legal rates are configured in production. Fixed test adapter exists only in TestConfiguration and is not a US/VN rule. effectiveDate and supplements/tax inputs are explicit caller inputs; no historical backfill.
+- **Verification:** Final clean codex_classification_20261003194231 and populated V13→V14 codex_classification_20261003152740 full regression PASS: 161 tests, 0 failures/errors, 1 legacy skip; 29 live cases. Twelve neutral unit cases and eight live hierarchy/contractor withholding/JSON snapshots/recalculation/source-idempotency/currency rollback/concurrent versions/API cases. JSONB uses structured equality; immutable-list null validation corrected. No prior cost/accessorial test expectation change.
+- **Open Issues and Risks:** 015C–015G and Phases 6–8 incomplete. Regional policies/adapters require authoritative sources. Historical V11 runs without input snapshots cannot be inferred/recalculated. Recovery workflow is explicitly unavailable.
+- **Blockers:** None for 015C or other jurisdiction-neutral workflow. Regional statutory adapters remain unconfigured and actual payroll cannot finalize without them.
+- **Next Required Action:** Separate 015C review/approve/lock audit/history gate; do not mark payroll or settlement PAID at lock.
+- **Acceptance Gate:** Unit/live/idempotency/lock mutation/concurrency/forward migration/full regression before checkpoint.
+- **Do Not Redo:** Completed Phase 3/4/015B; no V11/V14 edits, tax-zero bypass or regional legal-rate inference.
+
 ## 10. Final Readiness
 
 | Check | Status | Evidence / Exception |
@@ -821,7 +842,7 @@
 | Tests successful | IN_PROGRESS | 87 tests, 0 failures/errors, 1 legacy skip; 8 live PostgreSQL cases; classification/later features incomplete |
 | API working | IN_PROGRESS | Implemented ledger/accessorial/report routes verified; profit/settlement routes verified; payroll and later APIs incomplete |
 | Frontend working | NOT_APPLICABLE | API-only scope |
-| Database migrations working | IN_PROGRESS | V1–V13 clean and populated V12–V13 upgrade verified; supported production tenant history not available |
+| Database migrations working | IN_PROGRESS | V1–V14 clean and populated V13–V14 upgrade verified; supported production tenant history not available |
 | Authentication and authorization working | IN_PROGRESS | Policy/settlement routes require payroll-related roles; PG authorization verified; payroll next |
 | Validation and error handling working | NOT_STARTED | Not verified |
 | Security reviewed | NOT_STARTED | Not reviewed |

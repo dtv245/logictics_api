@@ -34,6 +34,191 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.payroll.PayPeriodService payPeriods;
     @Autowired com.company.logicstic.service.payroll.DriverPayEngine driverPay;
     @Autowired com.company.logicstic.service.profitability.ProfitabilityService profitability;
+    @Autowired com.company.logicstic.service.payroll.PayrollCalculationService payroll;
+    @Autowired com.company.logicstic.service.payroll.policy.PayrollConfigurationService payrollConfiguration;
+    @Autowired com.company.logicstic.service.payroll.policy.PayrollPolicyResolver payrollPolicyResolver;
+
+    @org.springframework.boot.test.context.TestConfiguration
+    static class PayrollFixtureConfiguration {
+        @org.springframework.context.annotation.Bean
+        com.company.logicstic.service.payroll.tax.PayrollTaxAdapter testOnlyTaxAdapter() {
+            return new com.company.logicstic.service.payroll.tax.PayrollTaxAdapter() {
+                public String key() { return "TEST_ONLY_FIXED"; }
+                public com.company.logicstic.service.payroll.tax.PayrollTaxResult calculate(
+                        com.company.logicstic.service.payroll.tax.PayrollTaxContext context,
+                        com.company.logicstic.service.payroll.domain.PayrollPolicy policy) {
+                    // Fixed arithmetic fixtures, never regional/statutory rates.
+                    var zero=context.grossAmount().signum()==0;
+                    return new com.company.logicstic.service.payroll.tax.PayrollTaxResult("AVAILABLE",null,context.currency(),
+                            new java.math.BigDecimal(zero?"0":"7"),new java.math.BigDecimal(zero?"0":"3"),
+                            key(),"FIXTURE-1",java.util.Map.of("explicitInputs",context.additionalInputs()),java.util.Map.of("fixture",true));
+                }
+            };
+        }
+    }
+
+    private record PayrollFixture(UUID driver,UUID period,UUID settlement,String email) {}
+    private PayrollFixture payrollFixture() {
+        var f=fixture();var date=java.time.LocalDate.of(2026,1,1);var code=UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(code,f.actor(),"1",date,null));var period=payPeriods.create(code,date,date.plusDays(30),null);
+        addAssignedTrip(f,"2026-01-15T12:00:00Z");var s=driverPay.calculate(f.actor(),period.getId());finalizeSettlement(s.id(),f.actor());
+        return new PayrollFixture(f.actor(),period.getId(),s.id(),f.email());
+    }
+    private com.company.logicstic.dto.payroll.CalculatePayrollRequest payrollRequest(PayrollFixture f) {
+        return new com.company.logicstic.dto.payroll.CalculatePayrollRequest(UUID.randomUUID().toString(),f.period(),"USD",
+                java.time.LocalDate.of(2026,1,31),java.util.List.of(f.settlement()),java.util.Map.of(),java.util.Map.of(),java.util.List.of());
+    }
+    private com.company.logicstic.service.payroll.domain.PayrollJurisdiction payrollJurisdiction(String country) {
+        return new com.company.logicstic.service.payroll.domain.PayrollJurisdiction(country,UUID.randomUUID().toString(),null);
+    }
+    private void payrollProfile(UUID driver,com.company.logicstic.service.payroll.domain.PayrollJurisdiction jurisdiction) {
+        payrollConfiguration.appendProfile(driver,new com.company.logicstic.dto.payroll.PayrollConfigurationRequests.Profile(
+                jurisdiction,com.company.logicstic.service.payroll.domain.WorkerClassification.CONTRACTOR,
+                java.time.LocalDate.of(2026,1,1),null,true));
+    }
+    private com.company.logicstic.service.payroll.domain.PayrollPolicy payrollPolicy(
+            String code,com.company.logicstic.service.payroll.domain.PayrollJurisdiction jurisdiction,java.time.LocalDate from,java.time.LocalDate to,String adapter) {
+        return payrollConfiguration.appendPolicy(new com.company.logicstic.dto.payroll.PayrollConfigurationRequests.Policy(code,jurisdiction,
+                com.company.logicstic.service.payroll.domain.WorkerClassification.CONTRACTOR,from,to,true,"USD",adapter,
+                "fixture://explicit-test-policy","{}"));
+    }
+
+    @Test void payrollMissingJurisdictionIsUnavailableAndConcurrentRetryReservesOnce() throws Exception {
+        var f=payrollFixture();payrollProfile(f.driver(),null);var request=payrollRequest(f);
+        com.company.logicstic.dto.payroll.PayrollRunView result;
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> payroll.calculate(request));var b=pool.submit(() -> payroll.calculate(request));
+            result=a.get(20,TimeUnit.SECONDS);assertEquals(result.id(),b.get(20,TimeUnit.SECONDS).id());
+        }
+        assertEquals("VALIDATION_REQUIRED",result.status());var item=result.items().getFirst();
+        assertEquals("UNAVAILABLE",item.taxAvailability());assertEquals("PAYROLL_JURISDICTION_NOT_CONFIGURED",item.validationReason());
+        assertNull(item.incomeTaxAmount());assertNull(item.insuranceAmount());assertNull(item.netAmount());
+        assertEquals(0,new java.math.BigDecimal("100").compareTo(item.grossAmount()));
+        for(var status:java.util.List.of("APPROVED","LOCKED","PAYMENT_SCHEDULED"))
+            assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_runs set status=? where id=?",status,result.id()));
+        assertEquals(1,jdbc.queryForObject("select count(*) from payroll_run_item_settlements where settlement_id=?",Integer.class,f.settlement()));
+        assertEquals("PAYROLL_SETTLEMENT_ALREADY_RESERVED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> payroll.calculate(payrollRequest(f))).getCode());
+        var changed=new com.company.logicstic.dto.payroll.CalculatePayrollRequest(request.idempotencyKey(),request.payPeriodId(),"USD",
+                request.effectiveDate().minusDays(1),request.settlementIds(),null,null,null);
+        assertEquals("PAYROLL_IDEMPOTENCY_CONFLICT",assertThrows(com.company.logicstic.exception.BadRequestException.class,() -> payroll.calculate(changed)).getCode());
+    }
+
+    @Test void payrollUsesOverrideProfileTenantHierarchyWithSeparateContractorTaxAndSupplements() {
+        var f=payrollFixture();var tenant=payrollJurisdiction("US");var profile=payrollJurisdiction("VN");var work=payrollJurisdiction("US");
+        payrollConfiguration.setTenantDefault(tenant);
+        try {
+            payrollProfile(f.driver(),profile);var date=java.time.LocalDate.of(2026,1,1);
+            var tenantPolicy=payrollPolicy(UUID.randomUUID().toString(),tenant,date,null,"TEST_ONLY_FIXED");
+            var profilePolicy=payrollPolicy(UUID.randomUUID().toString(),profile,date,null,"TEST_ONLY_FIXED");
+            var workPolicy=payrollPolicy(UUID.randomUUID().toString(),work,date,null,"TEST_ONLY_FIXED");
+            var plain=payrollRequest(f);
+            var request=new com.company.logicstic.dto.payroll.CalculatePayrollRequest(plain.idempotencyKey(),plain.payPeriodId(),"USD",plain.effectiveDate(),
+                    plain.settlementIds(),java.util.Map.of(f.driver(),work),java.util.Map.of(f.driver(),java.util.Map.of("taxPeriod","EXPLICIT_FIXTURE")),
+                    java.util.List.of(new com.company.logicstic.dto.payroll.CalculatePayrollRequest.Supplement(UUID.randomUUID(),f.driver(),"DEDUCTION","Voluntary fixture",new java.math.BigDecimal("2")),
+                            new com.company.logicstic.dto.payroll.CalculatePayrollRequest.Supplement(UUID.randomUUID(),f.driver(),"REIMBURSEMENT","Expense fixture",new java.math.BigDecimal("5"))));
+            var run=payroll.calculate(request);assertEquals("CALCULATED",run.status());var item=run.items().getFirst();
+            assertEquals(work,item.jurisdiction());assertEquals(workPolicy.id(),item.policyId());
+            assertEquals(com.company.logicstic.service.payroll.domain.WorkerClassification.CONTRACTOR,item.workerClassification());
+            assertEquals(0,new java.math.BigDecimal("7").compareTo(item.incomeTaxAmount()));assertEquals(0,new java.math.BigDecimal("93").compareTo(item.netAmount()));
+            var snapshot=tools.jackson.databind.json.JsonMapper.builder().build().readTree(item.calculationSnapshotJson());
+            assertEquals("WORK_PAYROLL_OVERRIDE",snapshot.get("jurisdictionResolution").get("source").asText());
+            assertEquals(workPolicy.id().toString(),snapshot.get("policyId").asText());assertEquals(1,snapshot.get("policyVersion").asInt());
+            assertEquals("EXPLICIT_FIXTURE",snapshot.get("taxContext").get("additionalInputs").get("taxPeriod").asText());
+            assertEquals("FIXTURE-1",snapshot.get("taxResult").get("calculatorVersion").asText());
+            var employeeOnly=payrollFixture();payrollProfile(employeeOnly.driver(),profile);
+            assertEquals(profilePolicy.id(),payroll.calculate(payrollRequest(employeeOnly)).items().getFirst().policyId());
+            var defaultOnly=payrollFixture();payrollProfile(defaultOnly.driver(),null);
+            assertEquals(tenantPolicy.id(),payroll.calculate(payrollRequest(defaultOnly)).items().getFirst().policyId());
+            assertEquals("LOCKED",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
+            assertEquals(0,new java.math.BigDecimal("100").compareTo(jdbc.queryForObject("select settlement_net from settlements where id=?",java.math.BigDecimal.class,f.settlement())));
+        } finally {jdbc.update("update tenant_payroll_settings set default_jurisdiction_id=null where id=1");}
+    }
+
+    @Test void payrollPoliciesAreAppendOnlyEffectiveDatedAndExpiredNewestCannotResurrectOldVersion() {
+        var f=payrollFixture();var jurisdiction=payrollJurisdiction("VN");payrollProfile(f.driver(),jurisdiction);
+        var code=UUID.randomUUID().toString();var jan=java.time.LocalDate.of(2026,1,1);
+        var first=payrollPolicy(code,jurisdiction,jan,null,"TEST_ONLY_FIXED");
+        var run=payroll.calculate(payrollRequest(f));var saved=run.items().getFirst().calculationSnapshotJson();
+        var second=payrollPolicy(code,jurisdiction,jan.plusMonths(1),jan.plusMonths(1).plusDays(27),"TEST_ONLY_FIXED");
+        assertEquals(2,second.version());assertEquals(first.id(),payrollPolicyResolver.resolve(jurisdiction,
+                com.company.logicstic.service.payroll.domain.WorkerClassification.CONTRACTOR,jan.plusDays(30)).id());
+        assertEquals(second.id(),payrollPolicyResolver.resolve(jurisdiction,
+                com.company.logicstic.service.payroll.domain.WorkerClassification.CONTRACTOR,jan.plusMonths(1)).id());
+        assertEquals("PAYROLL_POLICY_NOT_CONFIGURED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> payrollPolicyResolver.resolve(jurisdiction,com.company.logicstic.service.payroll.domain.WorkerClassification.CONTRACTOR,jan.plusMonths(2))).getCode());
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_policy_versions set configuration_json='{}' where id=?",first.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("delete from employee_payroll_profiles where employee_id=?",f.driver()));
+        var mapper=tools.jackson.databind.json.JsonMapper.builder().build();
+        assertEquals(mapper.readTree(saved),mapper.readTree(payroll.get(run.id()).items().getFirst().calculationSnapshotJson()));
+    }
+
+    @Test void payrollRecalculationPreservesUnavailableSnapshotAndResolvesOnlyExplicitNewPolicy() {
+        var f=payrollFixture();var jurisdiction=payrollJurisdiction("US");payrollProfile(f.driver(),jurisdiction);
+        var code=UUID.randomUUID().toString();var jan=java.time.LocalDate.of(2026,1,1);
+        payrollPolicy(code,jurisdiction,jan,null,"UNCONFIGURED_ADAPTER");var run=payroll.calculate(payrollRequest(f));
+        assertEquals("PAYROLL_TAX_CALCULATOR_NOT_CONFIGURED",run.items().getFirst().validationReason());
+        var prior=jdbc.queryForObject("select result_json::text from calculation_snapshots where entity_type='PAYROLL_ITEM' and entity_id=?",String.class,run.items().getFirst().id());
+        var explicit=payrollPolicy(code,jurisdiction,jan.plusDays(1),null,"TEST_ONLY_FIXED");
+        var recalculated=payroll.recalculate(run.id());assertEquals("CALCULATED",recalculated.status());assertEquals(explicit.id(),recalculated.items().getFirst().policyId());
+        assertEquals(2,jdbc.queryForObject("select count(*) from calculation_snapshots where entity_type='PAYROLL_ITEM' and entity_id=?",Integer.class,run.items().getFirst().id()));
+        assertEquals(1,jdbc.queryForObject("select count(*) from calculation_snapshots where entity_type='PAYROLL_ITEM' and entity_id=? and result_json=?::jsonb",Integer.class,run.items().getFirst().id(),prior));
+    }
+
+    @Test void payrollReversalMappingUsesOriginalEconomicGrossAndStandaloneRecoveryRequiresValidation() {
+        var f=payrollFixture();var jurisdiction=payrollJurisdiction("VN");payrollProfile(f.driver(),jurisdiction);
+        payrollPolicy(UUID.randomUUID().toString(),jurisdiction,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var reverse=driverPay.reverse(f.settlement(),"Fixture reversal");finalizeSettlement(reverse.id(),f.driver());
+        var plain=payrollRequest(f);
+        var request=new com.company.logicstic.dto.payroll.CalculatePayrollRequest(plain.idempotencyKey(),plain.payPeriodId(),"USD",plain.effectiveDate(),
+                java.util.List.of(f.settlement(),reverse.id()),null,null,null);
+        var combined=payroll.calculate(request);assertEquals("CALCULATED",combined.status());assertEquals(0,combined.items().getFirst().grossAmount().signum());
+        assertEquals(0,combined.items().getFirst().netAmount().signum());
+        var other=payrollFixture();payrollProfile(other.driver(),jurisdiction);var child=driverPay.reverse(other.settlement(),"Unpaired recovery");finalizeSettlement(child.id(),other.driver());
+        var template=payrollRequest(other);var recovery=new com.company.logicstic.dto.payroll.CalculatePayrollRequest(template.idempotencyKey(),template.payPeriodId(),"USD",template.effectiveDate(),
+                java.util.List.of(child.id()),null,null,null);
+        var blocked=payroll.calculate(recovery);assertEquals("VALIDATION_REQUIRED",blocked.status());
+        assertEquals("PAYROLL_RECOVERY_POLICY_REQUIRED",blocked.items().getFirst().validationReason());assertNull(blocked.items().getFirst().netAmount());
+        assertEquals(0,new java.math.BigDecimal("-100").compareTo(blocked.items().getFirst().grossAmount()));
+    }
+
+    @Test void payrollCalculationApiRequiresPayrollRoleAndSerializesAvailability() throws Exception {
+        var f=payrollFixture();payrollProfile(f.driver(),null);
+        var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext).apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
+        var body=tools.jackson.databind.json.JsonMapper.builder().build().writeValueAsString(payrollRequest(f));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/runs/calculate")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(f.email()).roles("DRIVER"))
+                        .contentType("application/json").content(body)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+        var response=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/runs/calculate")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(f.email()).roles("PAYROLL"))
+                        .contentType("application/json").content(body)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk()).andReturn();
+        assertTrue(response.getResponse().getContentAsString().contains("PAYROLL_JURISDICTION_NOT_CONFIGURED"));
+        assertTrue(response.getResponse().getContentAsString().contains("\"netAmount\":null"));
+    }
+
+    @Test void payrollCurrencyMismatchRollsBackAllSourceClaims() {
+        var f=payrollFixture();var template=payrollRequest(f);
+        var mixed=new com.company.logicstic.dto.payroll.CalculatePayrollRequest(template.idempotencyKey(),template.payPeriodId(),"EUR",
+                template.effectiveDate(),template.settlementIds(),null,null,null);
+        assertThrows(com.company.logicstic.exception.CurrencyMismatchException.class,() -> payroll.calculate(mixed));
+        assertEquals(0,jdbc.queryForObject("select count(*) from payroll_runs where request_key=?",Integer.class,template.idempotencyKey()));
+        assertEquals(0,jdbc.queryForObject("select count(*) from payroll_run_item_settlements where settlement_id=?",Integer.class,f.settlement()));
+    }
+
+    @Test void concurrentPayrollPolicyVersionsPreserveHistoryAndRejectEqualEffectiveDate() throws Exception {
+        var j=payrollJurisdiction("US");var code=UUID.randomUUID().toString();var date=java.time.LocalDate.of(2026,1,1);
+        var first=payrollPolicy(code,j,date,null,"TEST_ONLY_FIXED");
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> payrollPolicy(code,j,date.plusDays(1),null,"TEST_ONLY_FIXED"));
+            var b=pool.submit(() -> payrollPolicy(code,j,date.plusDays(1),null,"TEST_ONLY_FIXED"));
+            int succeeded=0,rejected=0;
+            for(var task:java.util.List.of(a,b)) try {assertEquals(2,task.get(20,TimeUnit.SECONDS).version());succeeded++;}
+                catch(java.util.concurrent.ExecutionException e) {assertInstanceOf(com.company.logicstic.exception.BadRequestException.class,e.getCause());rejected++;}
+            assertEquals(1,succeeded);assertEquals(1,rejected);
+        }
+        assertEquals(2,jdbc.queryForObject("select count(*) from payroll_policy_versions where policy_code=?",Integer.class,code));
+        assertEquals(1,jdbc.queryForObject("select policy_version from payroll_policy_versions where id=?",Integer.class,first.id()));
+    }
 
     @Test void contextLoadsWithEveryEntityAndController() {
         assertTrue(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Integer.class) >= 11);

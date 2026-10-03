@@ -37,7 +37,7 @@ public class SecurityConfig {
                                 "/api/reports/fleet/**", "/api/reports/costs/**",
                                 "/api/loads/*/financial-summary", "/api/reports/profitability/**")
                         .hasAnyRole("ADMIN", "ACCOUNTANT", "PAYROLL", "PAYROLL_MANAGER")
-                        .requestMatchers("/api/driver-pay-policies/**", "/api/driver-settlements/**", "/api/pay-periods/**")
+                        .requestMatchers("/api/driver-pay-policies/**", "/api/driver-settlements/**", "/api/pay-periods/**", "/api/payroll/**")
                         .hasAnyRole("ADMIN", "ACCOUNTANT", "PAYROLL", "PAYROLL_MANAGER")
                         .requestMatchers("/api/loads/*/costs/**")
                         .hasAnyRole("ADMIN", "ACCOUNTANT", "PAYROLL", "PAYROLL_MANAGER")
