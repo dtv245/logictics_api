@@ -295,6 +295,50 @@ class CostLedgerPostgresTest {
         assertEquals(0,jdbc.queryForObject("select count(*) from settlements where driver_id=?",Integer.class,missing.actor()));
     }
 
+    @Test void perLoadHourlyDailyAndFlatSettlementInputsAreExplicitAndDeduplicated() {
+        var start = java.time.LocalDate.of(2026,1,1);
+        for (String method : new String[]{"PER_LOAD","HOURLY","DAILY","FLAT_RATE"}) {
+            var fixture = fixture(); String code = UUID.randomUUID().toString();
+            var rate = new java.math.BigDecimal(method.equals("HOURLY")?"20.25":method.equals("PER_LOAD")?"125":method.equals("DAILY")?"150":"1000");
+            payPolicies.create(new com.company.logicstic.dto.payroll.DriverPayPolicyRequest(code,"Work pay",fixture.actor(),method,null,
+                    method.equals("PER_LOAD")?rate:null,method.equals("HOURLY")?rate:null,method.equals("DAILY")?rate:null,
+                    method.equals("FLAT_RATE")?rate:null,null,null,null,null,null,null,null,null,"USD",start,null));
+            var period = payPeriods.create(code,start,start.plusDays(30),null);
+            if (method.equals("PER_LOAD")) {
+                for (int i = 0; i < 2; i++) addAssignedTrip(fixture,"2026-01-15T12:00:00Z");
+            } else if (!method.equals("FLAT_RATE")) {
+                for (String hours : new String[]{"7.25","1.00"}) {
+                    jdbc.update("""
+                            insert into time_entries(id,employee_id,date,start_time,end_time,total_hours,type)
+                            values (?,?,'2026-01-15T00:00:00Z',interval '8 hours',interval '16 hours',?,'WORK')
+                            """,UUID.randomUUID(),fixture.actor(),new java.math.BigDecimal(hours));
+                }
+            }
+            var result = driverPay.calculate(fixture.actor(),period.getId());
+            java.math.BigDecimal expected = new java.math.BigDecimal(method.equals("HOURLY")?"167.06":method.equals("PER_LOAD")?"125.00":method.equals("DAILY")?"150.00":"1000.00");
+            assertEquals(expected,result.grossEarnings(),method); assertEquals(expected,result.settlementNet(),method);
+            assertEquals(method.equals("HOURLY")?2:1,result.lines().size(),method);
+            String input = jdbc.queryForObject("select cs.input_json::text from calculation_snapshots cs join settlements s on s.calculation_snapshot_id=cs.id where s.id=?",String.class,result.id());
+            var records = tools.jackson.databind.json.JsonMapper.builder().build().readTree(input).get("workCalculations");
+            assertEquals(result.lines().size(),records.size()); assertEquals(method,records.get(0).get("method").asText());
+        }
+    }
+
+    private UUID addAssignedTrip(Fixture fixture, String completedAt) {
+        UUID trip = UUID.randomUUID();
+        jdbc.update("insert into trips(id,name,total_distance,status,completed_at) values (?,'Work pay',99999,'COMPLETED',?::timestamptz)",trip,completedAt);
+        jdbc.update("""
+                insert into trip_stops(id,type,trip_id,"order",load_id,address_city,address_country,address_line1,
+                    address_state,address_zip_code,location_latitude,location_longitude)
+                values (?,'DELIVERY',?,1,?,'Test','US','Test','TX','00000',0,0)
+                """,UUID.randomUUID(),trip,fixture.load());
+        jdbc.update("""
+                insert into trip_driver_assignments(id,trip_id,driver_id,effective_from,effective_to,actual_miles,planned_miles)
+                values (?,?,?,'2026-01-14T12:00:00Z',?::timestamptz,100,200)
+                """,UUID.randomUUID(),trip,fixture.actor(),completedAt);
+        return trip;
+    }
+
     private record Fixture(UUID actor, UUID load, UUID expense, String email) {}
 
     @Test void concurrentAccessorialApprovalsProjectOnlyCompanyCost() throws Exception {

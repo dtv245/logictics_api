@@ -24,6 +24,7 @@ public class DriverPayEngine {
     private final DriverPayPolicyRepository policyRepository;
     private final DriverPayPolicyResolver policyResolver;
     private final MileagePayCalculator mileageCalculator;
+    private final WorkPayCalculator workCalculator;
     private final TripDriverAssignmentRepository assignmentRepository;
     private final TimeEntryRepository timeEntryRepository;
     private final AccessorialChargeRepository accessorialRepository;
@@ -62,12 +63,14 @@ public class DriverPayEngine {
         BigDecimal reimbursement = BigDecimal.ZERO, deduction = BigDecimal.ZERO;
         Map<UUID, DriverPayPolicy> policiesUsed = new LinkedHashMap<>();
         List<MileagePayCalculator.Result> mileageCalculations = new ArrayList<>();
+        List<WorkPayCalculator.Result> workCalculations = new ArrayList<>();
         DriverPayPolicy headerPolicy = resolveHeaderPolicy(driverId, from, through, assignments, timeEntries);
         policiesUsed.put(headerPolicy.getId(), headerPolicy);
         String currency = CurrencyGuard.canonical(headerPolicy.getCurrency());
 
         Set<String> handledAccessorials = new HashSet<>();
         Set<String> dailyPaid = new HashSet<>();
+        Set<UUID> paidLoads = new HashSet<>();
         for (TripDriverAssignment assignment : assignments) {
             LocalDate workDate = tripWorkDate(assignment, from, through);
             if (workDate.isBefore(from)) workDate = from;
@@ -87,7 +90,9 @@ public class DriverPayEngine {
             } else if ("PER_LOAD".equals(policy.getPayMethod())) {
                 if (loads.isEmpty()) throw new BadRequestException("Trip has no load attribution for per-load pay: " + trip.getId());
                 for (Load load : loads) {
-                    BigDecimal amount = policy.getPerLoadRate(); loadPay = loadPay.add(amount);
+                    if (!paidLoads.add(load.getId())) continue;
+                    var calculation = workCalculator.perLoad(load.getId(),policy); workCalculations.add(calculation);
+                    BigDecimal amount = calculation.amount(); loadPay = loadPay.add(amount);
                     lines.add(line("LOAD", "EARNING", trip, load, "Per-load pay", BigDecimal.ONE, "LOAD", amount, amount, currency, "TRIP_ASSIGNMENT", assignment.getId()));
                 }
             } else if ("PERCENT_REVENUE".equals(policy.getPayMethod())) {
@@ -115,7 +120,9 @@ public class DriverPayEngine {
         }
 
         if ("FLAT_RATE".equals(headerPolicy.getPayMethod())) {
-            BigDecimal amount = headerPolicy.getFlatRate();
+            if (headerPolicy.getEffectiveFrom().isAfter(from)) throw new BadRequestException("FLAT_PAY_VALIDATION_REQUIRED", "Flat period policy must be effective at period start");
+            var calculation = workCalculator.flat(payPeriodId,headerPolicy); workCalculations.add(calculation);
+            BigDecimal amount = calculation.amount();
             loadPay = loadPay.add(amount);
             lines.add(line("FLAT_RATE", "EARNING", null, null, "Period flat pay", BigDecimal.ONE, "PERIOD", amount, amount, currency, "PAY_POLICY", headerPolicy.getId()));
         }
@@ -125,15 +132,15 @@ public class DriverPayEngine {
             policiesUsed.put(policy.getId(), policy);
             CurrencyGuard.requireSameCurrency(currency, policy.getCurrency());
             if ("HOURLY".equals(policy.getPayMethod())) {
-                BigDecimal qty = entry.getTotalHours();
-                if (qty == null || qty.signum() <= 0) throw new BadRequestException("Time entry hours must be positive: " + entry.getId());
-                BigDecimal amount = policy.getHourlyRate().multiply(qty);
+                var calculation = workCalculator.hourly(entry,policy); workCalculations.add(calculation);
+                BigDecimal qty = calculation.eligibleQuantity(), amount = calculation.amount();
                 hourlyPay = hourlyPay.add(amount); hours = hours.add(qty);
                 lines.add(line("HOURLY", "EARNING", null, null, "Time entry " + entry.getId(), qty, "HOUR", policy.getHourlyRate(), amount, currency, "TIME_ENTRY", entry.getId()));
             } else if ("DAILY".equals(policy.getPayMethod())) {
                 String dayKey = entry.getDate().toLocalDate() + ":" + policy.getId();
                 if (dailyPaid.add(dayKey)) {
-                    BigDecimal amount = policy.getDailyRate(); hourlyPay = hourlyPay.add(amount);
+                    var calculation = workCalculator.daily(entry.getId(),policy); workCalculations.add(calculation);
+                    BigDecimal amount = calculation.amount(); hourlyPay = hourlyPay.add(amount);
                     lines.add(line("DAILY", "EARNING", null, null, "Daily pay " + entry.getDate().toLocalDate(), BigDecimal.ONE, "DAY", amount, amount, currency, "TIME_ENTRY", entry.getId()));
                 }
             }
@@ -164,6 +171,7 @@ public class DriverPayEngine {
         input.put("policies", policiesUsed.values().stream().map(p -> Map.of("id", p.getId(), "version", p.getPolicyVersion(),
                 "effectiveFrom", p.getEffectiveFrom(), "effectiveTo", Objects.toString(p.getEffectiveTo(), ""), "method", p.getPayMethod())).toList());
         input.put("mileageCalculations", mileageCalculations);
+        input.put("workCalculations", workCalculations);
         input.put("lines", lines.stream().map(l -> Map.of("type", l.getLineType(), "class", l.getLineClass(), "amount", l.getAmount(),
                 "currency", l.getCurrency(), "sourceType", Objects.toString(l.getSourceType(), ""),
                 "sourceId", Objects.toString(l.getSourceId(), ""), "loadId", l.getLoad() == null ? "" : l.getLoad().getId().toString(),

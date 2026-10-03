@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 27 |
+| Revision | 28 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
 | Last Updated | 2026-10-03T21:51:16+07:00 |
-| Current Phase | 7 — Backend Development / Phase 4C |
+| Current Phase | 7 — Backend Development / Phase 4D |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Complete Phase 4C per-load/hourly/daily/flat inputs/formulas/tests. Then 4D–4F and user-authorized MULTI_JURISDICTION neutral payroll; no guessed statutory rates. |
-| Handoff Sequence | 27 |
+| Next Action | Complete Phase 4D reconciled explicit revenue-percentage calculation; then accessorial attribution and settlement aggregation gates, followed by neutral multi-jurisdiction payroll. |
+| Handoff Sequence | 28 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-014 / Phase 4C
-- **Objective:** Complete per-load/hourly/daily/flat calculation inputs and tests.
-- **Acceptance Gate:** Explicit eligible load/hour source and rounding, no duplicate load/day pay, preserved independent monetary dimensions, unit/live/regression evidence.
-- **Allowed Change Scope:** Phase 4C pay calculator/engine integration; preserve completed slices; forward-only migrations when needed.
+- **Feature/Task ID:** BE-CALC-014 / Phase 4D
+- **Objective:** Complete explicit reconciled revenue-basis percentage pay.
+- **Acceptance Gate:** Ratio convention, invoice subtotal excluding tax, no missing-source bypass, reconciliation/currency/dedup/snapshot tests.
+- **Allowed Change Scope:** Phase 4D calculator/engine integration; preserve completed slices.
 
 ### Phase Status
 
@@ -727,6 +727,27 @@
 - **Next Required Action:** Complete per-load/hourly/daily/flat calculator and input/snapshot tests; then independent 4D–4F gates.
 - **Acceptance Gate:** Formula/source/rounding/dedup unit and live integration/regression evidence before checkpoint.
 - **Do Not Redo:** Explicit mileage/no-fallback policy or completed Phase 3/4A absent regression evidence; no applied migration edits.
+
+### HOFF-0028 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-03T21:59:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Phase 4C completion → 4D
+- **Status:** DONE
+- **Objective:** Complete explicit per-load/hourly/daily/flat formulas and source snapshots.
+- **Inputs Read:** Progress/HOFF-0027, TimeEntry/source/audit, policy/engine/reconciliation architecture, PG interval fixtures.
+- **Completed:** WorkPayCalculator and input snapshots; within-calculation load/day dedup; per-period flat source; explicit total_hours. Real PostgreSQL exposed Duration read as BigDecimal; fixed start/end JDBC INTERVAL_SECOND mapping, preserved source data.
+- **Requirement IDs:** BE-CALC-014 / Phase 4C.
+- **Files and Artifacts:** WorkPayCalculator/DriverPayEngine, TimeEntry mapping, work unit/live tests, settlement contracts, progress/memory.
+- **Decisions:** Hourly reads persisted total_hours; no start/end or invoice-payroll inference. Line rounding precedes aggregation for reconciliation. Flat policy must start before/on period start; explicit zero hours valid.
+- **Assumptions:** UTC calendar dependency retained from existing audit; no region timezone inferred from jurisdiction.
+- **Verification:** Final disposable PG clean full suite on codex_classification_20261003145821 PASS: 123 tests, 0 failures/errors, 1 legacy skip; 13 PG cases. Three work unit cases and real per-load/hourly/daily/flat mapping/dedup/snapshot case PASS. Original failed interval read corrected without weakening tests; no migration.
+- **Open Issues and Risks:** 4D–4F eligibility/reconciliation/accessorial attribution/concurrency/correction gates remain incomplete; no full settlement claim.
+- **Blockers:** None for Phase 4D.
+- **Next Required Action:** Add percentage-pay calculator using explicit eligible reconciled subtotal, ratios/currency, unknown-source guard and tests.
+- **Acceptance Gate:** Unit/live/API/regression formulas and immutable input explanation before checkpoint.
+- **Do Not Redo:** Completed calculator/source mapping slices absent regression evidence; no applied migration edits.
 
 ## 10. Final Readiness
 

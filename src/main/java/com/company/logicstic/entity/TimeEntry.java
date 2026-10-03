@@ -41,9 +41,11 @@ public class TimeEntry extends BaseAuditableEntity {
     private OffsetDateTime date;
 
     @Column(name = "start_time", nullable = false, columnDefinition = "interval")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.INTERVAL_SECOND)
     private Duration startTime;
 
     @Column(name = "end_time", nullable = false, columnDefinition = "interval")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.INTERVAL_SECOND)
     private Duration endTime;
 
     @Column(name = "total_hours", nullable = false, precision = 10, scale = 2)

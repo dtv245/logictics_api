@@ -14,10 +14,11 @@ Updated: 2026-10-03T21:51:16+07:00. Sources: convention plan, current code, Flyw
 - Phase 3 commits: 36b5c9e policy/calculator; ee17155 formulas/contracts/checkpoint.
 - Phase 4A commit: d1b2eb1.
 - Phase 4B: MileagePayCalculator with explicit ACTUAL_ALL_MILES / PLANNED_ALL_MILES, no fallback; auditable assignment/policy ID/version/basis/rate/raw/rounded inputs persisted in settlement snapshot. Missing/invalid miles fails MILEAGE_VALIDATION_REQUIRED with no financial rows.
+- Phase 4C: WorkPayCalculator for per-load/hourly/daily/flat, within-calculation load/day dedup, explicit time_entries.total_hours, immutable input snapshot. Fixed proven TimeEntry Duration→PostgreSQL interval JDBC mapping defect; no migration or test expectation weakening.
 
 ## In progress
 
-- Phase 4C–4F: existing partial DriverPayEngine/correction APIs remain unverified outside the completed mileage path. Work-date eligibility, cross-period source reuse, accessorial driver attribution and reconciliation/lock/correction/concurrency still need dedicated gates.
+- Phase 4D–4F: work-date eligibility, cross-period source reuse, invoice revenue basis/reconciliation, accessorial driver attribution and reconciliation/lock/correction/concurrency still need dedicated gates.
 
 ## Not started
 
@@ -46,6 +47,7 @@ Updated: 2026-10-03T21:51:16+07:00. Sources: convention plan, current code, Flyw
 - Existing cost/accessorial test expectations unchanged. Profitability expectations changed only for the newly authorized policy, known costs and empty eligible cost sets.
 - Phase 4A full regression on codex_classification_20261003145035: 114 tests, 0 failures/errors, 1 legacy skip; 11 live PG cases. Added 12 policy/resolver/period unit cases and 2 policy/period live cases, including concurrent version creation and retained locked-settlement policy reference.
 - Phase 4B full regression on codex_classification_20261003145401: 119 tests, 0 failures/errors, 1 legacy skip; 12 live PG cases. Four mileage unit cases and live settlement snapshot/source validation passed. Snapshot/idempotent sequential retry verified; concurrent settlement creation remains a Phase 4F gate.
+- Phase 4C full regression on codex_classification_20261003145821: 123 tests, 0 failures/errors, 1 legacy skip; 13 live PG cases. Three work-pay unit cases and per-load/hourly/daily/flat live source/dedup/snapshot case passed after fixing the real interval mapping defect.
 - `git diff --check` PASS. Runtime OpenAPI/controller mappings load with the full application context.
 
 ## Migrations applied
@@ -64,5 +66,5 @@ Updated: 2026-10-03T21:51:16+07:00. Sources: convention plan, current code, Flyw
 
 ## Next task
 
-- Complete Phase 4C per-load/hourly/daily/flat calculations, then 4D–4F in separate verified slices. Do not recreate V10/V11 or reopen completed Phase 3 subsystems without regression evidence.
+- Complete Phase 4D explicit eligible invoice subtotal percentage pay/reconciliation, then 4E–4F in separate verified slices.
 - Preserve unrelated pre-existing worktree/staged files. Commit each completed sub-task with explicit paths only.
