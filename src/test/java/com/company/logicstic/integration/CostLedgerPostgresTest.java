@@ -33,6 +33,7 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.payroll.DriverPayPolicyResolver payPolicyResolver;
     @Autowired com.company.logicstic.service.payroll.PayPeriodService payPeriods;
     @Autowired com.company.logicstic.service.payroll.DriverPayEngine driverPay;
+    @Autowired com.company.logicstic.service.profitability.ProfitabilityService profitability;
 
     @Test void contextLoadsWithEveryEntityAndController() {
         assertTrue(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Integer.class) >= 11);
@@ -207,8 +208,8 @@ class CostLedgerPostgresTest {
                 values (?,'SETTLEMENT',?,'DRIVER_PAY','Test','1','{}','{}')
                 """,snapshot,settlement);
         jdbc.update("""
-                insert into settlements(id,settlement_number,driver_id,pay_period_id,pay_policy_id,pay_policy_version,status,currency,calculation_snapshot_id,settlement_net)
-                values (?, ?, ?, ?, ?, 1, 'LOCKED', 'USD', ?, 10)
+                insert into settlements(id,settlement_number,driver_id,pay_period_id,pay_policy_id,pay_policy_version,status,currency,calculation_snapshot_id,settlement_net,gross_earnings,bonus_amount)
+                values (?, ?, ?, ?, ?, 1, 'LOCKED', 'USD', ?, 10,10,10)
                 """,settlement,settlement.toString(),fixture.actor(),period.getId(),old.getId(),snapshot);
         var request = payPolicyRequest(code,fixture.actor(),"2",start.plusMonths(1),start.plusMonths(2));
         var gate = new java.util.concurrent.CountDownLatch(1);
@@ -380,6 +381,149 @@ class CostLedgerPostgresTest {
                 """,UUID.randomUUID(),trip,other.actor());
         assertEquals("ACCESSORIAL_PAY_VALIDATION_REQUIRED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
                 () -> driverPay.calculate(other.actor(),otherPeriod.getId())).getCode());
+    }
+
+    @Test void concurrentOriginalAndLockReconcileLinesAndProjectGrossCostOnce() throws Exception {
+        var fixture = fixture(); var start = java.time.LocalDate.of(2026,1,1); String code = UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(code,fixture.actor(),"1",start,null)); var period = payPeriods.create(code,start,start.plusDays(30),null);
+        addAssignedTrip(fixture,"2026-01-15T12:00:00Z");
+        for (String[] item : new String[][]{{"REIMBURSEMENT","5"},{"DEDUCTION","10"}})
+            jdbc.update("""
+                    insert into expenses(id,type,status,expense_date,amount_amount,amount_currency,category,employee_id,load_id)
+                    values (?,'EMPLOYEE','APPROVED','2026-01-15T12:00:00Z',?,'USD',?,?,?)
+                    """,UUID.randomUUID(),new java.math.BigDecimal(item[1]),item[0],fixture.actor(),fixture.load());
+        com.company.logicstic.dto.payroll.DriverSettlementView original;
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> driverPay.calculate(fixture.actor(),period.getId()));
+            var b=pool.submit(() -> driverPay.calculate(fixture.actor(),period.getId()));
+            original=a.get(20,TimeUnit.SECONDS); assertEquals(original.id(),b.get(20,TimeUnit.SECONDS).id());
+        }
+        assertEquals(new java.math.BigDecimal("100.00"),original.grossEarnings()); assertEquals(new java.math.BigDecimal("95.00"),original.settlementNet());
+        assertThrows(com.company.logicstic.exception.BadRequestException.class, () -> driverPay.transition(original.id(),"LOCKED",fixture.actor()));
+        driverPay.transition(original.id(),"IN_REVIEW",fixture.actor()); driverPay.transition(original.id(),"APPROVED",fixture.actor());
+        try (var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> driverPay.transition(original.id(),"LOCKED",fixture.actor()));
+            var b=pool.submit(() -> driverPay.transition(original.id(),"LOCKED",fixture.actor()));
+            assertEquals(a.get(20,TimeUnit.SECONDS).lockedAt().toInstant(),b.get(20,TimeUnit.SECONDS).lockedAt().toInstant());
+        }
+        assertEquals(1,jdbc.queryForObject("select count(*) from shipment_costs sc join settlement_lines l on l.id=sc.source_id where l.settlement_id=?",Integer.class,original.id()));
+        assertEquals(0,new java.math.BigDecimal("100").compareTo(jdbc.queryForObject("select sum(sc.amount) from shipment_costs sc join settlement_lines l on l.id=sc.source_id where l.settlement_id=?",java.math.BigDecimal.class,original.id())));
+        assertEquals("APPROVED",jdbc.queryForObject("select sc.status from shipment_costs sc join settlement_lines l on l.id=sc.source_id where l.settlement_id=?",String.class,original.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class, () -> jdbc.update("update settlements set gross_earnings=gross_earnings+1,settlement_net=settlement_net+1 where id=?",original.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class, () -> jdbc.update("update settlement_lines set amount=amount+1 where settlement_id=?",original.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class, () -> jdbc.update("update settlements set status='CALCULATED' where id=?",original.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class, () -> jdbc.update("update driver_pay_policies set per_mile_rate=2 where policy_code=?",code));
+        assertEquals(original.id(),driverPay.calculate(fixture.actor(),period.getId()).id());
+
+        var request = new com.company.logicstic.dto.payroll.SettlementAdjustmentRequest("adjust-1","Correction",java.util.List.of(
+                adjustmentLine("EARNING","BONUS","10",fixture.load()),adjustmentLine("DEDUCTION","ADVANCE","2",fixture.load()),
+                adjustmentLine("REIMBURSEMENT","REIMBURSEMENT","5",fixture.load())));
+        var adjustment=driverPay.createAdjustment(original.id(),request); assertEquals(new java.math.BigDecimal("13.00"),adjustment.settlementNet());
+        assertEquals(adjustment.id(),driverPay.createAdjustment(original.id(),request).id()); finalizeSettlement(adjustment.id(),fixture.actor());
+        assertEquals(1,jdbc.queryForObject("select count(*) from shipment_costs sc join settlement_lines l on l.id=sc.source_id where l.settlement_id=?",Integer.class,adjustment.id()));
+        var changed = new com.company.logicstic.dto.payroll.SettlementAdjustmentRequest("adjust-1","Correction",java.util.List.of(adjustmentLine("EARNING","BONUS","11",fixture.load())));
+        assertEquals("ADJUSTMENT_IDEMPOTENCY_CONFLICT",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> driverPay.createAdjustment(original.id(),changed)).getCode());
+        var reverse=driverPay.reverse(original.id(),"R".repeat(300)); assertEquals(new java.math.BigDecimal("-95.00"),reverse.settlementNet());
+        assertEquals(reverse.id(),driverPay.reverse(original.id(),"Retry reversal").id()); finalizeSettlement(reverse.id(),fixture.actor());
+        assertEquals(0,new java.math.BigDecimal("-100").compareTo(jdbc.queryForObject("select sum(sc.amount) from shipment_costs sc join settlement_lines l on l.id=sc.source_id where l.settlement_id=?",java.math.BigDecimal.class,reverse.id())));
+        assertEquals("LOCKED",driverPay.get(original.id()).status()); assertEquals(0,new java.math.BigDecimal("95.00").compareTo(driverPay.get(original.id()).settlementNet()));
+        assertEquals(3,jdbc.queryForObject("select count(*) from settlements where driver_id=? and pay_period_id=?",Integer.class,fixture.actor(),period.getId()));
+        assertEquals(0,new java.math.BigDecimal("10").compareTo(jdbc.queryForObject("select sum(amount) from shipment_costs where load_id=?",java.math.BigDecimal.class,fixture.load())));
+    }
+
+    @Test void assignmentClosingDateIsNotClampedAndOriginalSourcesCannotRepeatAcrossPeriods() {
+        var fixture=fixture(); var jan=java.time.LocalDate.of(2026,1,1); String code=UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(code,fixture.actor(),"1",jan,null));
+        var january=payPeriods.create(code,jan,jan.plusDays(30),null); addAssignedTrip(fixture,"2026-02-01T12:00:00Z");
+        assertEquals(new java.math.BigDecimal("0.00"),driverPay.calculate(fixture.actor(),january.getId()).grossEarnings());
+        var february=payPeriods.create(code+"-FEB",jan.plusMonths(1),jan.plusMonths(1).plusDays(27),null);
+        assertEquals(new java.math.BigDecimal("100.00"),driverPay.calculate(fixture.actor(),february.getId()).grossEarnings());
+        var overlapping=payPeriods.create(code+"-OVERLAP",jan.plusMonths(1),jan.plusMonths(1).plusDays(10),null);
+        assertEquals("SETTLEMENT_SOURCE_ALREADY_USED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> driverPay.calculate(fixture.actor(),overlapping.getId())).getCode());
+        assertEquals(2,jdbc.queryForObject("select count(*) from settlements where driver_id=?",Integer.class,fixture.actor()));
+    }
+
+    @Test void tripOnlyLinesProjectOneTripCostAndLoadsRequireAllocationForProfit() {
+        var fixture=fixture(); var another=fixture(); var start=java.time.LocalDate.of(2026,1,1); String code=UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(code,fixture.actor(),"1",start,null)); var period=payPeriods.create(code,start,start.plusDays(30),null);
+        UUID trip=addAssignedTrip(fixture,"2026-01-15T12:00:00Z");
+        jdbc.update("""
+                insert into trip_stops(id,type,trip_id,"order",load_id,address_city,address_country,address_line1,address_state,address_zip_code,location_latitude,location_longitude)
+                values (?,'DELIVERY',?,2,?,'Test','US','Test','TX','00000',0,0)
+                """,UUID.randomUUID(),trip,another.load());
+        addInvoice(fixture.load()); addInvoice(another.load());
+        var settlement=driverPay.calculate(fixture.actor(),period.getId()); finalizeSettlement(settlement.id(),fixture.actor());
+        assertEquals(1,jdbc.queryForObject("select count(*) from shipment_costs where trip_id=? and load_id is null",Integer.class,trip));
+        for (UUID load : java.util.List.of(fixture.load(),another.load())) {
+            var summary=profitability.getLoadFinancialSummary(load); assertNull(summary.allocatedProfit());
+            assertEquals("TRIP_COST_ALLOCATION_REQUIRED",summary.allocatedProfitMetric().reason());
+            assertEquals(1,summary.costClassification().unallocatedTripCosts().size());
+        }
+    }
+
+    private com.company.logicstic.dto.payroll.SettlementAdjustmentRequest.Line adjustmentLine(String kind,String type,String amount,UUID load) {
+        return new com.company.logicstic.dto.payroll.SettlementAdjustmentRequest.Line(kind,type,"Correction",new java.math.BigDecimal(amount),load,null);
+    }
+    private void finalizeSettlement(UUID settlement,UUID actor) {
+        driverPay.transition(settlement,"IN_REVIEW",actor); driverPay.transition(settlement,"APPROVED",actor); driverPay.transition(settlement,"LOCKED",actor);
+    }
+
+    @Test void concurrentCorrectionsKeepOneIdempotentChildAndMonotonicSequence() throws Exception {
+        var fixture=fixture(); var start=java.time.LocalDate.of(2026,1,1); String code=UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(code,fixture.actor(),"1",start,null)); var period=payPeriods.create(code,start,start.plusDays(30),null);
+        addAssignedTrip(fixture,"2026-01-15T12:00:00Z"); var parent=driverPay.calculate(fixture.actor(),period.getId()); finalizeSettlement(parent.id(),fixture.actor());
+        var request=new com.company.logicstic.dto.payroll.SettlementAdjustmentRequest("same-key","Correction",java.util.List.of(adjustmentLine("EARNING","BONUS","10",fixture.load())));
+        try (var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> driverPay.createAdjustment(parent.id(),request)); var b=pool.submit(() -> driverPay.createAdjustment(parent.id(),request));
+            var first=a.get(20,TimeUnit.SECONDS); assertEquals(first.id(),b.get(20,TimeUnit.SECONDS).id()); assertEquals(1,first.sequenceNumber());
+        }
+        try (var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> driverPay.reverse(parent.id(),"First retry")); var b=pool.submit(() -> driverPay.reverse(parent.id(),"Second retry"));
+            var first=a.get(20,TimeUnit.SECONDS); assertEquals(first.id(),b.get(20,TimeUnit.SECONDS).id()); assertEquals(2,first.sequenceNumber());
+        }
+        assertEquals(2,jdbc.queryForObject("select count(*) from settlements where parent_settlement_id=?",Integer.class,parent.id()));
+        assertEquals(3,jdbc.queryForObject("select count(*) from calculation_snapshots where entity_type='DRIVER_SETTLEMENT' and entity_id in (select id from settlements where driver_id=?)",Integer.class,fixture.actor()));
+    }
+
+    @Test void projectionConflictRollsBackLockAndNeverOverwritesExistingLedgerCost() {
+        var fixture=fixture(); var start=java.time.LocalDate.of(2026,1,1); String code=UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(code,fixture.actor(),"1",start,null)); var period=payPeriods.create(code,start,start.plusDays(30),null);
+        addAssignedTrip(fixture,"2026-01-15T12:00:00Z"); var original=driverPay.calculate(fixture.actor(),period.getId());
+        driverPay.transition(original.id(),"IN_REVIEW",fixture.actor()); driverPay.transition(original.id(),"APPROVED",fixture.actor());
+        UUID line=original.lines().getFirst().id();
+        jdbc.update("""
+                insert into shipment_costs(id,load_id,category,cost_basis,status,source_type,source_id,amount,currency,driver_id)
+                values (?,?,'DRIVER','ACTUAL','APPROVED','DRIVER_SETTLEMENT',?,80,'USD',?)
+                """,UUID.randomUUID(),fixture.load(),line,fixture.actor());
+        assertEquals("SETTLEMENT_COST_SOURCE_CONFLICT",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> driverPay.transition(original.id(),"LOCKED",fixture.actor())).getCode());
+        assertEquals("APPROVED",driverPay.get(original.id()).status()); assertNull(driverPay.get(original.id()).lockedAt());
+        assertEquals(0,new java.math.BigDecimal("80").compareTo(jdbc.queryForObject("select amount from shipment_costs where source_id=?",java.math.BigDecimal.class,line)));
+    }
+
+    @Test void settlementValidationApiBlocksApprovalAndLockedHistoryCannotReopen() throws Exception {
+        var fixture=fixture(); var start=java.time.LocalDate.of(2026,1,1); String code=UUID.randomUUID().toString();
+        payPolicies.create(payPolicyRequest(code,fixture.actor(),"1",start,null)); var period=payPeriods.create(code,start,start.plusDays(30),null);
+        addAssignedTrip(fixture,"2026-01-15T12:00:00Z"); var original=driverPay.calculate(fixture.actor(),period.getId());
+        var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext)
+                .apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
+        var path="/api/driver-settlements/"+original.id();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path+"/require-validation").contentType("application/json").content("{\"reason\":\"Receipt required\"}")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("ACCOUNTANT")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value("VALIDATION_REQUIRED"));
+        assertThrows(com.company.logicstic.exception.BadRequestException.class, () -> driverPay.transition(original.id(),"APPROVED",fixture.actor()));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path+"/resolve-validation")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("driver").roles("DRIVER")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path+"/resolve-validation")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("ACCOUNTANT")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value("CALCULATED"));
+        finalizeSettlement(original.id(),fixture.actor());
+        assertThrows(com.company.logicstic.exception.BadRequestException.class, () -> driverPay.requireValidation(original.id(),"Reopen",fixture.actor()));
     }
 
     private record Fixture(UUID actor, UUID load, UUID expense, String email) {}

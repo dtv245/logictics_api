@@ -610,7 +610,7 @@ Xây dựng cơ chế tính toán thu nhập tài xế theo chuyến đi/kỳ l�
     - `GET /api/driver-pay-policies`
     - `POST /api/driver-pay-policies`
     - `POST /api/driver-pay-policies/{id}/new-version`
-- [ ] **Task 4.2 (BE-CALC-014 - Bảng Quyết toán Thù lao Chuyến - Driver Settlement)**:
+- [x] **Task 4.2 (BE-CALC-014 - Bảng Quyết toán Thù lao Chuyến - Driver Settlement)**:
   - Viết Flyway Migration `V10` (Phần 2: Bảng `settlements` và `settlement_lines`).
   - `settlements` phải hỗ trợ `settlement_type = ORIGINAL | ADJUSTMENT | REVERSAL`.
   - Thêm `parent_settlement_id` và `sequence_number` để sửa sai sau lock mà không mutate lịch sử.

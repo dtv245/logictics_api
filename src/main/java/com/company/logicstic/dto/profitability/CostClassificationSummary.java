@@ -10,7 +10,7 @@ import java.util.UUID;
 public record CostClassificationSummary(String policyName, String policyVersion, String currency, BigDecimal revenue,
         BigDecimal variableCost, BigDecimal allocatedFixedCost, BigDecimal excludedCost, BigDecimal unclassifiedCost,
         MetricDto contributionMargin, MetricDto contributionMarginPercent, MetricDto allocatedProfit,
-        MetricDto allocatedMarginPercent, List<CostDetail> costs) {
-    public record CostDetail(UUID costId, String category, String sourceType, UUID sourceId, String costBasis,
+        MetricDto allocatedMarginPercent, List<CostDetail> costs, List<CostDetail> unallocatedTripCosts) {
+    public record CostDetail(UUID costId, UUID tripId, String category, String sourceType, UUID sourceId, String costBasis,
             String allocationMethod, BigDecimal amount, String currency, CostBehavior behavior, String reason) {}
 }

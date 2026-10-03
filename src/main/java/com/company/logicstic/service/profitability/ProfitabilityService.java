@@ -67,7 +67,9 @@ public class ProfitabilityService {
                 ? MetricDto.available("COST_VARIANCE", variance, "CURRENCY", "ACTUAL_MINUS_APPROVED_ESTIMATE")
                 : MetricDto.unavailable("COST_VARIANCE", "CURRENCY", "NO_AUTHORITATIVE_COST_ESTIMATE");
         ProfitabilityMileageMetrics mileage = mileageMetrics(loadId, revenue, actual);
-        CostClassificationSummary classification = calculator.calculate(revenue, currency, costs);
+        List<ShipmentCost> unallocatedTripCosts = loadTrips(loadId).keySet().stream()
+                .flatMap(tripId -> shipmentCostRepository.findByTripIdAndLoadIsNull(tripId).stream()).toList();
+        CostClassificationSummary classification = calculator.calculate(revenue, currency, costs, unallocatedTripCosts);
         return new LoadFinancialSummary(loadId, load.getNumber() == null ? null : load.getNumber().toString(), currency,
                 quote, revenue, actual, estimatedCost, variance, classification.contributionMargin().value(),
                 classification.allocatedProfit().value(), legacyMargin(classification.allocatedMarginPercent()).value(),

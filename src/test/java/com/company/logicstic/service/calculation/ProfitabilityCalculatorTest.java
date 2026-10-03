@@ -85,4 +85,11 @@ class ProfitabilityCalculatorTest {
         var usd = calculator.calculate(new BigDecimal("100"),"USD",List.of());
         assertThrows(CurrencyMismatchException.class, () -> calculator.aggregate("VND",List.of(usd)));
     }
+    @Test void unallocatedTripCostsSuppressLoadAndGroupProfitsWithoutProration() {
+        var tripCost = cost("DRIVER","DRIVER_SETTLEMENT",null,"100"); var trip = new com.company.logicstic.entity.Trip(); trip.setId(UUID.randomUUID()); tripCost.setTrip(trip);
+        var s = calculator.calculate(new BigDecimal("500"),"USD",List.of(),List.of(tripCost));
+        assertEquals(new BigDecimal("0.00"),s.variableCost()); assertNull(s.allocatedProfit().value());
+        assertEquals("TRIP_COST_ALLOCATION_REQUIRED",s.contributionMargin().reason()); assertEquals(trip.getId(),s.unallocatedTripCosts().getFirst().tripId());
+        var group = calculator.aggregate("USD",List.of(s,s)); assertNull(group.allocatedProfit().value()); assertEquals(1,group.unallocatedTripCosts().size());
+    }
 }
