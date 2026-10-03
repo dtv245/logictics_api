@@ -1,6 +1,6 @@
 # LogisticsX implementation checkpoint
 
-Updated: 2026-10-04T02:45:00+07:00. Sources: convention plan, current code, Flyway resources and actual Maven/PostgreSQL results. This file was missing at continuation start; prior verified handoffs were retained in `.ai-workflow/PROJECT_MEMORY.md`.
+Updated: 2026-10-04T02:49:00+07:00. Sources: convention plan, current code, Flyway resources and actual Maven/PostgreSQL results. This file was missing at continuation start; prior verified handoffs were retained in `.ai-workflow/PROJECT_MEMORY.md`.
 
 ## Completed
 
@@ -23,13 +23,15 @@ Updated: 2026-10-04T02:45:00+07:00. Sources: convention plan, current code, Flyw
 
 - Phase 015B COMPLETE: MULTI_JURISDICTION neutral framework, generic config/profile/policy, exact effective resolution, tax ports, signed economic gross/settlement mapping, supplement source claims, immutable calculation history, reconciliation and fail-closed availability. Contract: docs/payroll-contracts.md.
 
+- Phase 015C COMPLETE: availability/reconciliation-aware review/approval/lock, authenticated actor audit, concurrent retry audit stability; V15 protects locked header/items/source claims/calculation history and blocks PAID while required items are incomplete.
+
 ## In progress
 
-- Phase 015C: separate approval/lock workflow and database financial history protections.
+- Phase 015D: immutable payslip issuance/read/PDF and driver-owned access.
 
 ## Not started
 
-- Phase 5 logic 015D–015G; 015C now in progress. Phase 5 parent remains incomplete.
+- Phase 5 logic 015E–015G; 015D now in progress. Phase 5 parent remains incomplete.
 - Phase 6 contract rate/FSC logic.
 - Phase 7 feasibility/optimization audit/scoring.
 - Phase 8 historical utilization.
@@ -38,7 +40,7 @@ Updated: 2026-10-04T02:45:00+07:00. Sources: convention plan, current code, Flyw
 
 - Payroll architecture: MULTI_JURISDICTION.
 - Tax implementations: pluggable by jurisdiction.
-- Current phase: jurisdiction-neutral framework (015B COMPLETE; 015C approval/lock next).
+- Current phase: jurisdiction-neutral framework (015B–015C COMPLETE; 015D payslip next).
 - Region-specific tax policies: implemented incrementally with authoritative policy/source; none hard-coded or currently implemented.
 - Generic country/subdivision/locality jurisdiction and independent EMPLOYEE/CONTRACTOR classification; contractor does not imply zero tax.
 - Resolution priority: work/payroll override → effective employee profile → tenant default. Missing jurisdiction/policy/statutory adapter yields UNAVAILABLE tax and VALIDATION_REQUIRED; blocks approval/lock/payment scheduling.
@@ -59,13 +61,14 @@ Updated: 2026-10-04T02:45:00+07:00. Sources: convention plan, current code, Flyw
 - Phase 4E clean regression on codex_classification_20261003150336: 131 tests, 0 failures/errors, 1 legacy skip; 15 live PG cases. Three attribution unit cases and approved driver amount/draft exclusion/ambiguous recipient integration PASS.
 - Phase 4F clean full regression on codex_classification_20261003152740: 141 tests, 0 failures/errors, 1 pre-existing legacy skip; 21 live PG cases. Three reconciliation unit cases, trip-only profitability guard, six live settlement/concurrency/correction/validation cases PASS. V12→V13 upgrade and full regression on populated codex_classification_20261003150336 PASS with the same 141-test count. Maximum-length reversal reason verified; historical invalid toy fixture corrected to satisfy its stated monetary invariant.
 - 015B clean regression codex_classification_20261003194231 and populated V13→V14 upgrade codex_classification_20261003152740 PASS: 161 tests, 0 failures/errors, 1 legacy skip; 29 PG cases. Twelve neutral payroll unit cases and eight live hierarchy/tax-port/currency/reconciliation/idempotency/concurrency/snapshot/API cases. JSONB comparisons use structured equality. Mapping metadata test now recognizes explicitly assigned snapshot/source IDs, tenant INTEGER singleton and mapped join table; real JPA/PostgreSQL startup independently verifies all mappings.
+- 015C clean codex_classification_20261003194644 and populated V14→V15 codex_classification_20261003194231 full regression PASS: 166 tests, 0 failures/errors, 1 legacy skip; 31 PG cases. Three workflow unit and two live concurrent lock/immutable header/item/claim/snapshot/API actor cases. LOCKED != PAID and all-required-item completion guard verified.
 - `git diff --check` PASS. Runtime OpenAPI/controller mappings load with the full application context.
 
 ## Migrations applied
 
 - No new migration or applied migration modification in Task 3.3.
 - User-confirmed V2–V7 applied baseline preserved; existing repository chain V1–V12 migrated/validated on disposable PostgreSQL during regression.
-- V9 cost/accessorial, V10 policy/settlement and V11 payroll schemas already exist. V12 is occupied by the audit-column correction; V13 adds settlement idempotency, workflow/history guards and explicit trip-only attribution; V14 adds neutral payroll configuration/availability/snapshots/source claims; clean and populated V13→V14 upgrade verified. Next unused migration is V15.
+- V9 cost/accessorial, V10 policy/settlement and V11 payroll schemas already exist. V12 is occupied by the audit-column correction; V13 adds settlement idempotency, workflow/history guards and explicit trip-only attribution; V14 adds neutral payroll configuration/availability/snapshots/source claims; clean and populated V13→V14 upgrade verified. V15 protects immutable locked payroll history, source claims and snapshots; clean and populated V14→V15 verified. Next unused migration is V16.
 - Production tenant migration histories were not changed or independently queried.
 
 ## Blockers
@@ -77,5 +80,5 @@ Updated: 2026-10-04T02:45:00+07:00. Sources: convention plan, current code, Flyw
 
 ## Next task
 
-- Complete separate 015C approval/lock history guards, then 015D payslip and 015E–015G payment state/orchestration/idempotency/manual reconciliation. No legal rates/provider credentials are guessed.
+- Complete separate 015D immutable payslip/PDF/driver ownership; then 015E–015G payment state/orchestration/idempotency/manual reconciliation. No legal rates/provider credentials are guessed.
 - Preserve unrelated pre-existing worktree/staged files. Commit each completed sub-task with explicit paths only.

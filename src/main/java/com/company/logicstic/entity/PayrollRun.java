@@ -22,6 +22,8 @@ public class PayrollRun {
  @JdbcTypeCode(SqlTypes.JSON) @Column(name="calculation_snapshot_json",columnDefinition="jsonb") private String calculationSnapshotJson;
  @Column(name="validation_reason",length=1000) private String validationReason;
  @Column(name="calculated_at") private OffsetDateTime calculatedAt;
+ @Column(name="reviewed_at") private OffsetDateTime reviewedAt;
+ @Column(name="reviewed_by") private UUID reviewedBy;
  @Column(name="approved_at") private OffsetDateTime approvedAt;
  @Column(name="approved_by") private UUID approvedBy;
  @Column(name="locked_at") private OffsetDateTime lockedAt;

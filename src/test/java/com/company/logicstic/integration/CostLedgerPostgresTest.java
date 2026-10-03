@@ -37,6 +37,50 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.payroll.PayrollCalculationService payroll;
     @Autowired com.company.logicstic.service.payroll.policy.PayrollConfigurationService payrollConfiguration;
     @Autowired com.company.logicstic.service.payroll.policy.PayrollPolicyResolver payrollPolicyResolver;
+    @Autowired com.company.logicstic.service.payroll.PayrollWorkflowService payrollWorkflow;
+
+    @Test void concurrentPayrollLockFreezesHeaderItemsClaimsAndSnapshotsWithoutMarkingPaid() throws Exception {
+        var f=payrollFixture();var j=payrollJurisdiction("VN");payrollProfile(f.driver(),j);
+        payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var run=payroll.calculate(payrollRequest(f));
+        assertThrows(com.company.logicstic.exception.BadRequestException.class,() -> payrollWorkflow.transition(run.id(),"LOCKED",f.driver()));
+        payrollWorkflow.transition(run.id(),"IN_REVIEW",f.driver());payrollWorkflow.transition(run.id(),"APPROVED",f.driver());
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> payrollWorkflow.transition(run.id(),"LOCKED",f.driver()));
+            var b=pool.submit(() -> payrollWorkflow.transition(run.id(),"LOCKED",f.driver()));
+            var first=a.get(20,TimeUnit.SECONDS);var second=b.get(20,TimeUnit.SECONDS);
+            assertEquals(first.lockedAt().toInstant(),second.lockedAt().toInstant());assertEquals("LOCKED",first.status());assertNull(first.paidAt());
+        }
+        assertEquals("CALCULATED",payroll.get(run.id()).items().getFirst().status());
+        assertEquals("LOCKED",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
+        assertThrows(com.company.logicstic.exception.BadRequestException.class,() -> payroll.recalculate(run.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_runs set status='CALCULATED' where id=?",run.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_runs set calculation_snapshot_json='{}' where id=?",run.id()));
+        var item=run.items().getFirst();
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_run_items set gross_amount=gross_amount+1 where id=?",item.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("delete from payroll_run_item_settlements where payroll_run_item_id=?",item.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update calculation_snapshots set result_json='{}' where entity_type='PAYROLL_ITEM' and entity_id=?",item.id()));
+        jdbc.update("update payroll_runs set status='PAYMENT_SCHEDULED' where id=?",run.id());
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_runs set status='PAID' where id=?",run.id()));
+    }
+
+    @Test void payrollWorkflowApiBlocksUnavailableTaxAndUsesAuthenticatedActor() throws Exception {
+        var f=payrollFixture();payrollProfile(f.driver(),null);var unavailable=payroll.calculate(payrollRequest(f));
+        var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext).apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/runs/"+unavailable.id()+"/approve")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(f.email()).roles("PAYROLL")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest());
+        var other=payrollFixture();var j=payrollJurisdiction("US");payrollProfile(other.driver(),j);
+        payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var valid=payroll.calculate(payrollRequest(other));
+        for(var step:java.util.List.of("submit-review","approve","lock"))
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/runs/"+valid.id()+"/"+step)
+                            .param("actorId",f.driver().toString())
+                            .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(other.email()).roles("PAYROLL")))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+        assertEquals(other.driver(),jdbc.queryForObject("select approved_by from payroll_runs where id=?",UUID.class,valid.id()));
+        assertEquals(other.driver(),jdbc.queryForObject("select locked_by from payroll_runs where id=?",UUID.class,valid.id()));
+    }
 
     @org.springframework.boot.test.context.TestConfiguration
     static class PayrollFixtureConfiguration {
