@@ -39,6 +39,58 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.payroll.policy.PayrollPolicyResolver payrollPolicyResolver;
     @Autowired com.company.logicstic.service.payroll.PayrollWorkflowService payrollWorkflow;
     @Autowired com.company.logicstic.service.payroll.PayslipService payslips;
+    @Autowired com.company.logicstic.service.payroll.payment.PayrollPaymentSchedulingService paymentScheduling;
+    @Autowired com.company.logicstic.service.payroll.payment.PayrollPaymentDispatchService paymentDispatch;
+
+    @Test void concurrentPaymentSchedulingAndDispatchPersistOneAttemptWithoutPayingPayroll() throws Exception {
+        var f=payrollFixture();var j=payrollJurisdiction("VN");payrollProfile(f.driver(),j);
+        payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var run=payroll.calculate(payrollRequest(f));payrollWorkflow.transition(run.id(),"IN_REVIEW",f.driver());
+        payrollWorkflow.transition(run.id(),"APPROVED",f.driver());payrollWorkflow.transition(run.id(),"LOCKED",f.driver());
+        var item=run.items().getFirst();
+        var request=new com.company.logicstic.dto.payroll.SchedulePayrollPaymentRequest(UUID.randomUUID().toString(),"BANK_TRANSFER","TEST_ONLY_ASYNC","fixture-account");
+        com.company.logicstic.dto.payroll.PayrollPaymentView scheduled;
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> paymentScheduling.schedule(item.id(),request,f.driver()));
+            var b=pool.submit(() -> paymentScheduling.schedule(item.id(),request,f.driver()));
+            scheduled=a.get(20,TimeUnit.SECONDS);assertEquals(scheduled.id(),b.get(20,TimeUnit.SECONDS).id());
+        }
+        assertEquals("SCHEDULED",scheduled.status());assertEquals(1,scheduled.attemptNumber());
+        assertEquals(0,new java.math.BigDecimal("90").compareTo(scheduled.amount()));
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> paymentDispatch.dispatch(scheduled.id()));var b=pool.submit(() -> paymentDispatch.dispatch(scheduled.id()));
+            assertEquals("PROCESSING",a.get(20,TimeUnit.SECONDS).status());assertEquals("PROCESSING",b.get(20,TimeUnit.SECONDS).status());
+        }
+        assertEquals("PAYMENT_SCHEDULED",payroll.get(run.id()).status());assertNull(payroll.get(run.id()).paidAt());
+        assertEquals("PAYMENT_PENDING",payroll.get(run.id()).items().getFirst().status());
+        assertEquals("PAYMENT_SCHEDULED",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
+        assertEquals(1,jdbc.queryForObject("select count(*) from payroll_payments where payroll_run_item_id=?",Integer.class,item.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_payments set amount=amount+1 where id=?",scheduled.id()));
+        assertEquals("PAYMENT_IDEMPOTENCY_CONFLICT",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> paymentScheduling.schedule(item.id(),new com.company.logicstic.dto.payroll.SchedulePayrollPaymentRequest(request.idempotencyKey(),"BANK_TRANSFER","TEST_ONLY_ASYNC","changed-account"),f.driver())).getCode());
+    }
+
+    @Test void missingProviderAndUnknownSubmissionNeverBecomeFailedOrPaid() {
+        var f=payrollFixture();var j=payrollJurisdiction("US");payrollProfile(f.driver(),j);
+        payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var run=payroll.calculate(payrollRequest(f));payrollWorkflow.transition(run.id(),"IN_REVIEW",f.driver());
+        payrollWorkflow.transition(run.id(),"APPROVED",f.driver());payrollWorkflow.transition(run.id(),"LOCKED",f.driver());
+        var scheduled=paymentScheduling.schedule(run.items().getFirst().id(),
+                new com.company.logicstic.dto.payroll.SchedulePayrollPaymentRequest(UUID.randomUUID().toString(),"BANK_TRANSFER","MISSING_PROVIDER","fixture-account"),f.driver());
+        assertEquals("PAYMENT_PROVIDER_NOT_CONFIGURED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> paymentDispatch.dispatch(scheduled.id())).getCode());
+        assertEquals("SCHEDULED",paymentScheduling.list(run.items().getFirst().id()).getFirst().status());
+        var other=payrollFixture();payrollProfile(other.driver(),j);var second=payroll.calculate(payrollRequest(other));
+        payrollWorkflow.transition(second.id(),"IN_REVIEW",other.driver());payrollWorkflow.transition(second.id(),"APPROVED",other.driver());payrollWorkflow.transition(second.id(),"LOCKED",other.driver());
+        var unknown=paymentScheduling.schedule(second.items().getFirst().id(),
+                new com.company.logicstic.dto.payroll.SchedulePayrollPaymentRequest(UUID.randomUUID().toString(),"BANK_TRANSFER","TEST_ONLY_ASYNC","UNKNOWN_OUTCOME"),other.driver());
+        assertEquals("PAYMENT_SUBMISSION_OUTCOME_UNKNOWN",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> paymentDispatch.dispatch(unknown.id())).getCode());
+        assertEquals("PROCESSING",paymentDispatch.dispatch(unknown.id()).status());
+        assertEquals("PAYMENT_ATTEMPT_ACTIVE",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> paymentScheduling.schedule(second.items().getFirst().id(),
+                        new com.company.logicstic.dto.payroll.SchedulePayrollPaymentRequest(UUID.randomUUID().toString(),"BANK_TRANSFER","TEST_ONLY_ASYNC","fixture-account"),other.driver())).getCode());
+    }
 
     @Test void payrollLockIssuesImmutablePdfAndDriverCanOnlyReadOwnPayslip() throws Exception {
         var f=payrollFixture();var j=payrollJurisdiction("VN");payrollProfile(f.driver(),j);
@@ -124,6 +176,19 @@ class CostLedgerPostgresTest {
 
     @org.springframework.boot.test.context.TestConfiguration
     static class PayrollFixtureConfiguration {
+        @org.springframework.context.annotation.Bean
+        com.company.logicstic.service.payroll.payment.PayrollPaymentProvider testOnlyPaymentProvider() {
+            return new com.company.logicstic.service.payroll.payment.PayrollPaymentProvider() {
+                private final java.util.concurrent.ConcurrentHashMap<String,String> requests=new java.util.concurrent.ConcurrentHashMap<>();
+                public String key() {return "TEST_ONLY_ASYNC";}
+                public boolean supports(String method) {return "BANK_TRANSFER".equals(method);}
+                public Submission submit(com.company.logicstic.service.payroll.payment.PayrollPaymentInstruction input) {
+                    var reference=requests.computeIfAbsent(input.idempotencyKey(),key -> "FIXTURE-"+input.paymentId());
+                    if("UNKNOWN_OUTCOME".equals(input.destinationReference())) return new Submission("UNAVAILABLE","FIXTURE_UNKNOWN",null);
+                    return new Submission("AVAILABLE",null,reference);
+                }
+            };
+        }
         @org.springframework.context.annotation.Bean
         com.company.logicstic.service.payroll.tax.PayrollTaxAdapter testOnlyTaxAdapter() {
             return new com.company.logicstic.service.payroll.tax.PayrollTaxAdapter() {

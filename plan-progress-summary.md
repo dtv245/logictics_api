@@ -1,6 +1,6 @@
 # LogisticsX implementation checkpoint
 
-Updated: 2026-10-04T02:59:00+07:00. Sources: convention plan, current code, Flyway resources and actual Maven/PostgreSQL results. This file was missing at continuation start; prior verified handoffs were retained in `.ai-workflow/PROJECT_MEMORY.md`.
+Updated: 2026-10-04T03:06:00+07:00. Sources: convention plan, current code, Flyway resources and actual Maven/PostgreSQL results. This file was missing at continuation start; prior verified handoffs were retained in `.ai-workflow/PROJECT_MEMORY.md`.
 
 ## Completed
 
@@ -27,13 +27,15 @@ Updated: 2026-10-04T02:59:00+07:00. Sources: convention plan, current code, Flyw
 
 - Phase 015D COMPLETE: lock atomically issues immutable payslip and persisted Unicode PDF with checksum/renderer/audit. Issuance retries retain original artifact; driver list/detail/PDF APIs enforce ownership. V16 protects artifact history. No email/external message or transfer sent.
 
+- Phase 015E COMPLETE: immutable idempotent payment attempts, source/destination snapshots, parent-first locks, one active attempt, committed dispatch intent and pluggable provider port. Schedule/PROCESSING never imply paid; missing provider/unknown outcome remain explicit.
+
 ## In progress
 
-- Phase 015E: separate payment scheduling/dispatch ports and immutable attempts; then callback/reconciliation 015F–015G.
+- Phase 015F: verified callback receipts/idempotency and payment-success reconciliation.
 
 ## Not started
 
-- Phase 5 logic 015F–015G; 015E now in progress. Phase 5 parent remains incomplete.
+- Phase 5 logic 015G; 015F now in progress. Phase 5 parent remains incomplete.
 - Phase 6 contract rate/FSC logic.
 - Phase 7 feasibility/optimization audit/scoring.
 - Phase 8 historical utilization.
@@ -42,7 +44,7 @@ Updated: 2026-10-04T02:59:00+07:00. Sources: convention plan, current code, Flyw
 
 - Payroll architecture: MULTI_JURISDICTION.
 - Tax implementations: pluggable by jurisdiction.
-- Current phase: jurisdiction-neutral framework (015B–015D COMPLETE; 015E payments next).
+- Current phase: jurisdiction-neutral framework (015B–015E COMPLETE; 015F verified callbacks next).
 - Region-specific tax policies: implemented incrementally with authoritative policy/source; none hard-coded or currently implemented.
 - Generic country/subdivision/locality jurisdiction and independent EMPLOYEE/CONTRACTOR classification; contractor does not imply zero tax.
 - Resolution priority: work/payroll override → effective employee profile → tenant default. Missing jurisdiction/policy/statutory adapter yields UNAVAILABLE tax and VALIDATION_REQUIRED; blocks approval/lock/payment scheduling.
@@ -65,13 +67,14 @@ Updated: 2026-10-04T02:59:00+07:00. Sources: convention plan, current code, Flyw
 - 015B clean regression codex_classification_20261003194231 and populated V13→V14 upgrade codex_classification_20261003152740 PASS: 161 tests, 0 failures/errors, 1 legacy skip; 29 PG cases. Twelve neutral payroll unit cases and eight live hierarchy/tax-port/currency/reconciliation/idempotency/concurrency/snapshot/API cases. JSONB comparisons use structured equality. Mapping metadata test now recognizes explicitly assigned snapshot/source IDs, tenant INTEGER singleton and mapped join table; real JPA/PostgreSQL startup independently verifies all mappings.
 - 015C clean codex_classification_20261003194644 and populated V14→V15 codex_classification_20261003194231 full regression PASS: 166 tests, 0 failures/errors, 1 legacy skip; 31 PG cases. Three workflow unit and two live concurrent lock/immutable header/item/claim/snapshot/API actor cases. LOCKED != PAID and all-required-item completion guard verified.
 - 015D clean codex_classification_20261003195715 and populated V15→V16 codex_classification_20261003194644 full regression PASS: 169 tests, 0 failures/errors, 1 legacy skip; 32 PG cases. Two PDF Unicode/multipage round-trip unit cases and live concurrent issuance/history/ownership/API case. Proven prior settlement retry storage-padding drift fixed in DTO presentation without monetary rounding or prior expectation changes.
+- 015E clean codex_classification_20261003200459 and populated V16→V17 codex_classification_20261003195715 full regression PASS: 174 tests, 0 failures/errors, 1 legacy skip; 34 PG cases. Three dispatch intent/provider/unknown-outcome unit cases and two live concurrent scheduling/dispatch/history/unknown-provider cases. Scalar parent-ID read before row locking corrected proven stale persistence-context race.
 - `git diff --check` PASS. Runtime OpenAPI/controller mappings load with the full application context.
 
 ## Migrations applied
 
 - No new migration or applied migration modification in Task 3.3.
 - User-confirmed V2–V7 applied baseline preserved; existing repository chain V1–V12 migrated/validated on disposable PostgreSQL during regression.
-- V9 cost/accessorial, V10 policy/settlement and V11 payroll schemas already exist. V12 is occupied by the audit-column correction; V13 adds settlement idempotency, workflow/history guards and explicit trip-only attribution; V14 adds neutral payroll configuration/availability/snapshots/source claims; clean and populated V13→V14 upgrade verified. V15 protects immutable locked payroll history, source claims and snapshots; clean and populated V14→V15 verified. V16 adds immutable persisted payslip PDF/checksum/audit; clean and populated V15→V16 verified. Next unused migration is V17.
+- V9 cost/accessorial, V10 policy/settlement and V11 payroll schemas already exist. V12 is occupied by the audit-column correction; V13 adds settlement idempotency, workflow/history guards and explicit trip-only attribution; V14 adds neutral payroll configuration/availability/snapshots/source claims; clean and populated V13→V14 upgrade verified. V15 protects immutable locked payroll history, source claims and snapshots; clean and populated V14→V15 verified. V16 adds immutable persisted payslip PDF/checksum/audit; clean and populated V15→V16 verified. V17 adds immutable payment attempts/provider/source/destination snapshots and active-attempt guard; clean and populated V16→V17 verified. Next unused migration is V18.
 - Production tenant migration histories were not changed or independently queried.
 
 ## Blockers
@@ -79,9 +82,10 @@ Updated: 2026-10-04T02:59:00+07:00. Sources: convention plan, current code, Flyw
 - Classification design blocker resolved by user-authorized policy V1. Individual OTHER/ambiguous MAINTENANCE rows remain UNCLASSIFIED and explain their reason; not a blocker to availability-aware engine completion.
 - Legacy distance semantics remain unresolved; use explicit V3 miles only.
 - Regional statutory rates/authoritative sources are not supplied. User authorized a MULTI_JURISDICTION neutral framework/ports and fail-closed availability; this does not block framework implementation. Regional adapters will be added incrementally without guessed rates.
+- Actual payment provider adapter/credentials are unconfigured; no network transfer implementation is guessed. Unknown submission outcome stays PROCESSING and requires verified provider/bank reconciliation, never a new attempt. Zero-net completion policy is not configured and returns PAYMENT_ZERO_NET_DISPOSITION_REQUIRED rather than fabricating a transfer.
 - Historical utilization definitions and historical vehicle-state source remain unverified.
 
 ## Next task
 
-- Implement 015E payment scheduling and pluggable dispatch, 015F verified callback/idempotency, 015G audited manual bank reconciliation. LOCKED/PAYMENT_SCHEDULED remain distinct from PAID. No legal rates/provider credentials are guessed.
+- Complete 015F verified callback receipts/idempotency and reconciliation, then 015G audited manual bank reconciliation. LOCKED/PAYMENT_SCHEDULED remain distinct from PAID. No legal rates/provider credentials are guessed.
 - Preserve unrelated pre-existing worktree/staged files. Commit each completed sub-task with explicit paths only.

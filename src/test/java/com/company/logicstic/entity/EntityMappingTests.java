@@ -75,7 +75,7 @@ class EntityMappingTests {
         // Snapshot owners/config versions use assigned UUIDs; supplement IDs are external source keys.
         // The tenant-local settings singleton is deliberately an INTEGER key constrained to 1.
         Set<Class<?>> assignedIds = Set.of(DriverSettlement.class, PayrollRun.class, PayrollRunItem.class,
-                PayrollJurisdictionEntity.class, PayrollPolicyVersion.class, EmployeePayrollProfile.class, PayrollSupplement.class,
+                PayrollJurisdictionEntity.class, PayrollPolicyVersion.class, EmployeePayrollProfile.class, PayrollSupplement.class, PayrollPayment.class,
                 TenantPayrollSettings.class);
         if (!assignedIds.contains(entityClass)) {
             assertNotNull(idField.getAnnotation(GeneratedValue.class),

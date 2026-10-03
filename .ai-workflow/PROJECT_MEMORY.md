@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 34 |
+| Revision | 35 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
-| Last Updated | 2026-10-04T02:59:00+07:00 |
-| Current Phase | 7 — Backend Development / Phase 015E |
+| Last Updated | 2026-10-04T03:07:08+07:00 |
+| Current Phase | 7 — Backend Development / Phase 015F |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Separate 015E payment scheduling/dispatch ports, then 015F verified callbacks and 015G manual reconciliation. |
-| Handoff Sequence | 34 |
+| Next Action | Separate 015F verified callback/idempotency and payment-success reconciliation, then 015G bank reconciliation. |
+| Handoff Sequence | 35 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-015 / Phase 015E
-- **Objective:** Schedule immutable payroll payment attempts from locked resolved items and dispatch through explicit provider ports.
-- **Acceptance Gate:** Idempotent scheduling, immutable amounts/attempt history, configured provider port, no paid-at-lock/schedule/processing; unit/live/concurrency/migration/regression evidence.
-- **Allowed Change Scope:** Separate 015E payments and next forward migration; preserve applied V11–V16.
+- **Feature/Task ID:** BE-CALC-015 / Phase 015F
+- **Objective:** Verified callback receipts and exact payment/item/settlement/run completion with idempotent immutable evidence.
+- **Acceptance Gate:** Verified provenance, exact amount/currency/identity, duplicate/drift protection and all-items paid only after success; unit/live/concurrency/history/migration/regression.
+- **Allowed Change Scope:** Separate 015F callback/reconciliation and next forward migration; preserve applied V11–V17.
 
 ### Phase Status
 
@@ -49,10 +49,10 @@
 | 4. System Architecture | Software Architect | Software Architect; Tech Lead; Security Engineer; Database Engineer | DONE | ADR-001 and ADR-002 |
 | 5. API Design | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer; Security Engineer | NOT_STARTED | — |
 | 6. Project Structure | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer | DONE | Existing Spring layout |
-| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 and neutral 015B–015D complete; 169 regression tests incl.32 PG; 015E next |
+| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 and neutral 015B–015E complete; 174 regression tests incl.34 PG; 015F next |
 | 8. Frontend Development | Frontend Developer | Frontend Developer; Tech Lead; QA / Tester; Security Engineer; Code Reviewer | NOT_APPLICABLE | API-only repository scope |
 | 9. Integration | Tech Lead | Tech Lead; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
-| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 169 tests, 0 failures/errors, 1 legacy skip; 32 live PostgreSQL cases; 015E–015G/later phases incomplete |
+| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 174 tests, 0 failures/errors, 1 legacy skip; 34 live PostgreSQL cases; 015F–015G/later phases incomplete |
 | 11. Security Review | Security Engineer | Security Engineer; Software Architect; Backend Developer; Frontend Developer; Code Reviewer | NOT_STARTED | — |
 | 12. Performance Review | Tech Lead | Tech Lead; Database Engineer; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
 | 13. Code Review | Code Reviewer | Code Reviewer; Tech Lead; Security Engineer | NOT_STARTED | — |
@@ -75,7 +75,7 @@
 | BE-CALC-013 | Task 4.1 / 4A | Backend Developer | DONE | Append-only locked versioning, expiry/scope/ambiguity resolver, explicit validation and pay-period APIs; 114 regression tests incl. 11 live PG | Phase 4B mileage calculation |
 | BE-CALC-014 | Task 4.2 | Backend Developer | DONE | All 4A–4F gates; 141 regression tests incl.21 PG, V13 clean/upgrade, concurrency/reconciliation/history/idempotency | Jurisdiction-neutral 015B |
 | BE-CALC-015 | Task 5.1 | Database Engineer | DONE | V11 creates payroll runs/items, settlement join, payslips, and payments; local clean and upgrade succeeded | Continue Task 5.2 workflow without hardcoding jurisdiction tax rules |
-| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B–015D DONE with V14–V16 neutral config, immutable workflow and driver-owned Unicode payslip; 015E in progress, 015F–015G not started | Idempotent payment scheduling/dispatch port |
+| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B–015E DONE with V14–V17 neutral config/workflow/payslip/immutable payment attempts; 015F in progress, 015G not started | Verified callback/idempotency and payment-success reconciliation |
 | BE-CALC-016–017 | Phases 6–8 | Backend Developer | NOT_STARTED | No implementation evidence in this handoff | Proceed after payroll and settlement gates |
 
 ## 4. Requirements and Scope
@@ -107,7 +107,7 @@
 - **Modules / Boundaries:** Controller → service → repository/entity.
 - **Dependency Direction:** HTTP depends on services; services depend on repositories/entities.
 - **Authentication / Authorization:** JWT tenant claim routes to a tenant data source.
-- **Data Model / Migration:** Flyway V1–V16 clean and populated V15–V16 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
+- **Data Model / Migration:** Flyway V1–V17 clean and populated V16–V17 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
 - **API / Integration Contract:** REST; Phase 1 and Task 3.1 unit/security/service integration contracts verified; documents linked below.
 - **Deployment / Runtime:** Docker assets exist but are unverified.
 
@@ -875,6 +875,27 @@
 - **Acceptance Gate:** Unit/live/concurrency/idempotency/monetary-history/migration/full regression before checkpoint.
 - **Do Not Redo:** Completed Phase 3/4/015B–015D; no V11–V16 edits, artifact regeneration or country-specific rates.
 
+### HOFF-0035 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T03:07:08+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / 015E completion → 015F
+- **Status:** DONE
+- **Objective:** Idempotent payment scheduling and safe provider dispatch.
+- **Inputs Read:** Progress/HOFF-0034, V11 payment schema, employee connected-account source, immutable run/item/source/payslip gates.
+- **Completed:** Immutable payment attempts/provider/destination snapshots, parent-first scalar lock protocol, one active attempt, source/payment scheduling state, committed PROCESSING intent and configured-provider port. No paid-at-submission or actual external transfer.
+- **Requirement IDs:** BE-CALC-015E.
+- **Files and Artifacts:** Payment entity/repo/DTO/controller, scheduling/dispatch/provider/instruction services; V17; unit/live tests/contracts/progress/memory.
+- **Decisions:** Immutable item net is payout source, never caller totals. Missing adapter keeps SCHEDULED; unknown outcome keeps PROCESSING and prevents new attempts until evidence. Intent commits before I/O. Scalar parent ID before reading item/payment fixes observed stale-context concurrency regression. Zero-net completion requires explicit policy; no fabricated transfer.
+- **Assumptions:** Production has no payment provider adapter/credentials; fixed asynchronous fixture sends no network request. No bank account or legal policy inferred.
+- **Verification:** Clean codex_classification_20261003200459 and populated V16→V17 codex_classification_20261003195715 full regression PASS: 174 tests, 0 failures/errors, 1 legacy skip; 34 PG cases. Three dispatch ordering/provider/unknown-outcome unit and two live concurrency/attempt/input-drift/history/source-state cases.
+- **Open Issues and Risks:** 015F–015G and Phases 6–8 incomplete; actual provider and statutory configurations unavailable. Unknown-outcome dispatch requires verified callback/bank reconciliation; no resend/new-attempt guess.
+- **Blockers:** None for verified callback port/core/manual reconciliation. Zero-net no-payment completion needs explicit business policy.
+- **Next Required Action:** 015F verified provenance/receipt/idempotency, exact amount/currency identity and all-required-items payment reconciliation.
+- **Acceptance Gate:** Unit/live/concurrency/idempotency/history/forward migration/full regression.
+- **Do Not Redo:** Completed Phase 3/4/015B–015E; no applied migration changes, tax/provider defaults or prematurely paid states.
+
 ## 10. Final Readiness
 
 | Check | Status | Evidence / Exception |
@@ -884,7 +905,7 @@
 | Tests successful | IN_PROGRESS | 87 tests, 0 failures/errors, 1 legacy skip; 8 live PostgreSQL cases; classification/later features incomplete |
 | API working | IN_PROGRESS | Implemented ledger/accessorial/report routes verified; profit/settlement routes verified; payroll and later APIs incomplete |
 | Frontend working | NOT_APPLICABLE | API-only scope |
-| Database migrations working | IN_PROGRESS | V1–V16 clean and populated V15–V16 upgrade verified; supported production tenant history not available |
+| Database migrations working | IN_PROGRESS | V1–V17 clean and populated V16–V17 upgrade verified; supported production tenant history not available |
 | Authentication and authorization working | IN_PROGRESS | Policy/settlement routes require payroll-related roles; PG authorization verified; payroll next |
 | Validation and error handling working | NOT_STARTED | Not verified |
 | Security reviewed | NOT_STARTED | Not reviewed |
