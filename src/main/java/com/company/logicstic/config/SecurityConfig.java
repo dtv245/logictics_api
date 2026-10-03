@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .addFilterBefore(larkAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/lark/**").permitAll()
+                        .requestMatchers("/api/payroll/provider-callbacks/**").permitAll()
                         .requestMatchers("/api/driver/me/payslips", "/api/payslips/**").authenticated()
                         .requestMatchers("/api/expenses/*/approve")
                         .hasAnyRole("ADMIN", "ACCOUNTANT")

@@ -15,9 +15,11 @@ public class PayrollPaymentDispatchService {
  private final PayrollRunRepository runs;
  private final Map<String,PayrollPaymentProvider> providers;
  private final TransactionTemplate transactions;
+ private final PayrollPaymentEventRepository events;
  public PayrollPaymentDispatchService(PayrollPaymentRepository payments,PayrollRunRepository runs,
-     List<PayrollPaymentProvider> registered,PlatformTransactionManager manager) {
+     List<PayrollPaymentProvider> registered,PlatformTransactionManager manager,PayrollPaymentEventRepository events) {
   this.payments=payments;this.runs=runs;this.transactions=new TransactionTemplate(manager);
+  this.events=events;
   var map=new HashMap<String,PayrollPaymentProvider>();
   for(var p:registered) if(p.key()==null || map.putIfAbsent(p.key(),p)!=null) throw new IllegalStateException("Duplicate/missing payroll payment provider key");
   this.providers=Map.copyOf(map);
@@ -26,6 +28,7 @@ public class PayrollPaymentDispatchService {
  public PayrollPaymentView dispatch(UUID id) {
   var task=transactions.execute(status -> {
    var p=locked(id);
+   if(events.hasUnresolvedCase(p.getItem().getId())) throw new BadRequestException("PAYMENT_RECONCILIATION_REQUIRED","Unresolved payment evidence blocks dispatch");
    if(!"SCHEDULED".equals(p.getStatus())) return new Dispatch(PayrollPaymentView.from(p),null,null);
    if("MANUAL".equals(p.getPaymentMethod())) throw new BadRequestException("PAYMENT_MANUAL_RECONCILIATION_REQUIRED","Manual payments require bank reconciliation");
    var provider=providers.get(p.getProviderKey());

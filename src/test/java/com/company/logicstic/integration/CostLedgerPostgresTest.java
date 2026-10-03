@@ -41,6 +41,98 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.payroll.PayslipService payslips;
     @Autowired com.company.logicstic.service.payroll.payment.PayrollPaymentSchedulingService paymentScheduling;
     @Autowired com.company.logicstic.service.payroll.payment.PayrollPaymentDispatchService paymentDispatch;
+    @Autowired com.company.logicstic.service.payroll.payment.PayrollCallbackService paymentCallbacks;
+
+    private com.company.logicstic.service.payroll.payment.VerifiedPayrollPaymentEvent paymentEvent(
+            com.company.logicstic.dto.payroll.PayrollPaymentView payment,String outcome,String amount,String currency) {
+        return new com.company.logicstic.service.payroll.payment.VerifiedPayrollPaymentEvent(UUID.randomUUID().toString(),payment.id(),outcome,
+                new java.math.BigDecimal(amount),currency,"FIXTURE-"+payment.id(),java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC));
+    }
+    private com.company.logicstic.dto.payroll.PayrollPaymentEventView callback(com.company.logicstic.service.payroll.payment.VerifiedPayrollPaymentEvent event) {
+        return paymentCallbacks.receive("TEST_ONLY_ASYNC",tools.jackson.databind.json.JsonMapper.builder().build().writeValueAsString(event),
+                java.util.Map.of("x-fixture-signature","SIGNED_FIXTURE"));
+    }
+    private com.company.logicstic.dto.payroll.PayrollRunView lockedPayroll(PayrollFixture f,com.company.logicstic.service.payroll.domain.PayrollJurisdiction j) {
+        payrollProfile(f.driver(),j);var run=payroll.calculate(payrollRequest(f));
+        payrollWorkflow.transition(run.id(),"IN_REVIEW",f.driver());payrollWorkflow.transition(run.id(),"APPROVED",f.driver());
+        return payrollWorkflow.transition(run.id(),"LOCKED",f.driver());
+    }
+    private com.company.logicstic.dto.payroll.PayrollPaymentView scheduledProviderPayment(UUID item,UUID actor) {
+        var p=paymentScheduling.schedule(item,new com.company.logicstic.dto.payroll.SchedulePayrollPaymentRequest(
+                UUID.randomUUID().toString(),"BANK_TRANSFER","TEST_ONLY_ASYNC","fixture-account"),actor);
+        paymentDispatch.dispatch(p.id());return paymentScheduling.list(item).getLast();
+    }
+
+    @Test void concurrentVerifiedSuccessPaysOnlyItsItemAndRunWaitsForEveryRequiredItem() throws Exception {
+        var f=payrollFixture();var otherSource=fixture();var date=java.time.LocalDate.of(2026,1,1);
+        payPolicies.create(payPolicyRequest(UUID.randomUUID().toString(),otherSource.actor(),"1",date,null));addAssignedTrip(otherSource,"2026-01-15T12:00:00Z");
+        var s=driverPay.calculate(otherSource.actor(),f.period());finalizeSettlement(s.id(),otherSource.actor());
+        var other=new PayrollFixture(otherSource.actor(),f.period(),s.id(),otherSource.email());var j=payrollJurisdiction("VN");
+        payrollProfile(f.driver(),j);payrollProfile(other.driver(),j);payrollPolicy(UUID.randomUUID().toString(),j,date,null,"TEST_ONLY_FIXED");
+        var template=payrollRequest(f);var request=new com.company.logicstic.dto.payroll.CalculatePayrollRequest(template.idempotencyKey(),f.period(),"USD",
+                template.effectiveDate(),java.util.List.of(f.settlement(),other.settlement()),null,null,null);
+        var run=payroll.calculate(request);payrollWorkflow.transition(run.id(),"IN_REVIEW",f.driver());payrollWorkflow.transition(run.id(),"APPROVED",f.driver());payrollWorkflow.transition(run.id(),"LOCKED",f.driver());
+        var firstItem=run.items().stream().filter(i -> i.driverId().equals(f.driver())).findFirst().orElseThrow();
+        var otherItem=run.items().stream().filter(i -> i.driverId().equals(other.driver())).findFirst().orElseThrow();
+        var first=scheduledProviderPayment(firstItem.id(),f.driver());var second=scheduledProviderPayment(otherItem.id(),f.driver());
+        int costs=jdbc.queryForObject("select count(*) from shipment_costs where driver_id in (?,?)",Integer.class,f.driver(),other.driver());
+        var event=paymentEvent(first,"SUCCEEDED","90","USD");
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> callback(event));var b=pool.submit(() -> callback(event));
+            var one=a.get(20,TimeUnit.SECONDS);var two=b.get(20,TimeUnit.SECONDS);assertEquals(one.eventId(),two.eventId());assertEquals("SUCCEEDED",two.payment().status());
+        }
+        assertEquals("PAYMENT_SCHEDULED",payroll.get(run.id()).status());assertNull(payroll.get(run.id()).paidAt());
+        assertEquals("PAID",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
+        assertEquals("PAYMENT_SCHEDULED",jdbc.queryForObject("select status from settlements where id=?",String.class,other.settlement()));
+        callback(paymentEvent(second,"SUCCEEDED","90","USD"));assertEquals("PAID",payroll.get(run.id()).status());assertNotNull(payroll.get(run.id()).paidAt());
+        assertTrue(payroll.get(run.id()).items().stream().allMatch(i -> i.status().equals("PAID")));
+        assertEquals(costs,jdbc.queryForObject("select count(*) from shipment_costs where driver_id in (?,?)",Integer.class,f.driver(),other.driver()));
+        assertEquals(1,jdbc.queryForObject("select count(*) from payroll_payment_events where source_key=?",Integer.class,event.eventId()));
+    }
+
+    @Test void verifiedFailureAllowsNewAttemptButLateSuccessCreatesUnresolvedCase() {
+        var f=payrollFixture();var j=payrollJurisdiction("US");payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var run=lockedPayroll(f,j);var item=run.items().getFirst();var first=scheduledProviderPayment(item.id(),f.driver());
+        assertEquals("FAILED",callback(paymentEvent(first,"FAILED","90","USD")).payment().status());
+        assertEquals("PAYMENT_FAILED",payroll.get(run.id()).items().getFirst().status());
+        var retry=scheduledProviderPayment(item.id(),f.driver());assertEquals(2,retry.attemptNumber());
+        var late=callback(paymentEvent(first,"SUCCEEDED","90","USD"));assertEquals("RECONCILIATION_REQUIRED",late.status());
+        assertEquals("FAILED",late.payment().status());assertEquals("PAYMENT_SCHEDULED",payroll.get(run.id()).status());
+        assertEquals("PAYMENT_RECONCILIATION_REQUIRED",assertThrows(com.company.logicstic.exception.BadRequestException.class,() -> paymentDispatch.dispatch(retry.id())).getCode());
+        assertEquals("RECONCILIATION_REQUIRED",callback(paymentEvent(retry,"SUCCEEDED","90","USD")).status());
+        assertEquals("PAYMENT_PENDING",payroll.get(run.id()).items().getFirst().status());
+    }
+
+    @Test void callbackRejectsWrongMoneyUnsignedBodyAndInputDriftAndDatabaseRequiresSuccessEvidence() {
+        var f=payrollFixture();var j=payrollJurisdiction("VN");payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var run=lockedPayroll(f,j);var p=scheduledProviderPayment(run.items().getFirst().id(),f.driver());
+        var badAmount=paymentEvent(p,"SUCCEEDED","89","USD");var rejected=callback(badAmount);
+        assertEquals("REJECTED",rejected.status());assertEquals("PAYMENT_AMOUNT_MISMATCH",rejected.reason());assertEquals("PROCESSING",rejected.payment().status());
+        assertEquals("PAYMENT_CURRENCY_MISMATCH",callback(paymentEvent(p,"SUCCEEDED","90","EUR")).reason());
+        var mapper=tools.jackson.databind.json.JsonMapper.builder().build();var good=paymentEvent(p,"SUCCEEDED","90","USD");
+        assertThrows(com.company.logicstic.exception.ForbiddenException.class,() -> paymentCallbacks.receive("TEST_ONLY_ASYNC",mapper.writeValueAsString(good),java.util.Map.of()));
+        assertThrows(com.company.logicstic.exception.ForbiddenException.class,() -> paymentCallbacks.receive("NO_VERIFIER",mapper.writeValueAsString(good),java.util.Map.of()));
+        var drift=new com.company.logicstic.service.payroll.payment.VerifiedPayrollPaymentEvent(badAmount.eventId(),p.id(),"SUCCEEDED",new java.math.BigDecimal("90"),"USD",badAmount.providerReference(),badAmount.occurredAt());
+        assertEquals("PAYMENT_CALLBACK_IDEMPOTENCY_CONFLICT",assertThrows(com.company.logicstic.exception.BadRequestException.class,() -> callback(drift)).getCode());
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_payments set status='SUCCEEDED' where id=?",p.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_run_items set status='PAID' where id=?",run.items().getFirst().id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update settlements set status='PAID' where id=?",f.settlement()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_payment_events set amount=90 where id=?",rejected.eventId()));
+        callback(good);assertEquals("PAID",payroll.get(run.id()).status());
+    }
+
+    @Test void callbackEndpointIsPublicOnlyThroughConfiguredVerifier() throws Exception {
+        var f=payrollFixture();var j=payrollJurisdiction("US");payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var run=lockedPayroll(f,j);var p=scheduledProviderPayment(run.items().getFirst().id(),f.driver());
+        var body=tools.jackson.databind.json.JsonMapper.builder().build().writeValueAsString(paymentEvent(p,"SUCCEEDED","90","USD"));
+        var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext).apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/provider-callbacks/TEST_ONLY_ASYNC").contentType("application/json").content(body))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/provider-callbacks/TEST_ONLY_ASYNC")
+                        .header("x-fixture-signature","SIGNED_FIXTURE").contentType("application/json").content(body))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+        assertEquals("PAID",payroll.get(run.id()).status());
+    }
 
     @Test void concurrentPaymentSchedulingAndDispatchPersistOneAttemptWithoutPayingPayroll() throws Exception {
         var f=payrollFixture();var j=payrollJurisdiction("VN");payrollProfile(f.driver(),j);
@@ -176,6 +268,17 @@ class CostLedgerPostgresTest {
 
     @org.springframework.boot.test.context.TestConfiguration
     static class PayrollFixtureConfiguration {
+        @org.springframework.context.annotation.Bean
+        com.company.logicstic.service.payroll.payment.PayrollProviderCallbackVerifier testOnlyCallbackVerifier(tools.jackson.databind.ObjectMapper mapper) {
+            return new com.company.logicstic.service.payroll.payment.PayrollProviderCallbackVerifier() {
+                public String key(){return "TEST_ONLY_ASYNC";}
+                public Verified verify(String body,java.util.Map<String,String> headers) {
+                    if(!"SIGNED_FIXTURE".equals(headers.get("x-fixture-signature"))) throw new com.company.logicstic.exception.ForbiddenException("Fixture signature required");
+                    return new Verified(mapper.readValue(body,com.company.logicstic.service.payroll.payment.VerifiedPayrollPaymentEvent.class),
+                            java.util.Map.of("verifier","FIXTURE_ONLY","signatureChecked",true));
+                }
+            };
+        }
         @org.springframework.context.annotation.Bean
         com.company.logicstic.service.payroll.payment.PayrollPaymentProvider testOnlyPaymentProvider() {
             return new com.company.logicstic.service.payroll.payment.PayrollPaymentProvider() {

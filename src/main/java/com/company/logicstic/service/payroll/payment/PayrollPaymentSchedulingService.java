@@ -21,6 +21,7 @@ public class PayrollPaymentSchedulingService {
  private final EmployeeRepository employees;
  private final PayrollReconciliationService reconciliation;
  private final ObjectMapper json;
+ private final PayrollPaymentEventRepository events;
  @Transactional
  public PayrollPaymentView schedule(UUID itemId,SchedulePayrollPaymentRequest request,UUID actor) {
   if(actor==null || !employees.existsById(actor)) throw new BadRequestException("PAYMENT_ACTOR_REQUIRED","Persisted payroll actor required");
@@ -37,6 +38,7 @@ public class PayrollPaymentSchedulingService {
   }
   if(!Set.of("LOCKED","PAYMENT_SCHEDULED").contains(run.getStatus())) throw new BadRequestException("PAYMENT_PAYROLL_NOT_LOCKED","Payment scheduling requires locked payroll");
   reconciliation.requireFinalizable(run,items.findByPayrollRunIdOrderById(run.getId()));
+  if(events.hasUnresolvedCase(itemId)) throw new BadRequestException("PAYMENT_RECONCILIATION_REQUIRED","Unresolved provider/bank evidence blocks new payment attempts");
   if(payslips.findByItemId(itemId).isEmpty()) throw new BadRequestException("PAYMENT_PAYSLIP_REQUIRED","Immutable payslip must be issued before payment");
   if(item.getNetAmount().signum()==0) throw new BadRequestException("PAYMENT_ZERO_NET_DISPOSITION_REQUIRED","Zero-net item requires an explicit no-payment completion policy; do not fabricate a transfer");
   var attempts=payments.findByItemIdOrderByAttemptNumberAsc(itemId);

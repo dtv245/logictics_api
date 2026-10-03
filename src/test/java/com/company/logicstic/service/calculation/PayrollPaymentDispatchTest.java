@@ -29,19 +29,19 @@ class PayrollPaymentDispatchTest {
    var input=(PayrollPaymentInstruction)i.getArgument(0);assertEquals(f.payment().getIdempotencyKey(),input.idempotencyKey());
    return new PayrollPaymentProvider.Submission("AVAILABLE",null,"fixture-reference");
   });
-  var service=new PayrollPaymentDispatchService(f.payments(),f.runs(),List.of(provider),f.manager());
+  var service=new PayrollPaymentDispatchService(f.payments(),f.runs(),List.of(provider),f.manager(),mock(PayrollPaymentEventRepository.class));
   var result=service.dispatch(f.payment().getId());assertEquals("PROCESSING",result.status());assertNull(result.succeededAt());
   verify(f.manager(),times(2)).commit(any());
  }
  @Test void unconfiguredProviderDoesNotPersistSubmissionIntent() {
-  var f=fixture();var service=new PayrollPaymentDispatchService(f.payments(),f.runs(),List.of(),f.manager());
+  var f=fixture();var service=new PayrollPaymentDispatchService(f.payments(),f.runs(),List.of(),f.manager(),mock(PayrollPaymentEventRepository.class));
   assertEquals("PAYMENT_PROVIDER_NOT_CONFIGURED",assertThrows(BadRequestException.class,() -> service.dispatch(f.payment().getId())).getCode());
   assertEquals("SCHEDULED",f.payment().getStatus());verify(f.payments(),never()).saveAndFlush(any());
  }
  @Test void unknownOutcomePreservesCommittedIntentAndDoesNotResubmitOnRetry() {
   var f=fixture();var provider=mock(PayrollPaymentProvider.class);when(provider.key()).thenReturn("fixture");when(provider.supports("BANK_TRANSFER")).thenReturn(true);
   when(provider.submit(any())).thenReturn(new PayrollPaymentProvider.Submission("UNAVAILABLE","fixture-timeout",null));
-  var service=new PayrollPaymentDispatchService(f.payments(),f.runs(),List.of(provider),f.manager());
+  var service=new PayrollPaymentDispatchService(f.payments(),f.runs(),List.of(provider),f.manager(),mock(PayrollPaymentEventRepository.class));
   assertEquals("PAYMENT_SUBMISSION_OUTCOME_UNKNOWN",assertThrows(BadRequestException.class,() -> service.dispatch(f.payment().getId())).getCode());
   assertEquals("PROCESSING",service.dispatch(f.payment().getId()).status());verify(provider,times(1)).submit(any());
  }

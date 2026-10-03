@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 35 |
+| Revision | 36 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
-| Last Updated | 2026-10-04T03:07:08+07:00 |
-| Current Phase | 7 — Backend Development / Phase 015F |
+| Last Updated | 2026-10-04T03:20:19+07:00 |
+| Current Phase | 7 — Backend Development / Phase 015G |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Separate 015F verified callback/idempotency and payment-success reconciliation, then 015G bank reconciliation. |
-| Handoff Sequence | 35 |
+| Next Action | Separate 015G audited bank attestation/case resolution; assess neutral Phase 5 core before Phase 6. |
+| Handoff Sequence | 36 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-015 / Phase 015F
-- **Objective:** Verified callback receipts and exact payment/item/settlement/run completion with idempotent immutable evidence.
-- **Acceptance Gate:** Verified provenance, exact amount/currency/identity, duplicate/drift protection and all-items paid only after success; unit/live/concurrency/history/migration/regression.
-- **Allowed Change Scope:** Separate 015F callback/reconciliation and next forward migration; preserve applied V11–V17.
+- **Feature/Task ID:** BE-CALC-015 / Phase 015G
+- **Objective:** Manual bank reconciliation with persisted actor, explicit evidence, immutable cases and exact financial identity.
+- **Acceptance Gate:** Authorized actor/evidence, idempotent bank source claims, exact amounts/currency, no successful-history rewrite, reviewed case resolution and unit/live/concurrency/migration/regression.
+- **Allowed Change Scope:** Separate 015G bank/case resolution and forward V19; preserve applied V11–V18.
 
 ### Phase Status
 
@@ -49,10 +49,10 @@
 | 4. System Architecture | Software Architect | Software Architect; Tech Lead; Security Engineer; Database Engineer | DONE | ADR-001 and ADR-002 |
 | 5. API Design | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer; Security Engineer | NOT_STARTED | — |
 | 6. Project Structure | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer | DONE | Existing Spring layout |
-| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 and neutral 015B–015E complete; 174 regression tests incl.34 PG; 015F next |
+| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 and neutral 015B–015F complete; 184 regression tests incl.38 PG; 015G next |
 | 8. Frontend Development | Frontend Developer | Frontend Developer; Tech Lead; QA / Tester; Security Engineer; Code Reviewer | NOT_APPLICABLE | API-only repository scope |
 | 9. Integration | Tech Lead | Tech Lead; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
-| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 174 tests, 0 failures/errors, 1 legacy skip; 34 live PostgreSQL cases; 015F–015G/later phases incomplete |
+| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 184 tests, 0 failures/errors, 1 legacy skip; 38 live PostgreSQL cases; 015G/later phases incomplete |
 | 11. Security Review | Security Engineer | Security Engineer; Software Architect; Backend Developer; Frontend Developer; Code Reviewer | NOT_STARTED | — |
 | 12. Performance Review | Tech Lead | Tech Lead; Database Engineer; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
 | 13. Code Review | Code Reviewer | Code Reviewer; Tech Lead; Security Engineer | NOT_STARTED | — |
@@ -75,7 +75,7 @@
 | BE-CALC-013 | Task 4.1 / 4A | Backend Developer | DONE | Append-only locked versioning, expiry/scope/ambiguity resolver, explicit validation and pay-period APIs; 114 regression tests incl. 11 live PG | Phase 4B mileage calculation |
 | BE-CALC-014 | Task 4.2 | Backend Developer | DONE | All 4A–4F gates; 141 regression tests incl.21 PG, V13 clean/upgrade, concurrency/reconciliation/history/idempotency | Jurisdiction-neutral 015B |
 | BE-CALC-015 | Task 5.1 | Database Engineer | DONE | V11 creates payroll runs/items, settlement join, payslips, and payments; local clean and upgrade succeeded | Continue Task 5.2 workflow without hardcoding jurisdiction tax rules |
-| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B–015E DONE with V14–V17 neutral config/workflow/payslip/immutable payment attempts; 015F in progress, 015G not started | Verified callback/idempotency and payment-success reconciliation |
+| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B–015F DONE with V14–V18 neutral config/workflow/payslip/payments/verified reconciliation; 015G in progress | Audited bank reconciliation and explicit case resolution |
 | BE-CALC-016–017 | Phases 6–8 | Backend Developer | NOT_STARTED | No implementation evidence in this handoff | Proceed after payroll and settlement gates |
 
 ## 4. Requirements and Scope
@@ -107,7 +107,7 @@
 - **Modules / Boundaries:** Controller → service → repository/entity.
 - **Dependency Direction:** HTTP depends on services; services depend on repositories/entities.
 - **Authentication / Authorization:** JWT tenant claim routes to a tenant data source.
-- **Data Model / Migration:** Flyway V1–V17 clean and populated V16–V17 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
+- **Data Model / Migration:** Flyway V1–V18 clean and populated V17–V18 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
 - **API / Integration Contract:** REST; Phase 1 and Task 3.1 unit/security/service integration contracts verified; documents linked below.
 - **Deployment / Runtime:** Docker assets exist but are unverified.
 
@@ -896,6 +896,27 @@
 - **Acceptance Gate:** Unit/live/concurrency/idempotency/history/forward migration/full regression.
 - **Do Not Redo:** Completed Phase 3/4/015B–015E; no applied migration changes, tax/provider defaults or prematurely paid states.
 
+### HOFF-0036 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T03:20:19+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / 015F completion → 015G
+- **Status:** DONE
+- **Objective:** Verified callback provenance/idempotency and exact financial completion.
+- **Inputs Read:** Progress/HOFF-0035, V17 attempts, existing tenant filter/context/routing/active-registry service as dependency only, user payment-state invariants.
+- **Completed:** Verifier port and trusted tenant scope, immutable canonical/raw-body/proof event journal; duplicate/drift and exact identity guards, failed retry history, per-item/settlement completion, all-items run completion and late-outcome cases. V18 DB success evidence guards.
+- **Requirement IDs:** BE-CALC-015F.
+- **Files and Artifacts:** Callback/verifier/tenant scope/outcome/event DTO/controller/entity/repo; source case guards; V18; unit/live tests/contracts/progress/memory.
+- **Decisions:** Callback claim is not financial proof. Actual adapters must authenticate provider/merchant and trusted registered tenant before DB binding. No tenant header/default fallback. Receipt stores original verified body/proof and canonical financial identity; duplicate proof timestamps/whitespace do not alter event identity. Late events require explicit reconciliation and block more dispatch; successful history never downgrades.
+- **Assumptions:** No production provider/callback verifier or regional statutory adapter configured. Test signature/provider are local fixtures only. Existing tenant isolation implementation was not audited/reimplemented.
+- **Verification:** Final clean codex_classification_20261003201635 and populated V17→V18 codex_classification_20261003200305 full regression PASS: 184 tests, 0 failures/errors, 1 legacy skip; 38 PG cases. Six unit identity/late-outcome/tenant-scope cases and four live duplicate concurrency/partial all-items/failure-retry/late-source/input-drift/unsigned/API/DB-evidence cases. Earlier 181-test upgrade also passed before adding tenant scope; final evidence is 184.
+- **Open Issues and Risks:** 015G and Phases 6–8 incomplete. Unresolved late/conflicting payment cases await manual explicit evidence. Provider/legal configurations remain unavailable.
+- **Blockers:** None for manual bank reconciliation; zero-net no-payment completion still needs explicit policy.
+- **Next Required Action:** 015G authorized bank attestation and append-only case resolution; no unlock/successful-payment rewrite or unsupported negative recovery.
+- **Acceptance Gate:** Unit/live/idempotency/concurrency/reconciliation/history/forward migration/full regression before neutral Phase 5 core gate.
+- **Do Not Redo:** Completed Phase 3/4/015B–015F; no V11–V18 edits, default tenant/tax/provider guesses or paid-at-schedule behavior.
+
 ## 10. Final Readiness
 
 | Check | Status | Evidence / Exception |
@@ -905,7 +926,7 @@
 | Tests successful | IN_PROGRESS | 87 tests, 0 failures/errors, 1 legacy skip; 8 live PostgreSQL cases; classification/later features incomplete |
 | API working | IN_PROGRESS | Implemented ledger/accessorial/report routes verified; profit/settlement routes verified; payroll and later APIs incomplete |
 | Frontend working | NOT_APPLICABLE | API-only scope |
-| Database migrations working | IN_PROGRESS | V1–V17 clean and populated V16–V17 upgrade verified; supported production tenant history not available |
+| Database migrations working | IN_PROGRESS | V1–V18 clean and populated V17–V18 upgrade verified; supported production tenant history not available |
 | Authentication and authorization working | IN_PROGRESS | Policy/settlement routes require payroll-related roles; PG authorization verified; payroll next |
 | Validation and error handling working | NOT_STARTED | Not verified |
 | Security reviewed | NOT_STARTED | Not reviewed |
