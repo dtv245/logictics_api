@@ -14,8 +14,9 @@ public record DriverSettlementView(UUID id, String settlementNumber, UUID driver
         Integer policyVersion, String validationReason) {
     public static DriverSettlementView from(DriverSettlement s, List<SettlementLineView> lines) {
         return new DriverSettlementView(s.getId(), s.getSettlementNumber(), s.getDriver().getId(), s.getPayPeriod().getId(),
-                s.getSettlementType(), s.getStatus(), s.getCurrency(), s.getGrossEarnings(), s.getReimbursementAmount(),
-                s.getDeductionAmount(), s.getSettlementNet(), s.getCalculatedAt(), s.getApprovedAt(), s.getLockedAt(), lines,
+                s.getSettlementType(), s.getStatus(), s.getCurrency(), SettlementLineView.displayMoney(s.getGrossEarnings(),s.getCurrency()),
+                SettlementLineView.displayMoney(s.getReimbursementAmount(),s.getCurrency()), SettlementLineView.displayMoney(s.getDeductionAmount(),s.getCurrency()),
+                SettlementLineView.displayMoney(s.getSettlementNet(),s.getCurrency()), s.getCalculatedAt(), s.getApprovedAt(), s.getLockedAt(), lines,
                 s.getParentSettlement()==null?null:s.getParentSettlement().getId(),s.getSequenceNumber(),s.getPayPolicy().getId(),s.getPayPolicyVersion(),s.getValidationReason());
     }
 }

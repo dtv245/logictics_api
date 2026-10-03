@@ -38,6 +38,46 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.payroll.policy.PayrollConfigurationService payrollConfiguration;
     @Autowired com.company.logicstic.service.payroll.policy.PayrollPolicyResolver payrollPolicyResolver;
     @Autowired com.company.logicstic.service.payroll.PayrollWorkflowService payrollWorkflow;
+    @Autowired com.company.logicstic.service.payroll.PayslipService payslips;
+
+    @Test void payrollLockIssuesImmutablePdfAndDriverCanOnlyReadOwnPayslip() throws Exception {
+        var f=payrollFixture();var j=payrollJurisdiction("VN");payrollProfile(f.driver(),j);
+        payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var run=payroll.calculate(payrollRequest(f));
+        assertThrows(com.company.logicstic.exception.BadRequestException.class,() -> payslips.issue(run.id(),f.driver()));
+        payrollWorkflow.transition(run.id(),"IN_REVIEW",f.driver());payrollWorkflow.transition(run.id(),"APPROVED",f.driver());
+        jdbc.update("update employees set first_name='Nguyễn',last_name='Văn An' where id=?",f.driver());
+        payrollWorkflow.transition(run.id(),"LOCKED",f.driver());
+        var slip=payslips.mine(f.driver()).getFirst();var pdf=payslips.pdf(slip.id(),f.driver(),false);
+        try(var parsed=org.apache.pdfbox.Loader.loadPDF(pdf)) {
+            var text=new org.apache.pdfbox.text.PDFTextStripper().getText(parsed);
+            assertTrue(text.contains("Nguyễn Văn An"),text);assertTrue(text.contains("90.00"),text);
+        }
+        assertEquals(slip.pdfSha256(),java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(pdf)));
+        try(var pool=Executors.newFixedThreadPool(2)) {
+            var a=pool.submit(() -> payslips.issue(run.id(),f.driver()));var b=pool.submit(() -> payslips.issue(run.id(),f.driver()));
+            assertEquals(slip.id(),a.get(20,TimeUnit.SECONDS).getFirst().id());assertEquals(slip.id(),b.get(20,TimeUnit.SECONDS).getFirst().id());
+        }
+        jdbc.update("update employees set first_name='Changed after issuance' where id=?",f.driver());
+        assertArrayEquals(pdf,payslips.pdf(slip.id(),f.driver(),false));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payslips set snapshot_json='{}' where id=?",slip.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payslips set pdf_content=''::bytea where id=?",slip.id()));
+        var other=fixture();var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext).apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/driver/me/payslips")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(f.email()).roles("DRIVER")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/payslips/"+slip.id()+"/pdf")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(f.email()).roles("DRIVER")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().contentType("application/pdf"));
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/payslips/"+slip.id())
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(other.email()).roles("DRIVER")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/payslips/"+slip.id()))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().is4xxClientError());
+        assertEquals(1,jdbc.queryForObject("select count(*) from payslips where payroll_run_item_id=?",Integer.class,slip.payrollItemId()));
+        assertEquals("LOCKED",payroll.get(run.id()).status());assertEquals("LOCKED",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
+    }
 
     @Test void concurrentPayrollLockFreezesHeaderItemsClaimsAndSnapshotsWithoutMarkingPaid() throws Exception {
         var f=payrollFixture();var j=payrollJurisdiction("VN");payrollProfile(f.driver(),j);

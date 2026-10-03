@@ -17,6 +17,7 @@ public class PayrollWorkflowService {
  private final PayrollWorkflow workflow;
  private final PayrollReconciliationService reconciliation;
  private final PayrollCalculationService calculation;
+ private final PayslipService payslips;
  @Transactional
  public PayrollRunView transition(UUID id,String target,UUID actor) {
   if(actor==null || !employees.existsById(actor)) throw new BadRequestException("PAYROLL_ACTOR_REQUIRED","Persisted authenticated payroll actor required");
@@ -35,6 +36,7 @@ public class PayrollWorkflowService {
    }
    runs.saveAndFlush(run);
   }
+  if("LOCKED".equals(target)) payslips.issue(id,actor);
   return calculation.view(run);
  }
 }

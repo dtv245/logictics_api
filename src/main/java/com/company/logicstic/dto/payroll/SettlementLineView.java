@@ -10,6 +10,11 @@ public record SettlementLineView(UUID id, String lineType, String lineClass, UUI
     public static SettlementLineView from(SettlementLine l) {
         return new SettlementLineView(l.getId(), l.getLineType(), l.getLineClass(),
                 l.getLoad() == null ? null : l.getLoad().getId(), l.getTrip() == null ? null : l.getTrip().getId(),
-                l.getDescription(), l.getQuantity(), l.getUnit(), l.getRate(), l.getAmount(), l.getCurrency(), l.getSourceId());
+                l.getDescription(), l.getQuantity(), l.getUnit(), l.getRate(), displayMoney(l.getAmount(),l.getCurrency()), l.getCurrency(), l.getSourceId());
+    }
+    static BigDecimal displayMoney(BigDecimal amount,String currency) {
+        // Canonical presentation removes storage padding without rounding historical financial values.
+        return amount==null?null:amount.setScale(Math.max(com.company.logicstic.common.MoneyRoundingPolicy.getScaleForCurrency(currency),
+                amount.stripTrailingZeros().scale()));
     }
 }

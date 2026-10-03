@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 33 |
+| Revision | 34 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
-| Last Updated | 2026-10-04T02:49:00+07:00 |
-| Current Phase | 7 — Backend Development / Phase 015D |
+| Last Updated | 2026-10-04T02:59:00+07:00 |
+| Current Phase | 7 — Backend Development / Phase 015E |
 | Active Role | Backend Developer |
 | Status | IN_PROGRESS |
 | Next Role | Backend Developer |
-| Next Action | Separate 015D immutable payslip and driver ownership; then 015E–015G payment orchestration/reconciliation. |
-| Handoff Sequence | 33 |
+| Next Action | Separate 015E payment scheduling/dispatch ports, then 015F verified callbacks and 015G manual reconciliation. |
+| Handoff Sequence | 34 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-015 / Phase 015D
-- **Objective:** Issue immutable payslips/PDF from locked payroll and expose protected driver-owned read APIs.
-- **Acceptance Gate:** Locked-only idempotent issuance, immutable snapshot/artifact, driver ownership/RBAC and unit/live/migration/regression evidence.
-- **Allowed Change Scope:** Separate 015D payslip and next forward migration if required; preserve V11/V14/V15.
+- **Feature/Task ID:** BE-CALC-015 / Phase 015E
+- **Objective:** Schedule immutable payroll payment attempts from locked resolved items and dispatch through explicit provider ports.
+- **Acceptance Gate:** Idempotent scheduling, immutable amounts/attempt history, configured provider port, no paid-at-lock/schedule/processing; unit/live/concurrency/migration/regression evidence.
+- **Allowed Change Scope:** Separate 015E payments and next forward migration; preserve applied V11–V16.
 
 ### Phase Status
 
@@ -49,10 +49,10 @@
 | 4. System Architecture | Software Architect | Software Architect; Tech Lead; Security Engineer; Database Engineer | DONE | ADR-001 and ADR-002 |
 | 5. API Design | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer; Security Engineer | NOT_STARTED | — |
 | 6. Project Structure | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer | DONE | Existing Spring layout |
-| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 and neutral 015B–015C complete; 166 regression tests incl.31 PG; 015D next |
+| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 and neutral 015B–015D complete; 169 regression tests incl.32 PG; 015E next |
 | 8. Frontend Development | Frontend Developer | Frontend Developer; Tech Lead; QA / Tester; Security Engineer; Code Reviewer | NOT_APPLICABLE | API-only repository scope |
 | 9. Integration | Tech Lead | Tech Lead; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
-| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 166 tests, 0 failures/errors, 1 legacy skip; 31 live PostgreSQL cases; 015D–015G/later phases incomplete |
+| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 169 tests, 0 failures/errors, 1 legacy skip; 32 live PostgreSQL cases; 015E–015G/later phases incomplete |
 | 11. Security Review | Security Engineer | Security Engineer; Software Architect; Backend Developer; Frontend Developer; Code Reviewer | NOT_STARTED | — |
 | 12. Performance Review | Tech Lead | Tech Lead; Database Engineer; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
 | 13. Code Review | Code Reviewer | Code Reviewer; Tech Lead; Security Engineer | NOT_STARTED | — |
@@ -75,7 +75,7 @@
 | BE-CALC-013 | Task 4.1 / 4A | Backend Developer | DONE | Append-only locked versioning, expiry/scope/ambiguity resolver, explicit validation and pay-period APIs; 114 regression tests incl. 11 live PG | Phase 4B mileage calculation |
 | BE-CALC-014 | Task 4.2 | Backend Developer | DONE | All 4A–4F gates; 141 regression tests incl.21 PG, V13 clean/upgrade, concurrency/reconciliation/history/idempotency | Jurisdiction-neutral 015B |
 | BE-CALC-015 | Task 5.1 | Database Engineer | DONE | V11 creates payroll runs/items, settlement join, payslips, and payments; local clean and upgrade succeeded | Continue Task 5.2 workflow without hardcoding jurisdiction tax rules |
-| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B–015C DONE with V14/V15 neutral config, reconciliation and immutable workflow; 015D in progress, 015E–015G not started | Immutable driver-owned payslip/artifact |
+| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B–015D DONE with V14–V16 neutral config, immutable workflow and driver-owned Unicode payslip; 015E in progress, 015F–015G not started | Idempotent payment scheduling/dispatch port |
 | BE-CALC-016–017 | Phases 6–8 | Backend Developer | NOT_STARTED | No implementation evidence in this handoff | Proceed after payroll and settlement gates |
 
 ## 4. Requirements and Scope
@@ -107,7 +107,7 @@
 - **Modules / Boundaries:** Controller → service → repository/entity.
 - **Dependency Direction:** HTTP depends on services; services depend on repositories/entities.
 - **Authentication / Authorization:** JWT tenant claim routes to a tenant data source.
-- **Data Model / Migration:** Flyway V1–V15 clean and populated V14–V15 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
+- **Data Model / Migration:** Flyway V1–V16 clean and populated V15–V16 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
 - **API / Integration Contract:** REST; Phase 1 and Task 3.1 unit/security/service integration contracts verified; documents linked below.
 - **Deployment / Runtime:** Docker assets exist but are unverified.
 
@@ -854,6 +854,27 @@
 - **Acceptance Gate:** Unit/live/concurrency/idempotency/ownership/history/migration/full regression before checkpoint.
 - **Do Not Redo:** Completed Phases 3/4/015B–015C; no applied migration edits or unlock/paid-at-lock behavior.
 
+### HOFF-0034 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T02:59:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / 015D completion → 015E
+- **Status:** DONE
+- **Objective:** Immutable payslip/PDF issuance with driver ownership.
+- **Inputs Read:** Progress/HOFF-0033, V11 payslip/document schema and storage capabilities, employee identity, convention routes and official Apache PDFBox Maven/version docs.
+- **Completed:** Lock atomically issues snapshotted payslip and persisted Unicode PDF/checksum/renderer/actor; retry/concurrency preserves original artifact. Protected driver list/detail/PDF routes, cross-driver denial, private PDF response. V16 artifact/source/immutability guards. Corrected proven settlement DTO storage-padding retry drift without changing financial value or prior test expectations.
+- **Requirement IDs:** BE-CALC-015D.
+- **Files and Artifacts:** Payslip entity/repo/service/PDF renderer/DTO/controller, lock hook/RBAC, V16, font/license, isolated PDFBox POM dependency; unit/live tests/contracts/progress/memory.
+- **Decisions:** No object-storage implementation exists; persist artifact atomically in payslip ledger. Historical external references stay immutable and explicit PDF-unavailable is returned if no local artifact exists. Font resource is configurable; unsupported glyphs block issuance instead of substituting names. Display never rounds further and preserves complete IDs across pages. Tax display uses stored rounded item deductions, not adapter raw values.
+- **Assumptions:** No external notification/transfer, current tax implementation or PDF provider guessed. DejaVuSans covers tested Vietnamese script; other glyph sets require configured font. Existing unrelated POM changes remain outside this task's commit.
+- **Verification:** Final clean codex_classification_20261003195715 and populated V15→V16 codex_classification_20261003194644 full regression PASS: 169 tests, 0 failures/errors, 1 legacy skip; 32 PG cases. Two Unicode/multipage PDF parse unit cases and live issuance/concurrency/immutability/employee-name history/checksum/ownership/API case. Glyph encoding and decimal display defects fixed; genuine prior retry scale regression fixed in DTO instead of weakening tests.
+- **Open Issues and Risks:** 015E–015G and Phases 6–8 incomplete. No provider adapter/credential or statutory source configured in production.
+- **Blockers:** None for neutral payment scheduling/verified ports/manual reconciliation; actual regional statutory calculation remains unconfigured.
+- **Next Required Action:** Separate 015E payment scheduling and provider dispatch; never mark paid merely from lock/schedule/processing.
+- **Acceptance Gate:** Unit/live/concurrency/idempotency/monetary-history/migration/full regression before checkpoint.
+- **Do Not Redo:** Completed Phase 3/4/015B–015D; no V11–V16 edits, artifact regeneration or country-specific rates.
+
 ## 10. Final Readiness
 
 | Check | Status | Evidence / Exception |
@@ -863,7 +884,7 @@
 | Tests successful | IN_PROGRESS | 87 tests, 0 failures/errors, 1 legacy skip; 8 live PostgreSQL cases; classification/later features incomplete |
 | API working | IN_PROGRESS | Implemented ledger/accessorial/report routes verified; profit/settlement routes verified; payroll and later APIs incomplete |
 | Frontend working | NOT_APPLICABLE | API-only scope |
-| Database migrations working | IN_PROGRESS | V1–V15 clean and populated V14–V15 upgrade verified; supported production tenant history not available |
+| Database migrations working | IN_PROGRESS | V1–V16 clean and populated V15–V16 upgrade verified; supported production tenant history not available |
 | Authentication and authorization working | IN_PROGRESS | Policy/settlement routes require payroll-related roles; PG authorization verified; payroll next |
 | Validation and error handling working | NOT_STARTED | Not verified |
 | Security reviewed | NOT_STARTED | Not reviewed |
