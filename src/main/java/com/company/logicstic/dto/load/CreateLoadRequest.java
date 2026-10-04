@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record CreateLoadRequest(
@@ -48,5 +49,7 @@ public record CreateLoadRequest(
         @NotBlank String destinationAddressZipCode,
         @NotBlank String destinationAddressCountry,
         @NotNull Double destinationLocationLatitude,
-        @NotNull Double destinationLocationLongitude
+        @NotNull Double destinationLocationLongitude,
+        LocalDate requestedPickupBusinessDate,
+        PickupBusinessDateProvenance requestedPickupDateProvenance
 ) {}

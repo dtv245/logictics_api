@@ -1,10 +1,12 @@
 # LOGISTICSX TMS — KẾ HOẠCH CHUYỂN HÓA VÀ QUY CHUẨN CƠ SỞ DỮ LIỆU (PLAN-CONVENTION)
 > **Phiên bản:** 3.0 (Implementation-Ready Enterprise Specification)  
 > **Căn cứ tài liệu:** `LogisticsX_Core_Business_Data_Model_and_Calculation_Spec_v2_Schema_Aligned.md`  
-> **Nền tảng công nghệ:** Spring Boot 3 / Spring Framework 6 / PostgreSQL 15+ / Hibernate JPA / Flyway Multi-Tenancy  
+> **Nền tảng runtime đã xác minh:** Java 21 / Spring Boot 4.1.0 / PostgreSQL 16 / Hibernate JPA + JDBC / Flyway Multi-Tenancy
 > **Mục tiêu:** Chuẩn hóa mô hình dữ liệu, khóa các quyết định kiến trúc còn mơ hồ, thiết lập conventions bắt buộc và biến từng Epic/Task thành specification đủ chi tiết để dev người hoặc AI triển khai mà không phải tự đoán business rule, transaction boundary, migration strategy, security hay acceptance criteria.
 
 ---
+
+**Final checkpoint 2026-10-05:** **PLAN COMPLETE — backend Convention V1**, Phase 0–8 COMPLETE theo toàn bộ RATE/BILL/OPT/FLEET decisions đã CONFIRMED/LOCKED. Final cùng code clean V1→V35 / populated V34→V35, Flyway validate, SHA migration bất biến, Maven clean verify/repackage và runtime OpenAPI PASS: 456 reported/455 executed, 0 failure/error, 1 legacy skip, 160 PostgreSQL methods; 17 Python PASS; diff sạch. Bằng chứng: [final verification](docs/backend-plan-final-verification.md), [progress](plan-progress-summary.md). Không đồng nghĩa đã deploy production hoặc hoàn tất frontend E2E; unsupported health trả UNAVAILABLE đúng quyết định. DDL/công thức minh họa và checkpoint cũ bên dưới không override confirmed contracts/runtime. Production release checklist §15 là gate vận hành riêng, không được tick giả.
 
 ## MỤC LỤC
 
@@ -648,7 +650,7 @@ Chấm dứt việc dùng `invoices` làm bảng lương. Thiết lập quy trì
     - Tạo `payroll_run_items`: Dòng tổng hợp thù lao, thuế, bảo hiểm của từng tài xế.
     - Tạo `payslips`: Phiếu lương chính thức gửi tài xế (chứa `snapshot_json` và link tài liệu PDF).
     - Tạo `payroll_payments`: Sổ cái thanh toán tiền lương tài xế.
-- [ ] **Task 5.2 (Quy trình Chạy lương & Khóa sổ Bất biến - Payroll Workflow)**:
+- [x] **Task 5.2 (Quy trình Chạy lương & Khóa sổ Bất biến - Payroll Workflow)** — hoàn tất ở mức framework đa jurisdiction, fail-closed khi thiếu policy/adapter pháp lý; zero-net disposition được audit riêng, không giả payment:
   - Xây dựng `PayrollEngine`: Gom toàn bộ các `settlements` đã ở trạng thái `APPROVED` trong kỳ vào `payroll_runs`.
   - Tính thuế thu nhập và các khoản trích nộp theo quy định pháp lý.
   - Sau khi người có quyền nhấn `Approve & Lock`:
@@ -656,19 +658,20 @@ Chấm dứt việc dùng `invoices` làm bảng lương. Thiết lập quy trì
     - Các settlement liên quan vẫn `LOCKED`/`PAYMENT_SCHEDULED`; **không được set `PAID` chỉ vì payroll đã khóa**.
     - Sinh `payslips` bất biến.
     - Tạo/schedule `payroll_payments`.
+- `payroll_runs` chỉ thành `COMPLETED` khi mọi payroll item đã `PAID` hoặc `NO_PAYMENT_REQUIRED`; `PAID` không phải trạng thái của run.
 - Chỉ khi `payroll_payment.status = SUCCEEDED` (hoặc bank reconciliation xác nhận):
     - cập nhật payment `SUCCEEDED`;
     - cập nhật payroll item tương ứng `PAID`;
-    - khi tất cả item thành công mới chuyển `payroll_runs = PAID`;
+    - khi tất cả item đã terminal mới chuyển `payroll_runs = COMPLETED`, ghi timestamp/actor/source;
     - settlement tương ứng mới được chuyển `PAID`.
 - Payment failure phải giữ nguyên lịch sử và cho phép retry idempotent.
-- [ ] **Task 5.3 (Cổng Thanh toán Thù lao & Ứng dụng Di động cho Tài xế)**:
+- [x] **Task 5.3 (Cổng Thanh toán Thù lao & Ứng dụng Di động cho Tài xế)** — APIs/port và xác minh callback/bank evidence đã có; không khẳng định đã tích hợp provider production:
   - Tích hợp chi trả qua `payroll_payments` (kết nối `employees.stripe_connected_account_id` hoặc chuyển khoản ngân hàng).
   - Cung cấp API chuyên biệt cho tài xế xem phiếu lương trên ứng dụng di động:
     - `GET /api/driver/me/payslips`
     - `GET /api/payslips/{id}`
     - `GET /api/payslips/{id}/pdf`
-- [ ] **Task 5.4 (Kế hoạch Khai tử cột lương trên Invoices - Deprecation Plan)**:
+- [x] **Task 5.4 (Kế hoạch Khai tử cột lương trên Invoices - Deprecation Plan)** — entity/API input fields deprecated; create/update từ chối dữ liệu payroll legacy; mapper không ghi các cột này; filter legacy bị từ chối. Historical response projection giữ read-only để tương thích; database columns/history giữ nguyên, chưa drop.
   - Đánh dấu `@Deprecated` trên các trường của Entity `Invoice`: `employee`, `periodStart`, `periodEnd`, `totalDistanceDriven`, `totalHoursWorked`.
   - Ngắt toàn bộ code nghiệp vụ mới không đọc/ghi vào các trường này.
 
@@ -676,48 +679,78 @@ Chấm dứt việc dùng `invoices` làm bảng lương. Thiết lập quy trì
 
 ### Phase 6: Biểu giá Hợp đồng Khách hàng & Phụ phí Nhiên liệu (Rate Rules & FSC)
 
+**Historical Phase 6 gate:** `CONFIRMED`, Phase 6 `COMPLETE` (6A–6G), verified V29. Phase 0–5 vẫn COMPLETE. Final clean V1→V29 + populated V27→V29 batch / V28→V29 previous-latest upgrade + validate PASS: 302 reported / 301 executed / 0 failures/errors / 1 legacy skip, 94 PostgreSQL methods. Applied V1–V29/checksums bất biến; V30+ là migration tiếp theo tại checkpoint đó. [docs/rating-policy-decisions.md](docs/rating-policy-decisions.md), RATE-DEC-001…007 và BILL-DEC-001…006 CONFIRMED/LOCKED. V1: linehaul `FLAT/PER_MILE`, FSC `INDEX_BASED_MPG`; method khác deferred, reject `UNSUPPORTED_RATE_METHOD`. Phases 7–8 đã COMPLETE theo final checkpoint V35 phía trên. Các checkpoint 6A–6F bên dưới là lịch sử theo thời điểm, không phải blocker hiện tại.
+
+| Sub-task | Outcome | Gate |
+|---|---|---|
+| 6A | Schema/domain, effective/versioned customer/contract rules, immutable used versions | RATE-DEC-001/002/004/005/006 |
+| 6B | Deterministic explicit-priority resolver; same-priority RATE_RULE_AMBIGUOUS | RATE-DEC-001 |
+| 6C | Explicit component mileage/source/provenance, no fallback | RATE-DEC-002/005 |
+| 6D | Only approved FSC policies, index/MPG audit inputs | RATE-DEC-002/003/004/005 |
+| 6E | Explainable rating with currency/component/min-max results | Applicable RATE-DEC-001…005 and approved method formulas |
+| 6F | Accepted rating lifecycle and immutable snapshot | RATE-DEC-005/006/007 |
+| 6G | Invoice snapshot linkage, business-key idempotency and concurrency | RATE-DEC-005/006/007 |
+
+**Verified 6A:** V21 versioned customer contract/rate domain, immutable published history, exact decimal inputs, guarded append and authenticated authoring API. Clean V1→V21 + populated V20→V21 clone + Flyway validation PASS; 203 reported tests, one legacy skip, 44 executed PostgreSQL methods. Contract: [docs/rating-v1-domain-contract.md](docs/rating-v1-domain-contract.md). 6B–6G still need their own gates.
+
+**Verified 6B:** Deterministic priority/date/dimension resolver, winning ambiguity, contract/currency guards; 14 new unit + 2 PostgreSQL methods. Latest clean V1→V21 and populated V20→V21 clone + validate PASS: 219 reported tests, zero failure/error, one legacy skip, 46 executed PostgreSQL methods. Load business-date adapter needs explicit DATE/provenance decision; no conversion from historical TIMESTAMPTZ is inferred. 6C–6G pending; Phase 6 is not COMPLETE.
+
+**Verified 6C:** User-approved independent pickup DATE captured/audited by V22, without historical backfill or timestamp-derived updates. V23 immutable per-component contract mileage provenance and explicit evidence resolver; planned/actual sources without Load attribution fail closed. Date gate clean V1→V22 + seeded populated V21→V22 PASS (228 reported, 53 PG); 6C latest clean V1→V23 + populated V22→V23 + validate PASS (241 reported, one legacy skip, 58 PG methods). Exact accepted snapshot pricingDate/source persistence/testing remains 6F. Contract: [docs/load-pickup-date-and-rating-mileage.md](docs/load-pickup-date-and-rating-mileage.md). 6D–6G pending; Phase 6 not COMPLETE.
+
 #### 1. Mục tiêu kinh doanh:
 Xây dựng động cơ định giá tự động cho khách hàng theo hợp đồng, tự động tính phụ phí nhiên liệu biến động theo thị trường (DOE Fuel Price Index).
 
+**Verified 6D:** Official EIA ULSD series/region v2 adapter, sanitized fail-closed errors and retrieval/version/hash audit; approved INDEX_BASED_MPG and RatingPolicyV1 rounding/currency scale. Eleven unit/local HTTP cases; clean V1→V23 + Flyway validate/full regression PASS: 252 reported, one legacy skip, 58 PG methods. No schema change. See [docs/rating-fsc-v1.md](docs/rating-fsc-v1.md). 6E–6G remain.
+
+**Verified 6E:** Explainable engine and accounting-only ephemeral Load preview, explicit context/source/component/accessorial inputs, line rounding/min-max/subtotal and separate tax availability. Four unit + three real PG/API cases; clean V1→V23 + validate/regression PASS: 259 reported, one legacy skip, 61 PG methods. See [docs/rating-engine-v1.md](docs/rating-engine-v1.md). 6F–6G remain; no accepted financial snapshot claimed yet.
+
+**Verified 6F:** V24 immutable accepted snapshots, exact business pricingDate/source/audit and currencyScale, all calculation inputs/results, stale preview and idempotent replay/conflict, correction chain and authenticated actor/history. Two unit + six PG/API cases; clean V1→V24 and populated V23→V24 + Flyway validate PASS: 267 reported, one legacy skip, 67 live PG methods. V1–V23 unchanged. See [docs/rating-accepted-snapshots.md](docs/rating-accepted-snapshots.md). 6G is IN_PROGRESS: BILL-DEC-001…004 are now CONFIRMED/LOCKED in [invoice contract](docs/invoice-rating-v1-contract.md); all RATE decisions remain LOCKED. Phase 6 is NOT COMPLETE until the full invoice and regression gates pass.
+
 #### 2. Danh sách Task chi tiết:
-- [ ] **Task 6.1 (Bảng Biểu giá Hợp đồng)**:
-  - Viết Flyway Migration `V12__create_rate_rules.sql`: Tạo bảng `rate_rules`.
-  - Hỗ trợ các phương thức: `FLAT`, `PER_MILE`, `PER_WEIGHT`, `TIERED`, `INDEX_BASED`.
+- [x] **Task 6.1 (Bảng Biểu giá Hợp đồng)**:
+  - Tạo migration mới theo thứ tự hiện tại (V20 đã dành cho payroll disposition/run completion; Phase 6 sẽ bắt đầu từ V21 trở đi, không dùng lại V12). Trước khi mở Phase 6, thống nhất và ghi contract đầu vào: currency/scale/rounding; precedence và hiệu lực rate rules; ý nghĩa nguồn eligible miles; nguồn/cập nhật/effective date/region của DOE index; Contract MPG; xử lý minimum/maximum và cách snapshot/idempotently append FSC vào quote/invoice.
+  - V1 hỗ trợ `FLAT`, `PER_MILE`; `PER_WEIGHT`, `TIERED`, `INDEX_BASED` linehaul hoãn phase sau theo quyết định user; không tạo placeholder calculator.
   - Thiết lập giá sàn tối thiểu (Minimum Charge) và giá trần tối đa (Maximum Charge).
-- [ ] **Task 6.2 (Động cơ Phụ phí Nhiên liệu - FSC Engine)**:
-  - Triển khai **một policy FSC được hỗ trợ** (`INDEX_BASED_MPG`), không coi đây là công thức bắt buộc cho mọi hợp đồng:
+- [x] **Task 6.2 (Động cơ Phụ phí Nhiên liệu - FSC Engine)**:
+  - V1 policy được duyệt `INDEX_BASED_MPG`, chỉ áp khi cấu hình explicit, không mặc định cho mọi hợp đồng:
     $$\text{FSCPerMile} = \frac{\max(0, \text{CurrentFuelPrice} - \text{BaseFuelPrice})}{\text{ContractMPG}}$$
     $$\text{TotalFSC} = \text{FSCPerMile} \times \text{EligibleMiles}$$
-  - Rate engine phải hỗ trợ policy type như `FLAT`, `PER_MILE`, `PERCENTAGE`, `INDEX_BASED_MPG`, `CUSTOM`.
+  - V1 chỉ `INDEX_BASED_MPG`; các FSC method khác deferred, không có fallback/placeholder.
   - Hợp đồng/rate rule là source of truth; không áp mặc định `INDEX_BASED_MPG` cho mọi customer.
   - Tự động sinh dòng cước phụ thu vào báo giá và hóa đơn khách hàng khi policy áp dụng.
-  - Lưu snapshot cấu hình tính FSC tại thời điểm báo giá.
+  - Preview báo giá ephemeral. Chỉ ACCEPTED rating tạo immutable snapshot; invoice tham chiếu snapshot đã accepted, không re-rate. FSC unit authoritative scale 6/HALF_UP trước khi nhân miles; final currency boundaries theo RatingPolicyV1 đã khóa.
+
+**Verified 6G:** V25 audited TaxAssessment; V26 PRIMARY/key/hash/tax/history commands; V27 signed supplemental/credit/rebill/charge claims/full-credit evidence và consumer adaptation; V28 pre-lock stale/recalculate/reapprove + post-lock append-only driver adjustment; V29 immutable driver snapshot history. Final gate phía trên PASS, git diff --check sạch, không sửa applied migration hoặc thêm skip. Contracts: [invoice integration](docs/invoice-rating-v1-contract.md), [driver revenue consistency](docs/settlement-billing-revenue-consistency.md). Phase 6 COMPLETE; mở policy audit Phase 7 ngay, không đoán normalization/weights/HOS/ties.
 
 ---
 
 ### Phase 7: Tối ưu hóa Điều phối & Giải thuật Phân bổ Chuyến (BE-CALC-016)
 
+**Dependency gate:** Phase 5 COMPLETE + Phase 6 COMPLETE. Chưa bắt đầu production scoring khi rating/profitability inputs chưa reliable. Candidate/feasibility/scoring/transactional acceptance phải giữ provenance, rejection reason, normalized utility và policy version; không mặc định weight hoặc HOS rule.
+
+**Current checkpoint:** Phase 7 COMPLETE, all OPT-DEC-001…010 CONFIRMED/LOCKED. [OPT contract](docs/optimization-policy-decisions.md): explicit policy/qualified evidence, 72h horizon, exact curves/weights/HALF_EVEN precision, DENSE_RANK and complete approved variable forecast coverage. Accept atomically assigns driver/truck to existing Trip without dispatch, with retry/stale/resource concurrency/physical tenant tests. V33 clean V1→V33 and populated V32→V33 + Flyway validate PASS: 422 reported/421 executed, zero failure/error, one legacy skip, 138 PG methods. V1–V32 SHA unchanged; diff clean. No deployed provider/source default claimed; source registration/allowlists require publication. Task 7.1–7.3 DONE; Phase 8 source/policy audit opens automatically.
+
 #### 1. Mục tiêu kinh doanh:
 Nâng cấp thuật toán gợi ý ghép chuyến (Smart Dispatch Matcher), tích hợp đồng thời ràng buộc an toàn HOS/ELD, tính khả thi của phương tiện, chi phí chạy rỗng (Deadhead Cost) và biên lợi nhuận kỳ vọng.
 
 #### 2. Danh sách Task chi tiết:
-- [ ] **Task 7.1 (Bảng Kiểm toán Tối ưu hóa Điều phối)**:
-  - Viết Flyway Migration `V13__create_optimization_audit_tables.sql`:
+- [x] **Task 7.1 (Bảng Kiểm toán Tối ưu hóa Điều phối)**:
+  - Tạo migration theo số tiếp theo sau khi Phase 6 hoàn tất (hiện tại V30+; V22 trong DDL draft chỉ là provisional; không dùng lại V1–V29 đã được áp dụng):
     - Tạo `optimization_runs`: Lưu trữ phiên chạy giải thuật, thuật toán sử dụng, tập ràng buộc và trọng số mục tiêu.
     - Tạo `optimization_assignments`: Lưu trữ danh sách ứng viên (Tài xế + Xe), xếp hạng điểm số (Rank), tính khả thi (`feasible = true/false`), lý do loại bỏ và điểm chi tiết.
-- [ ] **Task 7.2 (Bộ lọc Ràng buộc Khả thi Tuyệt đối - Hard Feasibility Gate)**:
+- [x] **Task 7.2 (Bộ lọc Ràng buộc Khả thi Tuyệt đối - Hard Feasibility Gate)**:
   - CẤM chấm điểm ứng viên nếu vi phạm các điều kiện an toàn:
     ```java
     boolean isFeasible = truckCapacityCompatible     // Tải trọng xe >= Khối lượng hàng
                       && equipmentTypeCompatible     // Loại thùng xe (Reefer, Dryvan...)
                       && hazmatCompatible           // Xe/Tài xế có chứng chỉ hàng nguy hiểm ADR
                       && truckAvailable              // Xe không nằm xưởng bảo dưỡng
-                      && driverHosFeasible           // Giờ lái xe HOS còn lại > Thời gian chạy tới đích
+                      && driverHosFeasible           // HosFeasibilityService: drive/duty/break/cycle/service/next available
                       && pickupReachableOnTime;      // Kịp giờ hẹn lấy hàng
     ```
   - Nếu `isFeasible == false`: Lưu lý do cụ thể vào `rejection_reason` (ví dụ: `HOS_CYCLE_LIMIT_EXCEEDED`).
 - `driverHosFeasible` phải được lấy qua `HosFeasibilityService`, không chỉ so `requiredDriveMinutes <= drivingMinutesRemaining`; service phải xét duty window, break, cycle, service time và `nextAvailableAt` theo rule set hiện hành.
-- [ ] **Task 7.3 (Động cơ Chấm điểm Trọng số Đa mục tiêu - Multi-Objective Scoring)**:
+- [x] **Task 7.3 (Động cơ Chấm điểm Trọng số Đa mục tiêu - Multi-Objective Scoring)**:
   - Chuẩn hóa tất cả component về `[0,1]` và định nghĩa rõ **higher score = better**.
 - Khuyến nghị dùng utility thay vì raw value:
     $$\text{Score} =
@@ -727,7 +760,7 @@ Nâng cấp thuật toán gợi ý ghép chuyến (Smart Dispatch Matcher), tíc
       + w_h \cdot \text{HOSUtility}$$
 - Quy định:
   - mọi weight `>= 0`;
-  - $\sum w_i = 1$ (trong tolerance decimal đã định nghĩa);
+  - $\sum w_i = 1$ chính xác theo quyết định đã khóa, không tolerance mặc định;
   - raw inputs và normalized component đều phải được lưu;
   - normalization/version của scoring policy phải được snapshot.
 - Nếu chọn objective dạng **minimize cost**, không dùng công thức utility ở trên; objective direction phải được ghi rõ.
@@ -737,14 +770,18 @@ Nâng cấp thuật toán gợi ý ghép chuyến (Smart Dispatch Matcher), tíc
 
 ### Phase 8: Giám sát Đội xe & Tỷ lệ Khai thác Lịch sử (Fleet Utilization)
 
+**Semantic gate:** Phải chốt productive eligible time, available capacity time, excluded time và nguồn historical interval trước implementation. Event statuses/lifecycle là đề xuất tới khi được duyệt; duplicate/same-timestamp/missing-initial/open/out-of-order phải deterministic. Thiếu history/denominator trả UNAVAILABLE; current trucks.status không chứng minh utilization lịch sử.
+
+**Current checkpoint:** Phase 8 COMPLETE. All [canonical FLEET decisions](docs/fleet-utilization-policy-decisions.md) CONFIRMED/LOCKED, bao gồm exact 008/009 A. V34 immutable policy/history/completion-attribution, strict SQL report; V35 forward actual-context/time guard. Clean V1→V35 / populated V34→V35 + validate và Maven clean verify/repackage PASS: 456 reported/455 executed, zero failure/error, 160 PG, một legacy skip; 17 Python tests PASS; V1–V34 SHA unchanged và V35 unchanged sau application, diff sạch. Task 8.1–8.2 DONE, mở final full-system gate; không backfill/fake KPI. Unsupported health sources trả UNAVAILABLE đúng quyết định. Contract: docs/fleet-history-v1-contract.md.
+
 #### 1. Mục tiêu kinh doanh:
 Đo lường chính xác tỷ lệ khai thác đội xe theo thời gian lịch sử thực tế thay vì chỉ chụp ảnh trạng thái tức thời (`trucks.status`).
 
 #### 2. Danh sách Task chi tiết:
-- [ ] **Task 8.1 (CSDL Sự kiện Trạng thái Xe)**:
-  - Viết Flyway Migration `V14__create_vehicle_status_events.sql` (Tùy chọn khi triển khai tính năng telemetry mở rộng):
-    - Tạo bảng `vehicle_status_events`: Ghi nhận các khoảng thời gian xe ở trạng thái: `DRIVING`, `IDLE`, `LOADING`, `MAINTENANCE`, `OFFLINE`.
-- [ ] **Task 8.2 (Công thức Khai thác Đội xe - Fleet Utilization Engine)**:
+- [x] **Task 8.1 (CSDL Sự kiện Trạng thái Xe)**:
+  - Tạo migration theo thứ tự thực tế lúc triển khai (V14 đã được áp dụng; không tái sử dụng số này; tùy chọn khi triển khai telemetry mở rộng):
+    - `vehicle_status_events`: ghi nhận membership/capacity/activity intervals có explicit validity và published mappings. Các literal `DRIVING`, `IDLE`, `LOADING`, `MAINTENANCE`, `OFFLINE` trước đó là ví dụ, không seed/default; chỉ dùng khi policy authoring/source xác nhận.
+- [x] **Task 8.2 (Công thức Khai thác Đội xe - Fleet Utilization Engine)**:
   $$\text{FleetUtilization\%} = \frac{\text{Productive Eligible Hours}}{\text{Available Capacity Hours}} \times 100\%$$
 - `Productive Eligible Hours` và `Available Capacity Hours` phải có data dictionary rõ ràng; không mặc định mọi `DRIVING` đều là productive và không mặc định `MAINTENANCE/OFFLINE` đều thuộc denominator.
   - Endpoints:
@@ -1244,10 +1281,10 @@ CREATE INDEX ix_payroll_payments_driver ON payroll_payments(driver_id);
 
 ---
 
-### Migration V12: Tạo Bảng Định giá Hợp đồng (Rate Rules)
-**File:** `src/main/resources/db/migration/tenant/V12__create_rate_rules.sql`
+### Migration proposal (legacy draft; renumber before execution): Rate Rules
+**File:** `src/main/resources/db/migration/tenant/V21__create_rate_rules.sql` (provisional; finalize only after Phase 6 gate approval; V20 is payroll completion)
 ```sql
--- V12__create_rate_rules.sql
+-- V21__create_rate_rules.sql (provisional)
 CREATE TABLE rate_rules (
     id UUID PRIMARY KEY,
     rule_code VARCHAR(80) NOT NULL,
@@ -1270,10 +1307,10 @@ CREATE INDEX ix_rate_rules_customer ON rate_rules(customer_id, active);
 
 ---
 
-### Migration V13: Tạo Bảng Kiểm toán Điều phối Tối ưu (Optimization Audit)
-**File:** `src/main/resources/db/migration/tenant/V13__create_optimization_audit_tables.sql`
+### Migration proposal (legacy draft; renumber after Phase 6): Optimization Audit
+**File:** `src/main/resources/db/migration/tenant/V22__create_optimization_audit_tables.sql` (provisional; renumber after Phase 6)
 ```sql
--- V13__create_optimization_audit_tables.sql
+-- V22__create_optimization_audit_tables.sql (provisional)
 CREATE TABLE optimization_runs (
     id UUID PRIMARY KEY,
     run_type VARCHAR(50) NOT NULL,
@@ -1398,17 +1435,17 @@ CREATE INDEX ix_optimization_assignments_run ON optimization_assignments(optimiz
 
 ### 7.2 Tiêu chuẩn Hoàn thành (Definition of Done - DoD)
 
-Một task hoặc một giai đoạn migration chỉ được nghiệm thu khi đạt đầy đủ các tiêu chuẩn sau:
+Nghiệm thu backend Convention V1 theo confirmed contracts và implementation hiện tại; chi tiết bằng chứng tại [final verification](docs/backend-plan-final-verification.md). Không dùng checklist này để khẳng định production rollout đã thực hiện.
 
-- [ ] Script Flyway DDL chạy thành công trên môi trường kiểm thử (Local/Staging) từ bản trắng (clean database) và từ bản baseline nâng cấp.
-- [ ] Các Entity JPA được ánh xạ đầy đủ, thiết lập khóa ngoại, ràng buộc duy nhất và FetchType.LAZY chính xác.
-- [ ] Tất cả money/rate dùng `BigDecimal`; có `CurrencyGuard` và `MoneyRoundingPolicy`. Không hard-code một rounding mode toàn hệ thống.
-- [ ] Mọi aggregate tài chính đều có `@Version` kiểm soát khóa lạc quan.
-- [ ] Mọi **persisted business decision** trọng yếu (accepted Rating, Costing persist, Settlement, Payroll, Optimization, ETA prediction cần audit) có snapshot; GET report/dashboard thuần đọc không tạo snapshot vô hạn.
-- [ ] Calculator/Engine trọng yếu có branch/invariant tests đầy đủ; coverage được dùng như tín hiệu phụ, không thay thế kiểm thử business rule. Mục tiêu 85% chỉ áp dụng khi có ý nghĩa, không chạy theo số coverage.
-- [ ] Viết Integration Test kiểm tra toàn bộ luồng từ Controller -> Service -> CSDL với Testcontainers PostgreSQL.
-- [ ] Không sinh ra bất kỳ lỗi hồi quy (regression) nào trên các API hiện hữu đang phục vụ khách hàng và tài xế.
-- [ ] Tài liệu Swagger/OpenAPI được cập nhật đầy đủ các endpoint mới.
+- [x] Flyway DDL clean V1→V35 và populated previous-latest V34→V35 trên PostgreSQL kiểm thử; validate/checksum PASS.
+- [x] JPA schema validation/full application startup PASS; FK/check/unique/immutable JDBC audit constraints được PostgreSQL integration test, không buộc snapshot append-only phải tạo entity JPA mới.
+- [x] Financial/rate calculations dùng `BigDecimal`, explicit currency/numeric policies; Rating, optimizer và Fleet không reuse ngầm một global rounding mode.
+- [x] Concurrency của aggregate mutable và financial commands được bảo vệ bằng existing `@Version`/parent/resource locking và DB uniqueness; immutable JDBC snapshots không có mutable `@Version` giả.
+- [x] Persisted consequential business decisions giữ immutable input/result/audit; GET report/dashboard không tạo snapshot/event.
+- [x] Branch/invariant/reconciliation/immutability/concurrency tests PASS; không fabricate con số coverage 85% hoặc dùng coverage thay correctness.
+- [x] Controller→service→real PostgreSQL container integration PASS, 160 methods; không thay bằng H2.
+- [x] Toàn bộ existing regression và test mới PASS: 456 reported/455 executed, không thêm skip; 1 legacy skip giữ nguyên.
+- [x] Runtime OpenAPI 3.1.0 từ executable JAR PASS, 134 paths/283 schemas; 16 required rating/billing/optimizer/fleet operations hiện diện.
 
 ---
 ---
@@ -1789,6 +1826,8 @@ với rule chống duplicate logical source.
 ---
 
 ## 15. REVISED DEFINITION OF DONE — PRODUCTION READY
+
+Checklist release/production tổng quát dưới đây không phải bằng chứng đã deployment/security/performance review. Approved backend Convention V1 đã PASS final gates ở §7.2 và [final verification](docs/backend-plan-final-verification.md); các hoạt động vận hành rộng hơn chưa được thực hiện, giữ trạng thái chưa xác minh thay vì tick để giả production readiness.
 
 Một Epic/Task chỉ hoàn thành khi các điều kiện **áp dụng cho task đó** đều đạt:
 

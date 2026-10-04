@@ -26,6 +26,7 @@ public class DriverPayEngine {
     private final MileagePayCalculator mileageCalculator;
     private final WorkPayCalculator workCalculator;
     private final PercentagePayCalculator percentageCalculator;
+    private final SettlementRevenueGuard revenueGuard;
     private final AccessorialDriverPayCalculator accessorialCalculator;
     private final SettlementReconciliationService settlementReconciliation;
     private final FinancialRoundingPolicy rounding;
@@ -107,11 +108,10 @@ public class DriverPayEngine {
                 if (loads.isEmpty()) throw new BadRequestException("REVENUE_PAY_VALIDATION_REQUIRED", "Trip has no attributable eligible load revenue");
                 for (Load load : loads) {
                     if (!revenueLoads.add(load.getId())) continue;
-                    Invoice invoice = invoiceRepository.findByLoadId(load.getId()).orElse(null);
-                    var calculation = percentageCalculator.calculate(invoice,policy); percentageCalculations.add(calculation);
+                    var calculation = percentageCalculator.calculateBillingChain(invoiceRepository.findAllByLoadId(load.getId()),policy); percentageCalculations.add(calculation);
                     BigDecimal amount = calculation.amount();
                     percentPay = percentPay.add(amount);
-                    lines.add(line("REVENUE_PERCENT", "EARNING", trip, load, "Percentage of invoiced revenue", invoice.getSubtotalAmount(), currency, policy.getRevenuePercentage(), amount, currency, "INVOICE", invoice.getId()));
+                    lines.add(line("REVENUE_PERCENT", "EARNING", trip, load, "Percentage of eligible economic revenue", calculation.eligibleRevenue(), currency, policy.getRevenuePercentage(), amount, currency, "INVOICE", calculation.invoiceId()));
                 }
             } else if ("FLAT_RATE".equals(policy.getPayMethod())) {
                 // A flat period rate is applied once using the policy effective on period start.
@@ -228,9 +228,11 @@ public class DriverPayEngine {
     @Transactional
     public DriverSettlementView transition(UUID id, String target, UUID actor) {
         if (actor == null || !employeeRepository.existsById(actor)) throw new BadRequestException("SETTLEMENT_ACTOR_REQUIRED", "Persisted approval/lock actor required");
+        if (Set.of("APPROVED","LOCKED").contains(target)) revenueGuard.lockSources(id);
         DriverSettlement s = settlementRepository.findByIdForUpdate(id).orElseThrow(() -> new BadRequestException("Settlement not found"));
         String state = s.getStatus();
         if (target.equals(state)) return view(s); // retry-safe command response
+        if (Set.of("APPROVED","LOCKED").contains(target)) revenueGuard.requireFresh(s,lineRepository.findBySettlementIdOrderById(id));
         settlementReconciliation.reconcile(s,lineRepository.findBySettlementIdOrderById(id));
         if ("CALCULATED".equals(target) && "VALIDATION_REQUIRED".equals(state)) { s.setStatus(target); s.setValidationReason(null); }
         else if ("IN_REVIEW".equals(target) && "CALCULATED".equals(state)) { s.setStatus(target); s.setReviewedAt(now()); s.setReviewedBy(actor); }
@@ -249,6 +251,12 @@ public class DriverPayEngine {
             throw new BadRequestException("INVALID_SETTLEMENT_TRANSITION", "Finalized settlements cannot be reopened for validation");
         s.setStatus("VALIDATION_REQUIRED"); s.setValidationReason(reason); s.setReviewedAt(null); s.setReviewedBy(null); s.setApprovedAt(null); s.setApprovedBy(null);
         return view(settlementRepository.save(s));
+    }
+
+    @Transactional(readOnly = true)
+    public List<DriverSettlementView> list(UUID payPeriodId, UUID driverId, String status, String settlementType) {
+        List<DriverSettlement> settlements = settlementRepository.findSettlements(payPeriodId, driverId, status, settlementType);
+        return settlements.stream().map(s -> DriverSettlementView.from(s, List.of())).toList();
     }
 
     @Transactional(readOnly = true)

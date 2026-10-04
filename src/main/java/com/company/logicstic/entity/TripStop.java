@@ -43,8 +43,26 @@ public class TripStop {
     @Column(name = "\"order\"", nullable = false)
     private Integer order;
 
+    @Column(name = "status", length = 40)
+    private String status = "PENDING";
+
+    @Column(name = "appointment_start")
+    private OffsetDateTime appointmentStart;
+
+    @Column(name = "appointment_end")
+    private OffsetDateTime appointmentEnd;
+
     @Column(name = "arrived_at")
     private OffsetDateTime arrivedAt;
+
+    @Column(name = "service_started_at")
+    private OffsetDateTime serviceStartedAt;
+
+    @Column(name = "service_completed_at")
+    private OffsetDateTime serviceCompletedAt;
+
+    @Column(name = "departed_at")
+    private OffsetDateTime departedAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "load_id", nullable = false)

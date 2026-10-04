@@ -206,9 +206,11 @@ public class PayrollCalculationService {
    i.getStatus(),i.getCurrency(),i.getGrossAmount(),i.getIncomeTaxAmount(),i.getInsuranceAmount(),i.getOtherDeductionAmount(),
    i.getReimbursementAmount(),i.getNetAmount(),i.getTaxAvailability(),i.getValidationReason(),i.getJurisdiction()==null?null:i.getJurisdiction().toDomain(),
    i.getWorkerClassification(),i.getPayrollPolicy()==null?null:i.getPayrollPolicy().getId(),i.getPayrollPolicyVersion(),i.getEffectiveDate(),
-   i.getSettlements().stream().map(DriverSettlement::getId).sorted().toList(),i.getCalculationSnapshotJson())).toList();
+   i.getSettlements().stream().map(DriverSettlement::getId).sorted().toList(),i.getCalculationSnapshotJson(),
+   i.getNoPaymentRequiredAt(),i.getNoPaymentRequiredBy(),i.getNoPaymentReasonCode(),i.getNoPaymentReason())).toList();
   return new PayrollRunView(run.getId(),run.getRunNumber(),run.getPayPeriod().getId(),run.getCurrency(),run.getStatus(),
-    run.getValidationReason(),run.getEffectiveDate(),run.getCalculatedAt(),run.getApprovedAt(),run.getLockedAt(),run.getPaidAt(),result);
+    run.getValidationReason(),run.getEffectiveDate(),run.getCalculatedAt(),run.getApprovedAt(),run.getLockedAt(),
+    run.getCompletedAt(),run.getCompletedBy(),run.getCompletionSource(),result);
  }
  private BigDecimal money(BigDecimal value,String currency) {return rounding.money(value,currency,FinancialRoundingPolicy.Boundary.ALLOCATION);}
  private String serialize(Object value) {return json.writeValueAsString(value);}

@@ -3,6 +3,7 @@ import com.company.logicstic.entity.*;
 import com.company.logicstic.repository.*;
 import com.company.logicstic.common.CurrencyGuard;
 import com.company.logicstic.service.payroll.PayrollReconciliationService;
+import com.company.logicstic.service.payroll.PayrollRunCompletionService;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import java.time.*;
@@ -13,9 +14,9 @@ public class PayrollPaymentOutcomeService {
  private final PayrollPaymentRepository payments;
  private final PayrollRunItemRepository items;
  private final DriverSettlementRepository settlements;
- private final PayrollRunRepository runs;
  private final PayrollPaymentEventRepository events;
  private final PayrollReconciliationService reconciliation;
+ private final PayrollRunCompletionService completion;
  public record Decision(String status,String reason,boolean apply) {}
  public Decision assess(PayrollPayment p,String provider,VerifiedPayrollPaymentEvent event,boolean bank,UUID resolvesEventId) {
   if(!bank && ("MANUAL".equals(p.getPaymentMethod()) || !Objects.equals(provider,p.getProviderKey())))
@@ -44,20 +45,25 @@ public class PayrollPaymentOutcomeService {
   payment.setProviderReference(event.providerReference());payment.setStatus(event.outcome());
   if(bankActor!=null) {payment.setReconciledBy(bankActor);payment.setReconciliationReference(bankReference);payment.setReconciledAt(now());}
   if("SUCCEEDED".equals(event.outcome())) {
-   if(!"PAYMENT_PENDING".equals(item.getStatus())) throw new com.company.logicstic.exception.BadRequestException("PAYMENT_ITEM_NOT_PENDING","Successful evidence must match pending payroll item");
+   boolean pending="PAYMENT_PENDING".equals(item.getStatus());
+   boolean manualBankRecovery=bankActor!=null && "PAYMENT_FAILED".equals(item.getStatus());
+   boolean alreadyPaid=bankActor!=null && "PAID".equals(item.getStatus());
+   if(!pending && !manualBankRecovery && !alreadyPaid) throw new com.company.logicstic.exception.BadRequestException("PAYMENT_ITEM_NOT_PENDING","Successful evidence must match a pending, failed, or already paid item under explicit bank reconciliation");
    payment.setSucceededAt(event.occurredAt().withOffsetSameInstant(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS));
-   payments.saveAndFlush(payment);item.setStatus("PAID");items.saveAndFlush(item);
-   for(var id:item.getSettlements().stream().map(DriverSettlement::getId).sorted().toList()) {
-    var s=settlements.findByIdForUpdate(id).orElseThrow();
-    if(!"PAYMENT_SCHEDULED".equals(s.getStatus())) throw new com.company.logicstic.exception.BadRequestException("PAYMENT_SETTLEMENT_NOT_SCHEDULED","Mapped settlement must be scheduled before paid");
-    s.setStatus("PAID");s.setPaidAt(payment.getSucceededAt());settlements.saveAndFlush(s);
+   payments.saveAndFlush(payment);
+   if(!alreadyPaid) {
+    item.setStatus("PAID");items.saveAndFlush(item);
+    for(var id:item.getSettlements().stream().map(DriverSettlement::getId).sorted().toList()) {
+     var s=settlements.findByIdForUpdate(id).orElseThrow();
+     if(!"PAYMENT_SCHEDULED".equals(s.getStatus())) throw new com.company.logicstic.exception.BadRequestException("PAYMENT_SETTLEMENT_NOT_SCHEDULED","Mapped settlement must be scheduled before paid");
+     s.setStatus("PAID");s.setPaidAt(payment.getSucceededAt());settlements.saveAndFlush(s);
+    }
    }
-   if(items.findByPayrollRunIdOrderById(run.getId()).stream().allMatch(i -> "PAID".equals(i.getStatus()))) {
-    run.setStatus("PAID");run.setPaidAt(now());runs.saveAndFlush(run);
-   }
+   completion.completeIfReady(run,bankActor,bankActor==null?"PAYMENT_PROVIDER":"BANK_RECONCILIATION");
   } else {
    payment.setFailureCode("VERIFIED_PAYMENT_FAILURE");payment.setFailureMessage("Failure confirmed by "+(bankActor==null?"provider":"bank reconciliation"));
-   payments.saveAndFlush(payment);item.setStatus("PAYMENT_FAILED");items.saveAndFlush(item);
+   payments.saveAndFlush(payment);
+   if(!"PAID".equals(item.getStatus())) {item.setStatus("PAYMENT_FAILED");items.saveAndFlush(item);}
   }
  }
  private OffsetDateTime now(){return OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS);}

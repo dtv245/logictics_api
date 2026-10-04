@@ -16,13 +16,25 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
             WHERE (:status IS NULL OR i.status = :status)
               AND (:type IS NULL OR i.type = :type)
               AND (:customerId IS NULL OR i.customer.id = :customerId)
-              AND (:employeeId IS NULL OR i.employee.id = :employeeId)
             """)
     Page<Invoice> search(
             @Param("status") String status,
             @Param("type") String type,
             @Param("customerId") UUID customerId,
-            @Param("employeeId") UUID employeeId,
             Pageable pageable
+    );
+
+    java.util.List<Invoice> findAllByLoadId(UUID loadId);
+
+    java.util.List<Invoice> findByCustomerId(UUID customerId);
+
+    @Query("""
+            SELECT i FROM Invoice i
+            WHERE (:from IS NULL OR i.createdAt >= :from)
+              AND (:to IS NULL OR i.createdAt <= :to)
+            """)
+    java.util.List<Invoice> findByPeriod(
+            @Param("from") java.time.OffsetDateTime from,
+            @Param("to") java.time.OffsetDateTime to
     );
 }

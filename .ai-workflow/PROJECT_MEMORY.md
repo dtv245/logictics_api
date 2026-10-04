@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 36 |
+| Revision | 63 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | EXISTING_PROJECT |
-| Last Updated | 2026-10-04T03:20:19+07:00 |
-| Current Phase | 7 — Backend Development / Phase 015G |
-| Active Role | Backend Developer |
-| Status | IN_PROGRESS |
-| Next Role | Backend Developer |
-| Next Action | Separate 015G audited bank attestation/case resolution; assess neutral Phase 5 core before Phase 6. |
-| Handoff Sequence | 36 |
+| Last Updated | 2026-10-04T18:52:00+00:00 |
+| Current Phase | 10 — Testing / Final approved backend convention plan verification |
+| Active Role | QA / Tester |
+| Status | DONE |
+| Next Role | QA / Tester |
+| Next Action | PLAN COMPLETE for approved backend Convention V1, Phases 0–8/final gates PASS at V35. Hand off docs/backend-plan-final-verification.md and progress; production sources/configuration/capture and release review/deployment are separate, not authorized/performed. Preserve dirty work and V1–V35; future schema V36+ only. |
+| Handoff Sequence | 63 |
 
 ## 2. Project Snapshot
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** BE-CALC-015 / Phase 015G
-- **Objective:** Manual bank reconciliation with persisted actor, explicit evidence, immutable cases and exact financial identity.
-- **Acceptance Gate:** Authorized actor/evidence, idempotent bank source claims, exact amounts/currency, no successful-history rewrite, reviewed case resolution and unit/live/concurrency/migration/regression.
-- **Allowed Change Scope:** Separate 015G bank/case resolution and forward V19; preserve applied V11–V18.
+- **Feature/Task ID:** Approved backend Convention V1 — PLAN COMPLETE
+- **Objective:** Completed convention Phases 0–8 and actual final tests/build/migration/API/history/tenant gates; hand off evidence without conflating production readiness.
+- **Acceptance Gate:** PASS: final same-code clean V1→V35 / populated V34→V35 Maven clean verify/validate; 456 reported/455 executed, 0 failures/errors, one legacy skip, 160 PG; 17 Python; executable JAR/OpenAPI/checksums/diff/memory.
+- **Allowed Change Scope:** Handoff only; preserve completed source and immutable/applied history. Production source/configuration/capture/release review requires separate operational work; no deployment, commit, completed-phase refactor or new business-policy assumption.
 
 ### Phase Status
 
@@ -45,14 +45,14 @@
 | 0. Project Understanding | Product Owner | Product Owner; Business Analyst; Tech Lead | DONE | Phase 0 audit documents |
 | 1. Business Analysis | Business Analyst | Business Analyst; Product Owner; QA / Tester; Backend Developer | DONE | BE-CALC-002–004 complete; unsupported maintenance currency and combined totals are explicitly PARTIAL per plan |
 | 2. Domain Modeling | Software Architect | Software Architect; Business Analyst; Tech Lead; Database Engineer | NOT_STARTED | — |
-| 3. Database Design | Database Engineer | Database Engineer; Software Architect; Backend Developer | IN_PROGRESS | V1–V11 validate; clean V1→V11 and V10→V11 upgrade verified locally; Phase 3 gates remain |
+| 3. Database Design | Database Engineer | Database Engineer; Software Architect; Backend Developer | DONE | Approved backend schema V35 clean/V34 upgrade/validate; V34 separately clean/V33 upgrade; earlier SHA unchanged, production rollout separate |
 | 4. System Architecture | Software Architect | Software Architect; Tech Lead; Security Engineer; Database Engineer | DONE | ADR-001 and ADR-002 |
 | 5. API Design | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer; Security Engineer | NOT_STARTED | — |
 | 6. Project Structure | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer | DONE | Existing Spring layout |
-| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | Phases 3–4 and neutral 015B–015F complete; 184 regression tests incl.38 PG; 015G next |
+| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | DONE | Convention 0–8 COMPLETE under all locked decisions; V35 implementation/final QA gates PASS; no production deployment claim |
 | 8. Frontend Development | Frontend Developer | Frontend Developer; Tech Lead; QA / Tester; Security Engineer; Code Reviewer | NOT_APPLICABLE | API-only repository scope |
 | 9. Integration | Tech Lead | Tech Lead; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
-| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | IN_PROGRESS | 184 tests, 0 failures/errors, 1 legacy skip; 38 live PostgreSQL cases; 015G/later phases incomplete |
+| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | DONE | Final same-code clean V35 / populated V34 upgrade PASS: 456 reported/455 executed, zero failures/errors, one legacy skip, 160 PG; 17 Python PASS; verify/repackage/runtime OpenAPI/hash/diff/memory PASS |
 | 11. Security Review | Security Engineer | Security Engineer; Software Architect; Backend Developer; Frontend Developer; Code Reviewer | NOT_STARTED | — |
 | 12. Performance Review | Tech Lead | Tech Lead; Database Engineer; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
 | 13. Code Review | Code Reviewer | Code Reviewer; Tech Lead; Security Engineer | NOT_STARTED | — |
@@ -75,8 +75,11 @@
 | BE-CALC-013 | Task 4.1 / 4A | Backend Developer | DONE | Append-only locked versioning, expiry/scope/ambiguity resolver, explicit validation and pay-period APIs; 114 regression tests incl. 11 live PG | Phase 4B mileage calculation |
 | BE-CALC-014 | Task 4.2 | Backend Developer | DONE | All 4A–4F gates; 141 regression tests incl.21 PG, V13 clean/upgrade, concurrency/reconciliation/history/idempotency | Jurisdiction-neutral 015B |
 | BE-CALC-015 | Task 5.1 | Database Engineer | DONE | V11 creates payroll runs/items, settlement join, payslips, and payments; local clean and upgrade succeeded | Continue Task 5.2 workflow without hardcoding jurisdiction tax rules |
-| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | IN_PROGRESS | 015B–015F DONE with V14–V18 neutral config/workflow/payslip/payments/verified reconciliation; 015G in progress | Audited bank reconciliation and explicit case resolution |
-| BE-CALC-016–017 | Phases 6–8 | Backend Developer | NOT_STARTED | No implementation evidence in this handoff | Proceed after payroll and settlement gates |
+| BE-CALC-015 | Tasks 5.2–5.4 | Backend Developer | DONE | Verified clean V1→V20 + populated V19→V20; 192 reported / 191 executed / one legacy skip; 40 PG methods | Preserve, no repeat implementation |
+| Phase 6 | 6A–6G | Backend Developer | DONE | RATE/BILL locked; final V29 clean/V27 batch/V28 upgrade/validate, 302 reported / 94 PG | Preserve completed baseline |
+| BE-CALC-016 | Phase 7 | Backend Developer | DONE | All approved policy/source/score/run/Accept/tenant/concurrency gates PASS; V33 clean/upgrade/validate, 422/421 Java, 138 PG, 16 Python | Preserve completed phase; source deployment separate |
+| BE-CALC-017 | Phase 8 | Backend Developer | DONE | All Fleet decisions locked; V34/V35 immutable evidence/strict report/proven miles/tenant/context gates, 456/455 Java, 160 PG, 17 Python; clean/upgrade/validate/build/hash/diff PASS | Preserve completed history/report contracts; source production capture/deployment separate |
+| BE-CALC-FINAL | Convention Phases 0–8 final gate | QA / Tester | DONE | docs/backend-plan-final-verification.md; final clean/upgrade/validate/456-455/160PG/17Python/OpenAPI/JAR/SHA/diff PASS | Verified backend V1 handoff, not production readiness |
 
 ## 4. Requirements and Scope
 
@@ -100,6 +103,9 @@
 | BE-CALC-010–012 | Independent lifecycle, no duplicate source, actual-only/currency/mileage guards and user-authorized policy V1 | V9 costs/accessorials, V3 mileage; code-based classification V1 | Explainable profit/ratio metrics, unknown availability, currency/unallocated buckets | 100 tests, 0 failure/error, 1 legacy skip; 9 live PG cases | DONE |
 | BE-CALC-013–014 | Effective policies, immutable locks, append-only corrections and source eligibility | V10/V13 | Protected policy/settlement APIs and per-line actual cost | 141 regression tests incl.21 PG, clean/upgrade | DONE |
 | BE-CALC-015 Task 5.1 | Payroll is separate from invoices; payment attempts are idempotent | V11 payroll runs/items, join, payslips, payment attempts | Schema only | Flyway clean V1→V11, upgrade V10→V11, validate 11 migrations | DONE |
+| Convention Phases 5–6 final | Immutable financial history, completed payroll, explicit rating/tax/billing/revenue decisions | V20–V29 and retained APIs | Protected rating, billing, settlement, payroll workflows | All retained financial/date/mileage/tax/billing suites green in final 456/455 regression | DONE |
+| BE-CALC-016 | Confirmed source/feasibility/score/tie and existing-Trip-only assignment | V30–V33 immutable policy/input/run/acceptance audit | Authorized policy/run/view/accept APIs | 44 optimizer PG + 76 unit/HTTP/scope, full regression and physical tenant gates | DONE |
+| BE-CALC-017 | Confirmed bounded history, strict availability/numeric and proven completion mileage | V34/V35 immutable policy/events/attribution | Fleet capture + read-only report/health API | 22 Fleet PG + 12 Fleet units; context/tenant/coverage/immutability and runtime OpenAPI | DONE |
 
 ## 5. Architecture and Data Snapshot
 
@@ -107,8 +113,8 @@
 - **Modules / Boundaries:** Controller → service → repository/entity.
 - **Dependency Direction:** HTTP depends on services; services depend on repositories/entities.
 - **Authentication / Authorization:** JWT tenant claim routes to a tenant data source.
-- **Data Model / Migration:** Flyway V1–V18 clean and populated V17–V18 upgrade verified on disposable PostgreSQL; V12 renames legacy audit columns without rewriting applied migrations; supported production tenant histories still need rollout validation.
-- **API / Integration Contract:** REST; Phase 1 and Task 3.1 unit/security/service integration contracts verified; documents linked below.
+- **Data Model / Migration:** Latest V35. Clean V1→V35 / populated V34→V35 + validate/build/regression PASS; V34 separately clean/V33 upgrade PASS. All earlier SHA unchanged, V35 untouched after application; financial/optimizer/fleet history immutable. Production rollout separate.
+- **API / Integration Contract:** Existing envelope/roles, real cross-domain controller/service/PostgreSQL tests; final executable local OpenAPI 3.1.0 with 134 paths/283 schemas and 16 required new operations verified. Not frontend E2E/production certification.
 - **Deployment / Runtime:** Docker assets exist but are unverified.
 
 ## 6. Decisions
@@ -120,6 +126,16 @@
 | DEC-003 | 2026-10-03 | Business Analyst | Legacy distance semantics unresolved | DTOs accept raw Double; legacy spec marks unit TBD | Block distance-dependent formulas | — |
 | DEC-004 | 2026-10-03 | Backend Developer | Caller-supplied maintenance CPM produces ESTIMATE, not ACTUAL | No source proves an actual incurred rate; Task 3.1 snapshot captures explicit mileage/truck/rate | Actual profitability must not include this estimate | — |
 | DEC-005 | 2026-10-03 | Backend Developer | Pending/submitted expense approval atomically projects ACTUAL/VERIFIED cost with row locks | No Java approval command existed; expense schema supports approval audit | Endpoint requires accounting role and tenant employee; unknown/rejected/draft states reject | HOFF-0020 missing-hook assumption |
+| DEC-006 | 2026-10-04 | Product Owner | PayrollRun terminal state is `COMPLETED` iff all items are `PAID` or audited `NO_PAYMENT_REQUIRED`; zero-net settlement remains `LOCKED`; Invoice legacy API fields remain but input is rejected | Explicit user domain decision; V20 schema, service, contract and tests implement it | No fake zero-amount payments; completedAt/source audit; historical invoice response values are read-only; Phase 6 remains gated | — |
+
+| DEC-007 | 2026-10-04 | Product Owner | RATE-DEC-001…007 confirmed; Rating V1 FLAT/PER_MILE linehaul + INDEX_BASED_MPG FSC only | Explicit replies in docs/rating-policy-decisions.md | No default priority/mileage/MPG/rounding; accepted history immutable; methods outside V1 deferred | Earlier Phase 6 OPEN gate |
+
+| DEC-008 | 2026-10-04 | Product Owner | Independent pickup business LocalDate, no TIMESTAMPTZ backfill/derivation, explicit audited correction and snapshot source | Explicit latest user decision; V22 and date tests | Legacy instant/API kept; new requestedPickupBusinessDate is source of pricing date; timestamp edits never mutate it | BLK-004 proposed adapter |
+
+| DEC-009 | 2026-10-04 | Product Owner | BILL-DEC-001…006 CONFIRMED/LOCKED; Accounting tax decision, signed immutable billing chain, versioned driver basis, explicit credit evidence and stale-before-lock rejection/recalculation | User confirmations and HOFF-0047…0050; all Phase 6 gates PASS at V29 | Phase 6 COMPLETE; no unresolved requested Billing V1 policy | Earlier additional 6G gate |
+| DEC-010 | 2026-10-04 | Product Owner | OPT-DEC-001 A trusted adapters, missing/stale evidence rejects; OPT-DEC-002 A all four utilities with approved forecast sources; OPT-DEC-003 A equal rank, dispatcher chooses, UUID display-only | Three explicit replies to the first OPT batch | Do not ask those directions again; exact source contracts/utility formulas/weights/precision and acceptance lifecycle action still required before authoritative implementation | HOFF-0051 pending direction choices |
+| DEC-011 | 2026-10-04 | Product Owner | OPT-DEC-004…010 exact eligibility/source/curves/weights/numeric/forecast/Accept contracts CONFIRMED/LOCKED | Explicit full user batch; docs/optimization-policy-decisions.md, verified V33 gates | Resolves DEC-010 later-detail gate; source/allowlists authored, no global defaults; existing Trip assignment only, no dispatch; Phase 7 COMPLETE | Former exact OPT blocker |
+| DEC-012 | 2026-10-04 | Product Owner | All required FLEET-DEC-001…009 A contracts CONFIRMED/LOCKED; 004/005 definition NOT_APPLICABLE to already approved unsupported-source UNAVAILABLE | Explicit first/follow-up replies; docs/fleet-utilization-policy-decisions.md; V34/V35 final gates | Authored maps/source/bounded evidence, no fabricated history, strict coverage/numeric, proven actual completion truck/miles; conflicts unavailable until audited correction; Phase 8 COMPLETE | Former fleet gate |
 
 ## 7. Assumptions, Risks, and Blockers
 
@@ -134,21 +150,30 @@
 | ID | Severity | Risk | Evidence | Mitigation | Owner | Status |
 |---|---|---|---|---|---|---|
 | RSK-001 | HIGH | Wrong distance semantics corrupt KPI, cost, or payroll. | Unit/source are absent or TBD. | Block dependent formulas. | Product Owner | OPEN |
-| RSK-002 | HIGH | Migration chain may be invalid or differ from tenant-applied history. | Found duplicate V8/V9 files in the active Flyway location; obsolete candidates moved out of active SQL naming, but migration history has not been checked after cleanup. | Verify clean/upgrade against actual supported tenant history before marking migrations complete. | Database Engineer | OPEN |
+| RSK-002 | HIGH | Production tenant history must match verified supported migration chain. | Local clean V1→V35 and populated V34→V35 plus all earlier batch validate/SHA proofs PASS; old duplicate active candidates were addressed at the baseline. Production rollout/history not inspected here. | Preserve applied files; perform separate production tenant validate/backup/rollout gate before deployment. | Database Engineer | MITIGATED |
 | RSK-003 | HIGH | Task 3.3 formerly lacked authoritative variable/fixed policy. | User supplied V1 classification rules; HOFF-0025 implements policy/formulas/tests with unknown semantics preserved. | Preserve policy version and unknown metadata; production readiness remains separate. | Backend Developer | CLOSED |
+| RSK-004 | HIGH | Former payroll completion/Invoice legacy closure. | Approved semantics implemented; verified clean V20 and populated V19→V20. | Preserve completed baseline and read-only history. | Product Owner / Backend Developer | CLOSED |
+| RSK-005 | HIGH | Phase 6 financial correctness requires approved policy and verified sources. | RATE/BILL locked; 6A–6G verified at V29, immutable history/source/date/concurrency gates PASS. Unqualified mileage or historical NULL dates correctly fail closed. | Preserve completed baseline; no inferred mileage attribution, historical date or financial policy. | Product Owner / Tech Lead | MITIGATED |
 
 ### Blockers
 
 | ID | Blocker | Needed To Unblock | Owner | Status |
 |---|---|---|---|---|
-| BLK-001 | Distance source, unit, and meaning are unresolved. | Written product decision. | Product Owner | OPEN |
+| BLK-001 | Legacy raw distance remains unqualified; it is not a formula input in approved V1. | New V1 uses explicit decimal MILE/provenance and fail-closed legacy availability; separate written source qualification needed only to make unsupported legacy metrics available. | Product Owner | MITIGATED |
 | BLK-002 | Former Task 3.3 classification design blocker. | User-authorized LOGISTICSX_COST_CLASSIFICATION V1 implemented/tested in HOFF-0025; ambiguous historical rows stay UNCLASSIFIED. | Backend Developer | RESOLVED |
+| BLK-003 | Former Phase 6 business gate. | All seven RATE-DEC and FLAT/PER_MILE + INDEX_BASED_MPG V1 scope confirmed by user; implement and verify incrementally. | Product Owner / Tech Lead | RESOLVED |
+
+| BLK-004 | Former Load date adapter provenance blocker. | User confirmed independent DATE, no historical backfill, explicit authenticated audited corrections; V22 and adapter verified. | Product Owner / Backend Developer | RESOLVED |
+
+| BLK-005 | Former 6G additional tax/document/revenue-source contracts. | BILL-DEC-001…006 explicitly confirmed/locked and implemented; invoice-rating-v1-contract.md and final V29 gates. | Product Owner | RESOLVED |
+| BLK-006 | Former optimization exact-policy business gate. | All OPT-DEC-001…010 explicitly confirmed/locked in docs/optimization-policy-decisions.md; runtime authored allowlists/source qualifications mandatory. | Product Owner | RESOLVED |
+| BLK-007 | Former fleet policy gate. | Four A directions and exact FLEET-DEC-008/009 A received/locked; implement without defaults; health unavailable already authorized. | Product Owner | RESOLVED |
 
 ## 8. Artifact Index
 
 | Artifact | Path / URL | Owner | Status | Last Verified |
 |---|---|---|---|---|
-| Convention plan | plan-convention-v3-implementation-ready.md | Product Owner | IN_PROGRESS | 2026-10-03 source audit |
+| Convention plan | plan-convention-v3-implementation-ready.md | Product Owner | DONE | 2026-10-05 approved backend V1 Phases 0–8 / final V35 gates PASS |
 | Domain audit | docs/current-domain-semantics.md | Business Analyst | DONE | 2026-10-03 source audit |
 | Timezone audit | docs/legacy-timezone-semantics.md | Business Analyst | DONE | 2026-10-03 source audit |
 | Tenant ADR | docs/adr/ADR-001-tenant-isolation.md | Software Architect | DONE | 2026-10-03 source audit |
@@ -157,7 +182,19 @@
 | Task 3.1 ledger contract | docs/cost-ledger-contracts.md | Backend Developer | DONE | PostgreSQL concurrency/rollback/snapshot tests pass |
 | Task 3.2 accessorial contract | docs/accessorial-contracts.md | Backend Developer | DONE | Detention edge cases and PostgreSQL company-only concurrency/actor tests pass |
 | Task 3.3 profitability contract | docs/profitability-contracts.md | Backend Developer | DONE | 100 regression tests; versioned/explainable classification and formulas verified |
-| Continuation checkpoint | plan-progress-summary.md | Backend Developer | IN_PROGRESS | Phase 3 COMPLETE; Phase 4A next |
+| Continuation checkpoint | plan-progress-summary.md | QA / Tester | DONE | Convention 0–8 PLAN COMPLETE; final V35 clean/upgrade 456/455 Java, 160 PG and 17 Python PASS |
+| Rating decision gate | docs/rating-policy-decisions.md | Tech Lead | DONE | All RATE-DEC-001…007 and V1 subset explicitly user-confirmed |
+| Regression runner | scripts/verify_backend_regression.py | Backend Developer | DONE | 17 Python tests PASS; final clean/upgrade verify/repackage; enforces 456/455 and 13 PG domain floors totaling 160 |
+| Pickup date/mileage contract | docs/load-pickup-date-and-rating-mileage.md | Backend Developer | DONE | V22/V23 clean/upgrade/validate; 241 reported Java tests, 58 PG methods; accepted financial snapshot remains 6F |
+| EIA FSC implementation | docs/rating-fsc-v1.md | Backend Developer | DONE | 6D full regression: 252 reported, 58 PG; official series mapping/local HTTP parser tests |
+| Explainable rating engine | docs/rating-engine-v1.md | Backend Developer | DONE | 6E: 259 reported, 61 PG; ephemeral preview/API/source tests |
+| Accepted financial rating | docs/rating-accepted-snapshots.md | Backend Developer | DONE | V24 clean/V23 upgrade/validate; 267 reported, 67 PG; actor/date/revision/history/concurrency/API guards |
+| Remaining decision gates | docs/remaining-business-decision-gates.md | Backend Developer | DONE | All required RATE/BILL/OPT/FLEET V1 gates resolved and verified |
+| Optimization decision gate | docs/optimization-policy-decisions.md | Backend Developer | DONE | OPT-DEC-001…010 CONFIRMED/LOCKED; exact approved contracts, no assumed parameters |
+| Fleet decision gate | docs/fleet-utilization-policy-decisions.md | Backend Developer | DONE | All required 001…009 choices confirmed/locked; unavailable health outcomes authorized |
+| Fleet runtime contract | docs/fleet-history-v1-contract.md | Backend Developer | DONE | Immutable real history/attribution, strict SQL reports and V35 full clean/upgrade/tenant gates |
+| Final backend verification | docs/backend-plan-final-verification.md | QA / Tester | DONE | Actual final same-code clean/upgrade/regression/API/immutability/tenant matrix; production readiness separate |
+| Applied migration SHA manifest | docs/verification/migration-sha256-v35.txt | QA / Tester | DONE | All 35 active applied SQL files match verified SHA; no earlier migration edit |
 
 ## 9. Role Handoffs
 
@@ -917,26 +954,605 @@
 - **Acceptance Gate:** Unit/live/idempotency/concurrency/reconciliation/history/forward migration/full regression before neutral Phase 5 core gate.
 - **Do Not Redo:** Completed Phase 3/4/015B–015F; no V11–V18 edits, default tenant/tax/provider guesses or paid-at-schedule behavior.
 
+### HOFF-0037 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-04T08:00:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / 015G complete; Phase 6 entry-gate assessment
+- **Status:** DONE
+- **Objective:** Finish audited manual bank reconciliation and assess Phase 5 exit / Phase 6 entry without guessing business policy.
+- **Inputs Read:** HOFF-0036; Phase 5 and 6 plan; payroll contracts; current Invoice service/entity/DTO callsites; migration history; GitNexus analysis/impact limitation.
+- **Completed:** Added authorized open-case and reconcile-bank APIs, actor/evidence capture, exact payment/case identity validation, case and payment/run locking, idempotent replay and unique bank transaction guard. Late explicit success can settle failed item through resolved case only; successful history cannot downgrade. V19 adds forward-only bank evidence constraints and narrow locked-item transition. Added concurrent duplicate reconciliation integration coverage; adapted open case assertion to shared suite state and corrected stale API JSON wrapper expectation. Phase 6 decision recorded NOT MET with concrete conditions.
+- **Requirement IDs:** BE-CALC-015G; Phase 5 exit; Phase 6 entry.
+- **Files and Artifacts:** Manual bank request/case DTO/service/controller/repository; PayrollPaymentOutcomeService; V19; unit and CostLedgerPostgresTest; payroll contract; plan/progress and memory.
+- **Decisions:** No production provider or statutory policy assumed. Same idempotency key and actor plus same structured request replays; a unique bank transaction reference cannot resolve another case. Manual evidence does not create a transfer. Phase 6 stays closed until predecessor/product contracts are complete. Future schema work starts V20+, never stale V12.
+- **Assumptions:** DBs created for verification are disposable local PostgreSQL clones; no production DB was touched. Dirty worktree contains unrelated existing user files and remains preserved.
+- **Verification:** Clean PostgreSQL `./mvnw -q clean test` PASS on codex_classification_20261004005739: 188 tests, 0 failures/errors, 1 legacy skip; 39 live PostgreSQL integration methods. Targeted clean DB manual reconciliation PASS. Full clean V1→V19 applied. Clone of populated V18 DB codex_classification_20261003201635 upgraded to disposable codex_classification_20261004005930 and full regression PASS (188, 0 failures/errors, 1 skip). Unit tests include evidence, amount drift and success-history protection; live test covers concurrent same-key replay, audit, authorization and source uniqueness. `git diff --check` still reports one blank line at EOF in pre-existing modified `DriverPayPolicyController.java`; left untouched.
+- **Open Issues and Risks:** Phase 5 parent remains incomplete: net-zero no-payment disposition is undecided; Task 5.4 Invoice employee/period/distance/hours fields are annotated deprecated but InvoiceService, InvoiceView/Mapper still read/write them. Production regional adapters/provider and supported tenant migration history are not verified. Phase 6 needs explicit rate/FSC sources/precedence/mileage/currency/rounding/snapshot contracts; existing plan's V12 migration pointer is stale. GitNexus MCP impact query is unavailable due graph DB schema mismatch; CLI index completed and caller scan used, but this is not equivalent to full impact graph.
+- **Blockers:** BLK-003 remains OPEN; do not open Phase 6 yet.
+- **Next Required Action:** Product Owner specifies zero-net disposition and Phase 6 business inputs; Tech Lead confirms invoice legacy-field retirement scope and corrects plan migration numbering; then Backend Developer closes Task 5.4/Phase 5 gate.
+- **Acceptance Gate:** 015G is DONE after clean + populated upgrade suite evidence. Phase 6 entry requires all Phase 5 Task 5.4 and payroll disposition criteria, approved authoritative DOE/index and eligible-mile/MPG/rate contracts, currency and rounding/precedence, immutable quote/invoice snapshot/idempotency rules, and migration plan beginning V20+.
+- **Do Not Redo:** Do not modify V11–V18; do not apply changes to source V18 database; do not infer zero-net disposition or FSC/rate sources; preserve unrelated dirty worktree changes.
+
+### HOFF-0038 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-04T09:25:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / Phase 5 finalization; Phase 6 gate assessment
+- **Status:** DONE
+- **Objective:** Implement the approved zero-net payroll disposition and migrate run lifecycle from `PAID` to `COMPLETED`, finish Invoice Task 5.4, and verify before Phase 6.
+- **Inputs Read:** HOFF-0037; explicit user decision for run/item/payment semantics; Invoice API compatibility decision; V11–V19 migration chain and current API/service callsites.
+- **Completed:** Added V20 with legacy run backfill, completed audit, terminal/item transition guards and no-payment audit constraints; completion/disposition services and endpoint; completion DTO/entity semantics; provider/bank success now completes only all-terminal runs. Zero-net uses item `NO_PAYMENT_REQUIRED`, no payment record and keeps settlement `LOCKED`. Invoice commands reject employee/period/distance legacy inputs and employee filter; mapper ignores writes; old response values remain deprecated read-only compatibility projection. Updated payroll state docs and Phase 6 migration number to V21+.
+- **Requirement IDs:** BE-CALC-015 Task 5.2/5.4; Phase 5 exit; Phase 6 entry gate.
+- **Files and Artifacts:** V20 migration; payroll run/item entities, DTOs/services/controller; Invoice request/view/service/mapper/repository; payroll and rating docs; plan/progress; unit and PostgreSQL tests.
+- **Assumptions:** PostgreSQL test databases and populated V19 clone are disposable local fixtures; no production database was touched. All preexisting unrelated worktree changes belong to the user and remain preserved.
+- **Decisions:** Run is `COMPLETED` iff each item is `PAID` or `NO_PAYMENT_REQUIRED`; run completion stores timestamp and source/actor. Zero-net item requires exact zero, actor, reason code/text, no attempts/unresolved case and is idempotent; settlement stays immutable `LOCKED`. Invoice legacy fields remain in API/read projection but all supplied legacy write/filter values reject explicitly. Phase 6 remains design-only pending authoritative rating/FSC contracts.
+- **Verification:** `./mvnw -q -DskipTests test-compile` passed. Targeted Invoice/payroll unit tests passed. Clean disposable V1→V20 and populated V19→V20 clone regression passed: each 192 tests, 0 failures/errors, 1 legacy skip; 40 live PostgreSQL methods. Populated clone's 7 preexisting `PAID` runs were backfilled to `COMPLETED/LEGACY_PAID_RUN`. `git diff --check` has one existing unrelated blank line at EOF in modified `DriverPayPolicyController.java`; preserved.
+- **Open Issues and Risks:** No authoritative DOE/index, eligible-mile, MPG, currency/rounding, rate precedence, min/max or invoice snapshot/idempotency contracts; Phase 6 remains NOT MET. Production provider/legal adapters and supported production tenant migration history are not verified. GitNexus MCP impact remains unavailable due graph DB schema mismatch; source caller scans were used.
+- **Blockers:** BLK-003 remains OPEN for Phase 6 pricing inputs only; Phase 5 domain and Invoice decisions are resolved.
+- **Next Required Action:** Present Phase 5 completion and Phase 6 gate; request authoritative pricing/FSC contract decisions. Do not implement Phase 6 until approval.
+- **Acceptance Gate:** Clean V1→V20 and populated V19→V20 regression pass; run backfill to `COMPLETED/LEGACY_PAID_RUN`; Task 5.4 behavior tested; Phase 6 remains closed absent all approved pricing/FSC inputs.
+- **Do Not Redo:** Do not edit applied V11–V19; do not fake zero payment; do not call PayrollRun `PAID`; preserve unrelated dirty worktree changes and read-only historical Invoice projection.
+
+### HOFF-0039 — Tech Lead → Backend Developer
+
+- **Timestamp:** 2026-10-04T12:20:00+07:00
+- **From Role:** Tech Lead
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 6 preparation → 6A
+- **Status:** DONE
+- **Objective:** Clean harmless diff warning, confirm V20 checkpoint and record authoritative rating decisions before implementation.
+- **Inputs Read:** Continuation plan/progress; current Java, V1–V20, Invoice controllers, tests, ADRs and payroll semantics; user RATE-DEC replies.
+- **Completed:** Removed only redundant EOF blank line; documented seven confirmed policies and approved V1 subset; added safe reproducible isolated PostgreSQL regression runner and seven runner tests; corrected stale current-state Phase 5/gate records without rewriting old handoffs.
+- **Requirement IDs:** Phase 6 gate / RATE-DEC-001…007.
+- **Files and Artifacts:** docs/rating-policy-decisions.md; docs/rating-fsc-contracts.md; plan/progress; scripts/verify_backend_regression.py; scripts/tests/test_verify_backend_regression.py; DriverPayPolicyController.java (whitespace only); memory.
+- **Decisions:** DEC-007; all seven confirmed, V1 FLAT/PER_MILE + INDEX_BASED_MPG. No guessed advanced formulas.
+- **Assumptions:** ASM-001. Disposable local clone only; source baseline queried read-only.
+- **Verification:** git diff --check PASS. Python unittest seven PASS. Populated V20→V20 disposable codex_regression_20261004050344284081 full suite PASS: 192 reported, 191 executed, zero failures/errors, one named legacy skip; 40 PostgreSQL methods. Flyway validation PASS. Evidence /tmp/logisticsx-regression-pf4nji1t/{maven.log,summary.json}. Source still seven LEGACY_PAID_RUN, no PAID runs. No migration added.
+- **Open Issues and Risks:** GitNexus impact risk UNKNOWN due graph42/runtime40 mismatch; graph query empty, source inspection confirms no rating implementation; no all-clear graph claim. Qualified planned/actual load mileage missing; approved fail-closed behavior required.
+- **Blockers:** None for 6A. Later Phase 7/8 dependencies and policy inputs remain.
+- **Next Required Action:** Backend Developer adds V21 schema/domain/version services and new unit/PostgreSQL cases; then 6B resolver.
+- **Acceptance Gate:** Clean latest + populated V20 upgrade + validate + complete growing regression; V1–V20 untouched.
+- **Do Not Redo:** Convention Phases 0–5 and legacy backfill; never mutate source DB or user edits.
+
+### HOFF-0040 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T12:35:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6A → 6B
+- **Status:** DONE
+- **Objective:** Publish immutable versioned Rating V1 customer contracts/rules without hidden financial defaults.
+- **Inputs Read:** HOFF-0039; seven RATE decisions and approved V1 subset; existing entity/service/controller/security conventions; PostgreSQL V1/Flyway baseline.
+- **Completed:** Additive V21 identity/version tables, finite decimal/method/date/FSC/context constraints and immutable history triggers; JDBC immutable records preserve exact decimals; authoring service serializes append with expected version; authenticated ADMIN/ACCOUNTANT API with tenant employee audit. No fake engine/calculation or speculative advanced formula.
+- **Requirement IDs:** Phase 6A / RATE-DEC-001/002/003/004/005.
+- **Files and Artifacts:** V21; service/rating domain/validator/service; RatePolicyRepository; dto/rating; RatePolicyController; narrow new SecurityConfig route guard; seven unit tests; four RatingPolicyPostgresTest methods; domain contract/plan/progress/memory.
+- **Decisions:** DEC-007. Published versions immutable immediately; overlapping versions are not silently superseded or closed; later resolver must expose winning ambiguity. Pricing method scope exactly user-approved.
+- **Assumptions:** No provider observations have been fetched. Exact EIA series adapter belongs to 6D; no financial sample defaults.
+- **Verification:** Unit seven PASS. Clean V1→V21 codex_regression_20261004053017140739 and populated V20→V21 codex_regression_20261004053108159552 complete regression/validate PASS: each 203 reported, 202 executed, zero failures/errors, one legacy skip; 44 PostgreSQL methods. Evidence /tmp/logisticsx-regression-b1_hwkmp and /tmp/logisticsx-regression-z7n7seuj. V1–V20 SHA256 unchanged; git diff --check PASS.
+- **Open Issues and Risks:** Graph risk UNKNOWN for RateRule/SecurityConfig due graph storage mismatch; graph-first attempts recorded, source scans and full security/application regression cover relevant routes. Source Load TIMESTAMPTZ does not preserve original local-date offset; doc corrected earlier proposed extraction.
+- **Blockers:** None for pure 6B resolver. Load adapter separate DATE/no historical guess proposal awaiting business confirmation.
+- **Next Required Action:** Add/test deterministic explicit LocalDate resolver; continue provenance after date adapter decision.
+- **Acceptance Gate:** 6B effective/date/dimension/priority/tie/currency tests plus growing full PostgreSQL regression.
+- **Do Not Redo:** Convention 0–5, applied V1–V21 or source backfills; preserve append-only old HOFF blocks.
+
+### HOFF-0041 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T12:40:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6B → 6C
+- **Status:** DONE
+- **Objective:** Deterministic rule resolution with no implicit precedence or historical business-date guess.
+- **Inputs Read:** HOFF-0040; RATE-DEC-001/002; V21 immutable domain/repository; runtime Load/TripStop timestamp and attribution fields.
+- **Completed:** Read-only LocalDate/customer/context resolver: null wildcard/exact dimensions, inclusive effective periods, smallest explicit priority, winning tie error without specificity/newest/order tie-break; compatible currency and pinned effective contract validation. No public arbitrary-date pricing API or authoritative Load adapter.
+- **Requirement IDs:** Phase 6B / RATE-DEC-001.
+- **Files and Artifacts:** RateMatchContext; RateRuleResolver; 14 unit cases; two additional RatingPolicyPostgresTest methods; domain/decision contracts, plan/progress/memory.
+- **Decisions:** DEC-007. Currency mismatch rejects the winner rather than using a hidden lower-priority fallback; contract identity/version must be proven. No clock fallback. All seven RATE decisions remain confirmed.
+- **Assumptions:** LocalDate source adapter not inferred from persisted TIMESTAMPTZ; proposal explicitly awaiting user confirmation.
+- **Verification:** Latest clean V1→V21 codex_regression_20261004053802305662 and populated V20→V21 codex_regression_20261004053624414292 full regression + Flyway validate PASS: each 219 reported, 218 executed, zero failures/errors, exactly one named legacy skip, 46 executed PostgreSQL methods. Evidence /tmp/logisticsx-regression-fsawox9p and /tmp/logisticsx-regression-mm1jcc4q. Seven Python gate tests PASS. git diff --check PASS. V1–V20 hashes unchanged; prior 38 handoffs unchanged.
+- **Open Issues and Risks:** Phase 6 not complete; 6C–6G and phases 7–8 remain. Graph storage mismatch keeps impact UNKNOWN; targeted source scans and full real-PG tests used, no false graph all-clear.
+- **Blockers:** BLK-004 only blocks Load date adapter. Qualified load-level planned/actual source absent; 6C must preserve unavailable/attribution-required outcomes. No blocker for independent contract provenance preparation.
+- **Next Required Action:** 6C contract mileage evidence/resolver and per-component provenance; confirm separate DATE capture before changing Load API/persistence. Then 6D→6G in approved V1 scope.
+- **Acceptance Gate:** Growing regression and live PostgreSQL source/precision/attribution/history tests; any new V22+ schema proves clean/previous-latest upgrade/validate.
+- **Do Not Redo:** Applied V1–V21, convention Phases 0–5, 6A/6B or historical legacy backfills without concrete regression evidence.
+
+### HOFF-0042 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T13:05:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6C date adapter → mileage provenance
+- **Status:** DONE
+- **Objective:** Implement user-confirmed independent Load pickup LocalDate without fabricating history.
+- **Inputs Read:** Plan/progress/HOFF-0041; latest explicit date decision; Load DTO/entity/mapper/controller/service callsites; V21 and existing date/tenant/audit conventions.
+- **Completed:** V22 nullable DATE/current-audit pointer, immutable chained corrections and SQL guard; explicit create/update date command input with authenticated actor/reason/provenance; timestamp-only edits retain business date; audited historical remediation with stale guard; exact rating pricingDate/source input, no timezone/clock/instant fallback. Preserved legacy timestamp names for compatibility; equivalent new business field is requestedPickupBusinessDate.
+- **Requirement IDs:** RATE-DEC-001/002 date provenance / explicit user date decision.
+- **Files and Artifacts:** V22; Load entity/DTO/view/mapper/service; date provenance/remediation DTO/service/controller; narrow security matcher; LoadRatingContextService and RatingPricingDate; seven PostgreSQL/two unit date cases; docs/load-pickup-date-and-rating-mileage.md; progress/memory.
+- **Decisions:** DEC-008. No timezone-derived path implemented: only explicit LocalDate. Null/omitted date does not clear/recompute existing promise.
+- **Assumptions:** None for business date; captured input is not an accepted financial snapshot.
+- **Verification:** Clean V1→V22 codex_regression_20261004060002540892 and populated V21→V22 codex_regression_20261004060134144460 full regression/validate PASS: 228 reported, 227 executed, zero failures/errors, one legacy skip; 53 live PostgreSQL methods. Logs /tmp/logisticsx-regression-yplgkruq and /tmp/logisticsx-regression-4c2bcbsb. Before upgrade, a separate V21 staging clone was seeded with a TIMESTAMPTZ offset; after upgrade that historical Load has appointment present, business date/audit NULL. Staging source remains V21.
+- **Open Issues and Risks:** GitNexus graph version mismatch keeps impact UNKNOWN; attempted graph-first impact for affected Load/mapper/service/security symbols, checked concrete callsites and full regression. Exact accepted snapshot date persistence/testing belongs to 6F and remains unimplemented, not skipped or faked.
+- **Blockers:** BLK-004 resolved. Planned/actual Load mileage sources remain unqualified and must fail closed.
+- **Next Required Action:** Add V23 immutable effective-contract Load mileage evidence and explicit per-component resolver/provenance; validate decimal/source/attribution and clean/V22 upgrade regression.
+- **Acceptance Gate:** 6C unit/real-PG provenance, unavailable/negative/zero/precision/multi-load cases; preserve all current tests and old migration checksums.
+- **Do Not Redo:** V1–V22 or historical date backfill; do not change pickup date when appointment/actual instant changes.
+
+### HOFF-0043 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T13:13:42+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6C → 6D
+- **Status:** DONE
+- **Objective:** Explicit per-component Load mileage provenance without inventing attribution or losing decimal precision.
+- **Inputs Read:** HOFF-0042; RATE-DEC-002 and approved method scope; immutable V21 contracts/rules, V22 audited business date; Trip/TripStop schema/source and existing test conventions.
+- **Completed:** V23 immutable Load/component/effective-contract mileage evidence, original value/unit + normalized NUMERIC(12,3), provenance/actor/time/context guards. Explicit component evidence selection and basis matching, currency/customer/contract/version/effective date validation; monetary minimum NOT_APPLICABLE, zero contract miles valid. No planned/actual/Trip/legacy allocation fallback; missing qualified source errors and multi-load attribution-required. Authenticated ADMIN/ACCOUNTANT capture API derives actor from session. Added eight unit and five PG cases.
+- **Requirement IDs:** Convention 6C / RATE-DEC-002/005.
+- **Files and Artifacts:** V23; ContractMileage DTO/validator/evidence; RatingMileageComponent/ResolvedRatingMileage; RatingMileageRepository/Service/Controller; narrow route guard; unit/PG tests; date/mileage and decision/domain contracts; plan/progress/memory.
+- **Decisions:** DEC-007/008. V1 accepts explicit MILE; no guessed unit conversion. Original values must be exactly representable in existing distance precision; no pre-tier rounding. Explicit agreement evidence remains available even for a multi-load Trip because it is already Load-attributed.
+- **Assumptions:** Planned/actual route/movement-leg authoritative Load sources are absent; availability errors are actual supported outcomes, not stub zero results. No financial snapshot is written by GET/preview or evidence resolution.
+- **Verification:** Clean V1→V23 codex_regression_20261004060841260687 (/tmp/logisticsx-regression-lp8ksqdo), populated V22→V23 codex_regression_20261004060931218651 (/tmp/logisticsx-regression-xh8p0yla), full suite + Flyway validate PASS: each 241 reported / 240 executed / zero failures/errors / one named legacy skip. 58 PG methods (40 baseline + 6 rule + 7 date + 5 mileage), none skipped. Seven Python verifier tests PASS; git diff --check clean; V1–V21 hashes unchanged. V22 source remains unchanged and historical seeded Load business DATE stays NULL.
+- **Open Issues and Risks:** Source-qualified planned/actual mileage ingestion is not implemented; no production fallback. Phase 6D–6G and Phase 7/8 remain. Exact accepted snapshot pricingDate/source persistence/test belongs to 6F, not the immutable input record tested here. GitNexus graph version mismatch keeps impact UNKNOWN; graph-first checks/source scan/full real-PG regression recorded.
+- **Blockers:** None for approved 6D implementation. Historical NULL date/absent qualified mileage remains fail-closed until explicit proven input.
+- **Next Required Action:** 6D EIA supported region/series provider and selection/retrieval/version audit; index stale/unavailable, explicit MPG/base and approved FSC rounding; then 6E explainable engine, 6F immutable snapshots, 6G invoice integration.
+- **Acceptance Gate:** Preserve current growing regression/PG/skip budget; any V24+ clean/previous-latest upgrade/validate. No magic prices/MPG or unlimited last-known index fallback.
+- **Do Not Redo:** Applied V1–V23, completed convention 0–5/6A–6C, historical legacy backfill/date guesses. Old handoffs remain append-only.
+
+### HOFF-0044 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T13:35:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6D → 6E
+- **Status:** DONE
+- **Objective:** Approved FSC calculation and authoritative EIA adapter without financial defaults.
+- **Inputs Read:** Full memory, continuation plan/progress, RATE decisions, V21 FSC contract and existing services; official EIA ULSD history links/API documentation.
+- **Completed:** EIA verified supported-region ULSD series, weekly nonfuture retrieval, provider data hash/version/time audit, sanitized unavailable errors; selector latest/unique/age gate; explicit MPG/base/mileage calculator, DECIMAL128 and unit-6-before-total rounding; CurrencyScaleProvider and min/max boundary. Eleven unit/local HTTP tests.
+- **Requirement IDs:** Convention 6D / RATE-DEC-002…005.
+- **Files and Artifacts:** service/rating provider/selector/calculator/rounding/domain; two test classes; docs/rating-fsc-v1.md; plan/progress/memory.
+- **Decisions:** DEC-007. Official series mapping is technical qualification, not a fallback policy. No observations or financial snapshots written on preview.
+- **Assumptions:** No actual EIA credential deployment verified; absence fails closed. Existing phase rounding is unchanged.
+- **Verification:** Clean codex_regression_20261004063251074099, /tmp/logisticsx-regression-3rl3vk6a full suite/Flyway validate PASS: 252 reported / 251 executed / zero failures/errors / one named legacy skip; 58 live PG methods. No new migration. Applied V1–V23 untouched.
+- **Open Issues and Risks:** Graph impact UNKNOWN (storage version mismatch), source checks and growing regression used. Phase 6E–6G and 7–8 remain. Asked structured Phase 7/HOS/scoring, Phase 8 lifecycle/utilization and explicit billing-tax-source decisions; no choices assumed.
+- **Blockers:** None for 6E/6F. Tax assessment/generation policy and Phase 7/8 business answers pending.
+- **Next Required Action:** 6E explainable immutable value output and ephemeral real Load preview; then persisted immutable acceptance in 6F.
+- **Acceptance Gate:** New calculation/preview/source/auth/readonly tests plus full growing PostgreSQL suite; no GET snapshots/hidden policy.
+- **Do Not Redo:** V1–V23 and complete 0–5/6A–6D, legacy backfills and old handoffs. No fake index/default MPG or inferred history.
+
+### HOFF-0045 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T13:41:16+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6E → 6F
+- **Status:** DONE
+- **Objective:** Explainable Rating V1 from authoritative Load/rule/component sources.
+- **Inputs Read:** HOFF-0044; RATE decisions; Load/Accessorial and rating repositories/resolver/source contracts; security routes and tax-source gap.
+- **Completed:** Explicit context provenance, server Load customer/date, independent component evidence, approved customer-charge selection and no double FSC; pure explainable engine; short read transaction before provider I/O; accounting-only ephemeral preview and structured existing SLF4J logs. Four unit/three PG methods.
+- **Requirement IDs:** Convention 6E / RATE-DEC-001…005.
+- **Files and Artifacts:** RatingPreviewRequest; RatingInputs/AccessorialInput/Line/Preview; RatingInputLoader/Engine/PreviewService/Controller; engine/PG tests; docs/rating-engine-v1.md; plan/progress/memory.
+- **Decisions:** DEC-007/008. Request dimensions are explicit, no guessed Load lane/equipment; date/customer cannot be caller overrides. Tax excluded by separate policy, not fabricated zero.
+- **Assumptions:** None for monetary sources; no financial acceptance yet.
+- **Verification:** Clean codex_regression_20261004064011710033, /tmp/logisticsx-regression-imgezs39 full suite/Flyway validate PASS: 259 reported / 258 executed / zero failures/errors / one legacy skip; 61 live PG methods. Incorrect new test multiplication expectation independently checked as exact integer arithmetic and corrected; no baseline weakened. No new migration.
+- **Open Issues and Risks:** Graph impact UNKNOWN, source scans/full real-PG regression used. 6F/6G and 7/8 remain. Tax assessment and later policies awaiting user answer.
+- **Blockers:** None for 6F.
+- **Next Required Action:** V24 accepted immutable snapshots, exact date/source persistence, idempotency and append-only correction/concurrency tests; keep external HTTP outside transaction.
+- **Acceptance Gate:** Clean latest/populated V23 upgrade/validate/growing suite; accepted inputs stay unchanged after Load/rule/provider revisions.
+- **Do Not Redo:** V1–V23/completed 0–5/6A–6E/old handoffs; no tax default, guessed miles or financial snapshot on preview.
+
+### HOFF-0046 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T14:01:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6F → 6G decision gate
+- **Status:** DONE
+- **Objective:** Real immutable accepted rating and exact business-date source persistence, not generic snapshot scaffolding.
+- **Inputs Read:** HOFF-0045; confirmed RATE/date semantics; existing security/JDBC/JSONB/actor conventions and immutable policy source; focused invoice consumers/HOS/fleet policy gaps, no Phase 0–5 re-audit.
+- **Completed:** V24 accepted financial snapshot scalar/JSONB/date/source/rule/result/reconciliation/history guards; exact currencyScale and all provider/component/audit inputs; canonical preview/command fingerprints, early replay/conflict, stale acceptance, short locked input/publication revalidation transaction, append-only coded corrections. Two unit and six PG/API methods. Added narrow snapshot read route guard after real 403 test exposed method-security annotation was insufficient.
+- **Requirement IDs:** Convention 6F / RATE-DEC-005/006/007 retry safety / exact user pricingDate snapshot test.
+- **Files and Artifacts:** V24; RatingFingerprintService/SnapshotService/Writer/Repository; AcceptedRatingSnapshot/AcceptRequest/Preview fields; RatingController/SecurityConfig; fingerprint/PG tests; docs/rating-accepted-snapshots.md and remaining-business-decision-gates.md; plan/progress/memory.
+- **Decisions:** DEC-007/008. Replay retains existing accepted outcome after current Load/rule/provider changes. No inferred root uniqueness for ratings; invoice business key is distinct. Tax remains excluded pending explicit assessment. Existing published migrations/history untouched.
+- **Assumptions:** None for additional billing choices. Live EIA credential deployment remains unverified; test observation provider exists only in the test context.
+- **Verification:** Final clean codex_regression_20261004065734077168 (/tmp/logisticsx-regression-kp09gd53) and populated V23→V24 clone codex_regression_20261004065914986712 (/tmp/logisticsx-regression-pefyz2ee), full suite/Flyway validate PASS: each 267 reported / 266 executed / zero failures/errors / one named legacy skip; 67 PG methods. Seven Python verifier tests PASS. git diff --check and touched untracked source whitespace clean. V1–V23 SHA-256 unchanged; V24 unchanged since first migration gate. Missing route guard test fixed, not skipped; all final gates rerun.
+- **Open Issues and Risks:** Graph impact UNKNOWN due storage mismatch; pre-edit graph attempts, concrete source checks and full security/PG regression used. 6G/7/8/final plan gates remain. Multiple invoices would invalidate Optional one-invoice financial/payroll source consumers; no constraint drop or guessed sign/wage recalculation. Original dirty worktree preserved.
+- **Blockers:** BLK-005 additional invoice tax/sign/composition/driver-revenue-source answers; BLK-006 scoring/full HOS sources; BLK-007 historical utilization policy. Unsupported fleet health may remain UNAVAILABLE and is not an extra blocker.
+- **Next Required Action:** Receive structured business answers, implement 6G end-to-end and migration/concurrency/full regression, mark Phase 6 COMPLETE only then; proceed 7 then 8/final verification. No useful independent production work remains without encoding those financial/source choices; no unused speculative schema/interfaces added.
+- **Acceptance Gate:** Next V25+ clean/current-latest upgrade/validate; generated invoice uses accepted snapshot, not current rate, has real approved tax and deterministic business/request invariants; later phases need approved policies.
+- **Do Not Redo:** V1–V24, complete convention 0–5/6A–6F, historical legacy/date backfill or old handoffs. Do not fabricate zero tax, duplicate base freight, legal HOS limits, weights or utilization history.
+
+### HOFF-0047 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T18:28:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6G.A → billing commands
+- **Status:** DONE
+- **Objective:** Record locked continuation decisions and implement audited immutable tax evidence independently of invoice calculation.
+- **Inputs Read:** Full workflow memory/skill/playbook, current plan/progress/rating docs/ADRs, Invoice/DriverPayPolicy/settlement consumers, V1/V10/V13/V24, controllers and existing PG tests; latest user locked decisions and BILL-DEC-004 reply.
+- **Completed:** Locked BILL-DEC-001…004 without reopening RATE policies; V25 immutable assessment, explicit source/reference/jurisdiction/value/currency/assessor audit plus authenticated Accounting capture audit, safe same-ID replay/conflict, exact currency precision, tenant-owned references and protected API. No tax engine/rates/default zero, historical backfill or generated invoice claimed.
+- **Requirement IDs:** 6G TaxAssessment; BILL-DEC-001/004; migration and regression governance.
+- **Files and Artifacts:** invoice-rating-v1-contract/remaining gates/rating decisions/plan/progress; TaxAssessment DTO/domain/repository/service/controller; narrow SecurityConfig guard; V25; four unit/four PG methods; memory.
+- **Decisions:** User confirmed tax external/accounting source, configurable driver revenue, signed economic documents, and Accounting REQUIRED/NOT_REQUIRED audit. Existing V24 runtime wins stale V21 checkpoint. New BILL-DEC-005 question concerns full reversal represented by multiple partial credit documents only; no answer inferred.
+- **Assumptions:** None for tax requirement, legal rates, financial sign or history. SourceType provider label is never unauthenticated ingestion; Accounting-authenticated capture attests supplied assessment provenance. No live external integration claimed.
+- **Verification:** Baseline populated V24 clone codex_regression_20261004111750511153 PASS: 267 reported/266 executed/one legacy skip, 67 PG. Four unit tests PASS. Clean V1→V25 codex_regression_20261004112441009879 (/tmp/logisticsx-regression-243ws1x1) and populated V24→V25 codex_regression_20261004112612125787 (/tmp/logisticsx-regression-qswxpyzf) full regression + Flyway validate PASS: each 275 reported/274 executed/zero failures/errors/one named legacy skip; 71 real PG methods. Seven Python verifier tests PASS. V1–V24 SHA256 unchanged; git diff --check clean.
+- **Open Issues and Risks:** Graph-first queries/impact still UNKNOWN due storage42/runtime40 mismatch; concrete caller/source scans and full PG/security regression used, no graph all-clear. Remaining 6G financial commands/consumers/history gate and later phases not complete.
+- **Blockers:** No blocker to independent billing implementation. BILL-DEC-005 exact multi-partial-credit rebill proof is awaiting answer. BLK-006/007 remain future optimization/fleet gates.
+- **Next Required Action:** Implement dedicated accepted-snapshot invoice generation, tax-decision audit, business/idempotency uniqueness, signed chain corrections and consistent revenue/driver source handling; do not start Phase 7 before complete Phase 6 gates.
+- **Acceptance Gate:** Growing unit/real PG/concurrency/security matrix, clean V1→V26+, populated V25→latest, validate, immutable earlier checksums and diff check; full 6G matrix before Phase 6 COMPLETE.
+- **Do Not Redo:** Applied V1–V25, completed convention 0–5/6A–6F, source backfills or old handoffs; no defaults from isVatExempt.
+
+### HOFF-0048 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T18:44:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6G.B → signed chain
+- **Status:** DONE
+- **Objective:** Real accepted-snapshot PRIMARY generation, audited tax requirement/allocations and protected financial command history.
+- **Inputs Read:** HOFF-0047; locked BILL/RATE decisions; invoice/JPA/mapper/CRUD/revenue/payment/driver consumers, V1/V25, actual clean migration diagnostics and PG tests.
+- **Completed:** V26 exact NUMERIC invoice amounts, accepted snapshot/context FK, purpose/sign/business uniqueness, tax decision/assessment and immutable operation/key/hash command outcomes. Dedicated accounting-only generation/issue/regenerate/read routes; stale draft reference guard, replay retains existing outcome after issue/current Load/rule changes, tax allocations reconcile without invented tax rates. Generic CRUD cannot mutate/delete rated or issued financial history. Seven live PG methods.
+- **Requirement IDs:** 6G PRIMARY/TaxAssessment/idempotency/draft regeneration/issued immutability/currency/concurrency/auth.
+- **Files and Artifacts:** V26, BillingRepository/Service/Controller/domain, GenerateInvoiceRequest, invoice numeric/sign fields and InvoiceService edit gate, narrow route security, BillingPrimaryPostgresTest; invoice contract/progress/memory.
+- **Decisions:** BILL-DEC-004 Accounting explicit REQUIRED/NOT_REQUIRED. BILL-DEC-005 newly CONFIRMED: multiple issued partial credits with explicit IDs can prove exact full subtotal/tax reversal before rebill; prior pending question in HOFF-0047 superseded.
+- **Assumptions:** None for tax/legal rates/financial identity. Existing single-load index deliberately retained until all signed multiplicity consumers are implemented in next slice; not a complete 6G claim.
+- **Verification:** Clean codex_regression_20261004114029043703 (/tmp/logisticsx-regression-hrcwjrui) and populated V25→V26 codex_regression_20261004114225857415 (/tmp/logisticsx-regression-_c5li4sk), full regression + Flyway validate PASS: 282 reported/281 executed/zero failures/errors/one legacy skip, 78 real PG methods. Initial real schema run exposed SMALLINT/Integer mapping, then JDBC parameter-count defect; Java fixes and all gates rerun, no migrations rewritten or baseline tests weakened. V1–V25 SHA256 unchanged; V26 unchanged after its first application.
+- **Open Issues and Risks:** Impact graph UNKNOWN due graph42/runtime40 mismatch; attempted all financial/payroll symbols and concrete callers checked. Signed corrections, multiplicity/financial consumers/driver correction and later phases still incomplete.
+- **Blockers:** None for remaining 6G: all BILL-DEC-001…005 locked. Future OPT/FLEET gates remain; do not begin them before dependencies complete.
+- **Next Required Action:** V27+ signed billing chains, exact credit caps/evidence and incremental charge claims; adapt one-invoice consumers consistently, preserve legacy history and run all migration/PG/regression gates. Then append-only driver revenue corrections.
+- **Acceptance Gate:** Full required 6G matrix including supplementary/partial/full/overcredit/rebill/net revenue/driver corrections, concurrency and tenant isolation; clean latest/previous-latest upgrade/validate/diff/checksums.
+- **Do Not Redo:** V1–V26, previous financial history or completed 0–5/6A–6F. Do not re-rate invoice or mutate issued history; original regenerate command may replay safely after issuance.
+
+### HOFF-0049 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T19:07:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention 6G.C → driver consistency
+- **Status:** DONE
+- **Objective:** Explicit signed supplemental/credit/rebill chain with financial consumers and database caps.
+- **Inputs Read:** HOFF-0048; locked BILL decisions including new confirmed multi-credit evidence; billing/revenue/payroll callers, V13/V26, PostgreSQL tests and source dependencies.
+- **Completed:** V27 multiplicity with no legacy classification, positive-face credit caps, explicit immutable multi-credit rebill evidence, new accepted snapshot full replacement, incremental approved-charge claims, issued-line move protection. Financial reports and driver percentage calculations use explicit economic signs and eligible runtime statuses. Four new unit and six PostgreSQL cases.
+- **Requirement IDs:** 6G supplemental/credit/rebill/billing-chain revenue/versioned driver basis/concurrency/history.
+- **Files and Artifacts:** BillingCorrectionRequests, BillingService/Repository/Controller, V27, invoice mapping/view/repository, revenue/profit/balance calculators, PercentagePayCalculator/DriverPayEngine/PolicyService, unit/PG tests and domain/progress docs.
+- **Decisions:** BILL-DEC-005 permits multiple issued partial credit evidence IDs. BILL-DEC-006 newly confirmed A: reject stale revenue at approve/lock, explicit recalculation and repeated approval required.
+- **Assumptions:** None for financial sign, tax, historical identity or pay basis. Explicit legacy INVOICE_SUBTOTAL compatibility retained, never used as a hidden default.
+- **Verification:** Clean codex_regression_20261004120335988095 (/tmp/logisticsx-regression-2y0o8fiz) and populated V26→V27 codex_regression_20261004120507136354 (/tmp/logisticsx-regression-mdlydb65), full regression/Flyway validate PASS: 292 reported/291 executed/zero failures/errors/one legacy skip, 84 PG methods. V1–V26 unchanged; V27 frozen after first application; diff check clean.
+- **Open Issues and Risks:** Graph impact remains UNKNOWN (storage42/runtime40); concrete source fallback and PG/security regression used. Driver consistency/corrections and later phases remain incomplete.
+- **Blockers:** None for 6G.D; BILL-DEC-001…006 confirmed. Future OPT/FLEET gates remain.
+- **Next Required Action:** Implement audited pre-lock drift/recalculation and automatic or explicit retry-safe post-lock driver revenue adjustments under original policy/work-date; never mutate parent payroll/history. Complete Phase 6 gate before Phase 7.
+- **Acceptance Gate:** Driver bases/work-date/stale/reapproval/post-lock/concurrency/history plus all billing tests; clean V28+/previous-latest upgrade/validate/checksums/diff.
+- **Do Not Redo:** V1–V27 or completed 0–5/6A–6F; no legacy purpose/date backfill or issued invoice re-rating.
+
+### HOFF-0050 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T19:37:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 6 COMPLETE → Phase 7 policy audit
+- **Status:** DONE
+- **Objective:** Complete driver revenue consistency and full Phase 6 gates, automatically continue to optimization policy audit.
+- **Inputs Read:** HOFF-0049, BILL-DEC-006 user confirmation, driver engine/snapshots/policy/work-date/correction consumers, V13/V15/V27, physical PG tests/security/controller/exception contracts and regression diagnostics.
+- **Completed:** V28 immutable revenue commands/evidence; approve/lock drift guard; explicit audited recalculation resets review/approval and appends snapshots. Issue atomically applies post-lock source under frozen earning-date policy, appends reviewed-later adjustment or legitimate no-pay-impact audit, never fake payment. Aggregate rounding, replay/source dedup and sorted lock order. V29 driver snapshot immutability; deferred-method domain error; real two-database PostgreSQL financial isolation. Phase 6 COMPLETE under locked V1 scope; Phase 7 audit begins without permission request.
+- **Requirement IDs:** 6G driver basis/work-date/stale/reapproval/post-lock/locked payroll/payslip/concurrency/tenant/rounding/error contracts; Phase 6 final gates.
+- **Files and Artifacts:** SettlementRevenueGuard/Service, DriverPayEngine/Controller, BillingService issue hook, V28/V29, GlobalExceptionHandler/RatingMethod, BillingPrimaryPostgresTest (23 methods), settlement-billing-revenue-consistency and plan/progress/decision docs.
+- **Decisions:** BILL-DEC-006 A CONFIRMED/LOCKED: reject stale before lock; explicit recalculate and reapprove. All RATE-DEC-001…007/BILL-DEC-001…006 remain locked. No optimization/fleet choices inferred.
+- **Assumptions:** None for compensation, tax, history or mileage. Driver source date comes from existing evidenced earning line; no invoice/current-date policy fallback. No external provider/payment call or unsupported new outbox framework; issue side effects are local atomic DB facts.
+- **Verification:** Final-source clean codex_regression_20261004123217069452 (/tmp/logisticsx-regression-qbea0dmf), populated V27→V29 codex_regression_20261004123004873068 (/tmp/logisticsx-regression-joiuq31o), previous-latest V28→V29 codex_regression_20261004123506439284 (/tmp/logisticsx-regression-feim5x6x), full regression/Flyway validate PASS: each 302 reported/301 executed/zero failures/errors/one named legacy skip; 94 PG methods, 207 executed non-PG unit/API cases. Seven Python verifier tests PASS. V1–V29 frozen checksums unchanged; diff clean. Initial new fixture mistakes corrected against source, not by skipping or rewriting migrations/baseline assertions.
+- **Open Issues and Risks:** Graph impact UNKNOWN due storage42/runtime40, concrete source fallback and full PG/security regressions used. Production configuration/rollout is not claimed. Exact OPT normalization/weights/ties/full HOS/source policy and future FLEET history semantics still require source/business confirmation.
+- **Blockers:** No Phase 6 blocker. Phase 7 audit must determine exact unresolved OPT choices; Phase 8 dependency remains.
+- **Next Required Action:** Read actual Phase 7 plan/source/approved docs, record evidence and ask one grouped new OPT batch only where correctness depends on unspecified semantics. Continue any useful assumption-free preparation; do not add unused speculative engines/schema to claim completion.
+- **Acceptance Gate:** Confirmed Phase 7 semantics then its full feasibility/scoring/stale/concurrency tests; preserve completed Phase 6 and immutable V1–V29.
+- **Do Not Redo:** Completed 0–6 or locked RATE/BILL decisions; source backfills, old handoffs or applied SQL. Do not declare PLAN COMPLETE before 7–8/final gates.
+
+### HOFF-0051 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T19:40:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 7 policy/source gate
+- **Status:** BLOCKED
+- **Objective:** Begin Phase 7 automatically after Phase 6; verify actual confirmed policy/source inputs without financial or compliance guesses.
+- **Inputs Read:** HOFF-0050, Phase 7 plan, existing decision gates, full legacy AI-dispatch doc, Java HOS status/log/violation, Truck/Load/Employee/assignments, actual Java service/controller/provider inventory and profitability contract.
+- **Completed:** Phase 5+6 dependency PASS. Source inventory proves absence of full Java HosFeasibilityService/routing/availability providers, incomplete capacity/weight/equipment qualification, no approved normalization/weights/tie/action. Existing actual-profitability report is not an expected dispatch margin source. Created exact OPT-DEC-001…003 decision register and sent one structured batch with options/evidence/recommendation/impact; no RATE/BILL questions repeated.
+- **Requirement IDs:** Phase 7 policy audit and no-guessed-policy gate; optimizer hard feasibility/prospective economics/ranking/acceptance semantics.
+- **Files and Artifacts:** docs/optimization-policy-decisions.md, remaining-business-decision-gates.md, plan/progress/memory. No new production class/table/score or fake candidate.
+- **Decisions:** Architectural hard-feasibility/utility-range/weights-sum/complete audit/atomic idempotent stale acceptance remain locked. Exact OPT source/curves/weights/precision/ties/domain action are BLOCKED, not defaulted. Legacy C# AI documentation is not Java runtime authority.
+- **Assumptions:** None for HOS legal rules, source units/freshness, expected margin, objective weights or accepted lifecycle action. No unused speculative abstraction/schema added to imply completion.
+- **Verification:** Read-only source/doc audit; prior final Phase 6 gates remain 302 reported/301 executed/zero failures/errors/one legacy skip, 94 real PG methods. No Java/SQL change after those gates; diff/memory validation required at handoff. Graph-first query returned no processes; actual source scan used, no graph all-clear.
+- **Open Issues and Risks:** Capacity unit/Load cargo source, full HOS/source freshness, expected cost coverage, normalization/weights and tie/acceptance lifecycle must be approved. Phase 8 depends on completed Phase 7 and later fleet semantics.
+- **Blockers:** New OPT-DEC-001…003 business batch pending. No unresolved Rating V1 or Billing decision. Meaningful assumption-free policy inventory is complete; production schema/engine would encode unresolved choices.
+- **Next Required Action:** On answers, lock only confirmed exact contracts and continue 7A onward with full PG/concurrency/migration gates. Do not request permission merely to continue or reopen completed phases.
+- **Acceptance Gate:** Confirmed source/normalization/weights/tie/action, real feasibility/scoring/persistence/acceptance tests, then Phase 8 and final plan gates.
+- **Do Not Redo:** Completed 0–6, RATE/BILL decisions, V1–V29/backfills/old handoffs. No authoritative HOS calculation from remaining minutes or fake expected margin from actual zero.
+
+### HOFF-0052 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T19:53:35+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 7 supplemental parameter gate
+- **Status:** BLOCKED
+- **Objective:** Lock received OPT directions without substituting them for missing exact business contracts.
+- **Inputs Read:** HOFF-0051, three explicit user OPT replies, optimization decision register, current progress and memory; final Phase 6 verification evidence unchanged.
+- **Completed:** Recorded OPT-DEC-001 trusted adapters with missing/stale rejection, OPT-DEC-002 all four utilities with approved forecast sources, OPT-DEC-003 equal rank/dispatcher choice. Updated register/progress and removed stale current Phase 6 pending statements while retaining historical verification. Sent one supplemental structured batch asking only missing exact contracts and acceptance action, never the confirmed directions again.
+- **Requirement IDs:** Phase 7 locked-decision persistence and no hidden source/scoring/acceptance policy.
+- **Files and Artifacts:** docs/optimization-policy-decisions.md; plan-progress-summary.md; .ai-workflow/PROJECT_MEMORY.md.
+- **Decisions:** DEC-009 records completed locked Billing V1; DEC-010 records all three selected OPT directions. Equal rank is not an open tie-break question. Missing parameters are not ASSUMED/DEFAULTED.
+- **Assumptions:** None for provider qualification, capacity units, freshness windows, candidate statuses/pairing, utility curves/weights/score precision, expected cost coverage or accepted Trip lifecycle action.
+- **Verification:** Documentation-only changes since final Phase 6 clean V1→V29 / populated V27/V28→V29 full suite and Flyway validate PASS: 302 reported/301 executed/zero failures/errors/one legacy skip; 94 real PostgreSQL methods and 207 executed non-PG cases. No Java/SQL change, migration or additional test skip. Diff and memory validator checked at handoff.
+- **Open Issues and Risks:** Choosing full utilities does not supply their exact formulas/weights; choosing equal rank does not authorize reserve/create/dispatch side effects. Missing/stale trusted evidence rejects, but provider/source and freshness contracts still need qualification.
+- **Blockers:** Only exact OPT-DEC-001 source/unit/freshness/eligibility contracts, OPT-DEC-002 utility formulas/parameters/weights/precision and expected economics composition, OPT-DEC-003 acceptance lifecycle action. Phase 8 waits for completed Phase 7. No Rating/Billing V1 policy blocker.
+- **Next Required Action:** Receive supplemental fields, lock each supplied contract and implement confirmed Phase 7 tasks with real PG/migration/concurrency gates; then Phase 8. Do not reask selected A/A/A or return to completed 0–6 absent a proven defect.
+- **Acceptance Gate:** Complete exact policy/source contract before production feasibility/scoring/acceptance; preserve completed Phase 6 and immutable V1–V29, then complete 7–8/final plan gates.
+- **Do Not Redo:** Applied SQL/backfills, prior handoffs, locked RATE/BILL/OPT directions. Do not turn missing financial/compliance input into a zero or fabricated feasible candidate. PLAN is not COMPLETE.
+
+### HOFF-0053 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T13:19:49+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 7 decision register and regression foundation
+- **Status:** BLOCKED
+- **Objective:** Follow current continuation with only unresolved Phase 7 questions and useful assumption-free technical preparation.
+- **Inputs Read:** Full workflow skill/playbook/memory; relevant Phase 7/8 plan; progress; full optimization/rating/domain/settlement contracts; tenant/migration ADRs; focused Load/Truck/Employee/Trip statuses, HOS observations, cost enums, Trip controllers/services, verification runner/tests and configured quality inventory. No Phase 0–6 implementation audit or business reopening.
+- **Completed:** Split confirmed OPT directions from seven exact remaining contracts as OPT-DEC-004…010; sent ONE consolidated batch with current evidence/options/recommendation/reason and DB/service/API/test impact. Corrected current plan tolerance/version/tie text to locked decisions. Hardened runner from historical 192/40 to current 302 reported/301 executed and eight per-domain PG floors totaling 94, detects duplicated XML suites and future PG skips; six new Python verifier tests. No optimizer scoring/source/assignment assumptions or speculative tables.
+- **Requirement IDs:** Current continuation sections 4–6/8–20/29/59/62–65; regression guarantee preservation independent of business policy.
+- **Files and Artifacts:** optimization-policy-decisions.md; remaining-business-decision-gates.md; plan/progress; scripts/verify_backend_regression.py; scripts/tests/test_verify_backend_regression.py; memory.
+- **Decisions:** OPT-DEC-001…003 remain CONFIRMED/LOCKED; unconfirmed exact fields now 004…010, not renamed or changed approved semantics. Canonical optimizer MILE and no binary-float authoritative ranking follow current user scope. No numerical policy/provider/status/source/action selected from recommendations.
+- **Assumptions:** None about optimizer business policy. Synthetic XML tests test only the verification harness, not production feasibility/economic data.
+- **Verification:** python3 -m unittest discover -s scripts/tests -v PASS: 13 verifier cases. Fresh python3 scripts/verify_backend_regression.py PASS on codex_regression_20261004131345874121 (/tmp/logisticsx-regression-dbl7046z): clean V1→V29, Flyway validate, 302 reported/301 executed/zero failures/errors/one named legacy skip, 94 PG methods including each completed suite floor. No new SQL; prior V28→V29 upgrade accepted unchanged. V1–V29 SHA256 unchanged; diff and memory validation at handoff. No Checkstyle/SpotBugs/ArchUnit gate configured in inspected POM/.github/tests; none skipped or installed.
+- **Open Issues and Risks:** Graph-first query empty; impact verify_reports/ReportGateTest UNKNOWN due storage42/runtime40 mismatch. Source caller search confirms runner/main plus verifier tests; actual Python and full PG regression used, no graph all-clear. Only technical verification foundation is complete, not production optimizer.
+- **Blockers:** OPT-DEC-004…010 exact eligibility, source/unit/freshness, raw definitions/curves, weights, precision, cost coverage and Accept action pending in one batch. Phase 8 waits for Phase 7 COMPLETE. No RATE/BILL or confirmed OPT decision unresolved.
+- **Next Required Action:** Lock genuinely supplied exact contracts, implement 7A onward and migration/PG/scoring/concurrency gates; complete 7 then inspect relevant Phase 8 sources and one FLEET batch if needed. Do not repeatedly ask confirmed directions or normal implementation permission.
+- **Acceptance Gate:** Complete explicit OPT contracts and working source/feasibility/scoring/acceptance before Phase 7 COMPLETE; preserve 302/301/94, one named legacy skip, immutable earlier migrations, then Phase 8/final system gates.
+- **Do Not Redo:** Completed 0–6, applied V1–V29, historical backfills/handoffs, locked RATE/BILL/OPT directions. No hidden weights/TTL/statuses/forecast zero/Haversine/fixed-speed ETA or dispatch side effects. PLAN remains NOT COMPLETE.
+
+### HOFF-0054 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T16:18:24+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 7 domain and audit slice
+- **Status:** DONE
+- **Objective:** Lock all supplied Optimization V1 answers and implement the smallest verifiable approved domain/audit slice without reopening Phase 0–6.
+- **Inputs Read:** Current continuation/user OPT-DEC-004…010 answers, full workflow skill/playbook and memory, relevant plan/progress/optimization/rating/settlement contracts; focused entities, controllers/security, source/provenance, cost/assignment schema and verification gates. Graph-first query/impact followed by source confirmation because graph storage42/runtime40 yields UNKNOWN.
+- **Completed:** All ten OPT decisions CONFIRMED/LOCKED. Exact curves/weights/DECIMAL128/HALF_EVEN/DENSE_RANK and explainable contribution reconciliation. Candidate-bound source/class/unit/freshness evidence, explicit km/lb conversions, full-HOS subsystem port/route-plan binding, independent rejection aggregation and complete approved forecast coverage/zero/currency guards. V30 immutable authored policy/run/candidate audit with published policy API and authorization; V31 forward-only NULL-score constraint correction. No provider/allowlist seeded.
+- **Requirement IDs:** BE-CALC-016 domain/audit slice; all OPT-DEC-001…010. Full Phase 7 is IN_PROGRESS, not DONE.
+- **Files and Artifacts:** OptimizationScoringPolicy/Engine; OptimizationEvidence/Validator/HardFeasibility/ForecastResolver; integration/hos/HosFeasibilityService; OptimizationAudit/Repository/PolicyService/PolicyController; narrow SecurityConfig guard; V30/V31; three unit classes and OptimizationAuditPostgresTest; regression runner/Python tests; optimization decisions/domain contract, remaining gates, plan/progress/memory.
+- **Decisions:** Exact user policies only: 72h horizon, explicit status/source authoring, endpoint TTLs/units, four approved curves/weights, HALF_EVEN scales6/8, required variable forecasts/pre-tax rating, equal dense ranks and existing-Trip assignment WITHOUT create/dispatch. No repeated decision request. Driver dynamic evidence has 5m cap; authoritative DB snapshot follows explicit source validity. Qualification sources must be authoritative effective/versioned DB records.
+- **Assumptions:** None for business semantics. Pure ports/test fixtures do not constitute configured production provider or accepted assignment.
+- **Verification:** 56 new units and 11 new real PG methods. Clean codex_regression_20261004141122415158 (/tmp/logisticsx-regression-l32xdl4n), V30→V31 clone codex_regression_20261004141406735169 (/tmp/logisticsx-regression-iv2zph0s), populated V29→V31 clone codex_regression_20261004141746797894 (/tmp/logisticsx-regression-sd95_06z): each 369 reported/368 executed, 0 failures/errors, 1 named legacy skip and 105 PG methods. Flyway validate PASS, V1–V30 SHA unchanged, diff clean. 14 Python verifier tests PASS; new floors 369/368 and each of nine PG suites required.
+- **Validation NOT Performed:** Full production source adapter/run/accept stale/concurrency workflow, Phase 8 or final plan gate; no production deployment/provider call claimed.
+- **Open Issues and Risks:** Full workflow wiring remains. Exact allowlists/source registrations must be published by authenticated authority. V30 initial parser defects rolled back before apply; after applied V30 exposed rejected-score NOT NULL defect, fixed only by V31, not historical edit. V30 upgrade source has applied/validated schema and preserved financial baseline, but its new rejected-candidate test originally failed; the V31 clone resolves it and passes all tests. Diagnostic databases/logs retained.
+- **Blockers:** No Optimization V1 business decision open. Phase 8 awaits Phase 7 completion and later fleet semantics.
+- **Next Required Action:** Wire qualified authoritative DB evidence and trusted source/HOS adapters; scoped real candidate generation; authorized immutable run/view; transactional idempotent existing-Trip assignment with current-input/financial/resource revalidation and PG concurrency/physical tenant isolation. New migrations V32+. Do not stop or request permission for normal technical implementation.
+- **Acceptance Gate:** Whole Phase 7 requires all feasibility/scoring/precision/source/coverage/rank/persistence/stale/retry/accept/concurrency/tenant tests and clean/latest/previous upgrade/validate/checksum/diff gates; then automatically Phase 8 business/source gate and implementation.
+- **Do Not Redo:** Completed 0–6 or their RATE/BILL decisions; all confirmed OPT decisions; applied V1–V31; historical payroll backfills or prior handoffs. No fake score for infeasible/missing inputs, no remaining-hours legal HOS shortcut, no hidden status/source/financial default, no dispatch side effect.
+
+### HOFF-0055 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T16:42:50+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 7 authoritative source-capture slice
+- **Status:** DONE
+- **Objective:** Persist real candidate-bound source evidence without interpreting legacy unitless fields or mutating financial history.
+- **Inputs Read:** Existing plan/progress, optimization decisions/domain/evidence/forecast/policy/audit, source-capture V32 draft, ledger/domain schema, Spring authorization, existing PG fixture and verification runner. Graph query empty and impact UNKNOWN due storage-version mismatch; focused source references confirmed.
+- **Completed:** V32 append-only capacity/qualification/forecast evidence with approved source/policy, real Trip/Load/Driver/Truck context, units/as-of/validity, actor/reason/approval and immutable corrections. Explicit original-unit normalization; all qualification assertions mandatory. Forecast source capture freezes only exact locked ESTIMATE/APPROVED ledger values, audited zero and explicit applicability. Deferred PG guards reconcile complete forecast payload/links atomically. API authorization, normalized identity retry/conflict, correction concurrency and live ledger/supersession stale checks.
+- **Requirement IDs:** BE-CALC-016; OPT-DEC-001/004/005/009. This source-capture slice is DONE; full Phase 7 remains IN_PROGRESS.
+- **Files and Artifacts:** V32; OptimizationQualifiedInput, OptimizationQualifiedInputRepository/Service/Controller, narrow SecurityConfig guards, OptimizationQualifiedInputPostgresTest, verifier/Python tests, optimization contract/decisions, remaining gates, progress/memory.
+- **Decisions:** Existing locked source/unit/qualification/forecast contracts only; explicit source registration and authored policy required. Existing ADMIN source-authority and ACCOUNTANT forecast roles reused; no new role or financial policy. Forecast money read from real ledger, never caller-provided.
+- **Assumptions:** No new business assumption. Test-only sources/allowlists are explicitly fixture approvals; not production defaults or configured external provider claims.
+- **Verification:** Compile/test-compile PASS. Clean codex_regression_20261004164009903565 (/tmp/logisticsx-regression-ixafwbyc) and V31→V32 clone codex_regression_20261004164143038095 (/tmp/logisticsx-regression-paqz2n6q): each 380 reported/379 executed, 0 failure/error, one legacy skip, 116 live PG methods (11 new). Flyway validate and V1–V31 SHA comparison PASS; git diff --check clean; 15 Python verifier tests PASS.
+- **Validation NOT Performed:** Full source HTTP/full-HOS production adapter/run/view/Accept workflow, physical optimizer tenant isolation or Phase 8/final plan gate. No production source/deployment claimed.
+- **Open Issues and Risks:** Initial V32 clean run had four baseline-suite connection-limit errors, while all new source methods passed. Bounded verifier-only Hikari pools to four/zero idle; reran both gates green, no test skipped or production configuration changed. V32 remained immutable after first apply. Qualified evidence must be selected explicitly per candidate by run wiring; sources require approved configuration.
+- **Blockers:** No unresolved Optimization V1 business decision. Phase 8 is gated on Phase 7 completion and later fleet semantics.
+- **Next Required Action:** Implement configured authenticated tenant-bound routing/availability/full-HOS adapter, batched real candidate generation and immutable run/view, then transactional existing-Trip-only acceptance without dispatch; revalidate evidence/ledger/resources and prove stale/retry/concurrency/physical tenant isolation. New migrations V33+.
+- **Acceptance Gate:** Whole Phase 7 feasibility/score/rank/coverage/run/accept/concurrency/tenant matrix plus clean/previous upgrade/validate/checksum/diff; then automatically Phase 8.
+- **Do Not Redo:** Applied V1–V32, completed phases 0–6, RATE/BILL/confirmed OPT questions, historical payroll backfill or earlier handoffs. No fake capacity/cost/score, timestamp date backfill, guessed source or dispatch side effect.
+
+### HOFF-0056 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T16:52:28+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 7 trusted source adapter slice
+- **Status:** DONE
+- **Objective:** Connect approved source ports without inventing routing/availability/HOS semantics or implicit tenant/provider configuration.
+- **Inputs Read:** HOFF-0055/control/current delivery, approved optimization domain/ports/contracts, existing tenant binding and HTTP provider conventions, focused tests/config. Graph-first query/impact UNKNOWN due known index storage mismatch; source confirmed new adapter names absent and HOS port callers.
+- **Completed:** OptimizationInputProvider dynamic source port and authenticated HTTPS aggregator/full-HOS adapter with exact tenant/context/appointment/simulation-plan binding, original route-unit normalization and no remotely asserted DB evidence. Explicit tenant resolver requires bound multi-tenant scope or configured single-tenant identity. Sanitized transport failures, no provider endpoint/token fallback and no redirects. Existing full-HOS assessment port reused; all legal checks/headroom remain qualified provider facts.
+- **Requirement IDs:** BE-CALC-016; OPT-DEC-001/005/006. Adapter slice DONE; Phase 7 run/Accept remains IN_PROGRESS.
+- **Files and Artifacts:** integration/optimization/OptimizationInputProvider and TrustedOptimizationHttpAdapter, OptimizationTenantScope, 12 deterministic local HTTP tests, explicit application.yml keys, regression floors/tests, optimization domain contract/progress/memory.
+- **Decisions:** All previously locked OPT decisions. Freshness caps/units/route/HOS provenance unchanged; no numeric or source policy invented. HTTPS/authentication/timeouts are technical transport safeguards, not business forecast TTLs.
+- **Assumptions:** No business assumption. Local HTTP is permitted only by a package-private test constructor and loopback fixture; production constructor requires HTTPS. Deployment requires explicitly approved endpoint/token/source configuration.
+- **Verification:** Compile PASS; 12 targeted HTTP/tenant unit tests PASS; full clean codex_regression_20261004165021519082 (/tmp/logisticsx-regression-05ocrc88) PASS: 392 reported/391 executed, 0 failure/error, one legacy skip, 116 PG methods. 15 Python verifier tests PASS; all V1–V32 SHA unchanged; git diff --check clean. No schema change; HOFF-0055 clean/previous-upgrade/validate evidence retained.
+- **Validation NOT Performed:** Configured live provider deployment, complete run/Accept persistence/resource concurrency or optimizer physical tenant flow; Phase 8/final plan gates not passed. Adapter-only slice did not rerun previous-version upgrade.
+- **Open Issues and Risks:** No source availability is fabricated if environment is unconfigured. Published source identities must match actual trusted evidence, and authoritative DB capacity/qualification/forecast evidence remains separately selected. Batched scoped generation and short-transaction acceptance still needed.
+- **Blockers:** No unresolved Optimization V1 business decision. No permission question required for next normal implementation.
+- **Next Required Action:** Implement bounded explicit real scopes, batched authoritative DB input/financial reads, immutable run/view and rejection/rank explanation; then existing-Trip-only atomic Accept with current-source/ledger/resource revalidation, retry/stale/concurrency and physical tenant tests. New migration only if needed, V33+.
+- **Acceptance Gate:** Whole Phase 7 unit/PG/run/Accept/concurrency/tenant matrix and clean/latest/previous upgrade/validate/checksum/diff; automatically proceed to Phase 8 once PASS.
+- **Do Not Redo:** Applied V1–V32; COMPLETE 0–6; RATE/BILL/confirmed OPT questions or earlier handoffs. No Haversine/fixed-MPH/remaining-drive shortcut, guessed source/default tenant, financial mutation or dispatch side effect.
+
+### HOFF-0057 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T17:20:50+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 7 scoped run/view slice
+- **Status:** DONE
+- **Objective:** Wire approved real candidate generation, source/financial projection and immutable explainable run before consequential assignment acceptance.
+- **Inputs Read:** HOFF-0056/control/current delivery; approved optimizer policy/evidence/score/source/forecast/audit and provider contracts; real Load/Trip/Stop/Driver/Truck/assignment/accepted-rating/ledger projections, focused controllers/security and PG fixtures. Graph-first impact/query UNKNOWN from known storage mismatch, with source-confirmed callers/new symbols.
+- **Completed:** Explicit target accepted snapshot/existing Trip/pickup stop plus Driver/Truck sets and qualified source selections; deterministic bounded Cartesian generation with no sampling/demo/default. Scoped SQL projections and batched evidence/supersession/live-ledger reads; full trusted routing/HOS outside transactions. Hard eligibility/source/coverage before explainable score. Short atomic run/candidate audit with DB state/source/ledger/freshness revalidation, unscored state-drift rejection and exact dense-rank ties. Authorized run/view envelope, original-outcome normalized key retry/concurrency and explicit tenant snapshot. Run makes no assignment/dispatch or financial write.
+- **Requirement IDs:** BE-CALC-016 run/view slice; OPT-DEC-001…009. Full Phase 7 remains IN_PROGRESS pending Accept/resource/physical tenant/final gates.
+- **Files and Artifacts:** OptimizationCandidateRepository, OptimizationQualifiedInputBatchResolver, OptimizationApplicationService/RunController, compatible OptimizationAudit record extensions and bulk QualifiedInputRepository methods; eight OptimizationScopeTest units and 11 OptimizationRunPostgresTest methods; verifier floor/PG suite registry, contract/progress/memory.
+- **Decisions:** Existing confirmed explicit scope/source/effective DATE/horizon/full-HOS/variable margin/precision/rank contracts. Explicit pickup stop selects authoritative appointment, not a guessed date. The 200-candidate API bound is a visible technical work limit; oversized requests reject, never truncate. Candidate ID sorting is display only. Source retrieval timestamps may refresh only if material values/identity/version remain equal; validity still rechecked.
+- **Assumptions:** No new business assumption. Qualified provider fixture mocks only external adapter, not production repositories or financial aggregates. Real accepted rating produced through Phase 6 services; costs are real approved ledger facts.
+- **Verification:** Compile/test-compile and eight targeted scope units PASS. Full clean codex_regression_20261004171832858772 (/tmp/logisticsx-regression-4rjh7xrn): 411 reported/410 executed, 0 failure/error, one legacy skip, 127 PG methods. Tests include real accepted rating/costs, score reconciliation/immutability/no assignment, same-key concurrency/retry/drift, source supersession/ledger drift, unknown/started/unavailable/HOS, state change during provider, foreign IDs/rating, API roles, tied dense ranks, historical NULL-date preservation and currency mismatch. 15 Python verifier tests PASS; V1–V32 SHA unchanged; diff clean. No schema change; HOFF-0055 clean/V31-upgrade/validate migration evidence retained.
+- **Validation NOT Performed:** Atomic optimizer Accept, resource claims/legacy writer concurrency guards, complete optimizer physical tenant flow or Phase 8/final gate. No configured production provider/deployment claimed; no previous-version migration rerun for this schema-free slice.
+- **Open Issues and Risks:** Initial 408-test attempt had two Mockito override fixture errors; replaced overrides with doAnswer/doThrow and reran all tests green, no skip/expectation weakening. Acceptance must revalidate exact original planning scope and material/state fingerprint, then lock/commit only DB-owned facts. Existing Trip/assignment history must be reused or appended without dispatch or synthetic future earning end.
+- **Blockers:** No unresolved Optimization V1 business decision; implementation only.
+- **Next Required Action:** Add V33+ immutable acceptance/command audit and DB resource concurrency guards; resolve external source/HOS revalidation outside long transaction, detect stale rather than silently re-rate, acquire consistent short DB locks, reuse matching assignment or append real assignment, set existing Trip truck only and never dispatch. Verify retries/aliases/input drift, stale/already selected/concurrent Load/Driver/Truck acceptance, no history mutation, real physical tenant isolation; then Phase 7 full migration/regression gates and automatically Phase 8 policy/source audit.
+- **Acceptance Gate:** Whole Phase 7 matrix and clean/latest/previous upgrade/validate/checksum/diff before COMPLETE; then FLEET-DEC batch only if new semantics genuinely missing.
+- **Do Not Redo:** Applied V1–V32; COMPLETE phases 0–6; RATE/BILL/all confirmed OPT questions, prior handoffs or historical financial backfills. No financial mutation, fake metrics/cost/score, hidden resource/status/source, or dispatch side effect.
+
+### HOFF-0058 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T17:54:00+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 7 COMPLETE → Phase 8 audit
+- **Status:** DONE
+- **Objective:** Complete existing-Trip-only Accept and whole Phase 7 gates, then proceed automatically to historical fleet source/policy audit.
+- **Inputs Read:** HOFF-0057/control/current delivery; all locked OPT contracts, candidate/state/source/HOS/ledger/run services, actual Trip assignment convention, focused security/controllers and PostgreSQL fixtures. Graph impact UNKNOWN from storage42/runtime40 mismatch; source-confirmed dependency checks and full tests used, not claimed graph all-clear.
+- **Completed:** Full source/HOS/material revalidation outside long DB transaction; short sorted resource/ledger/source locks and commit-time stale guards. Reuse matching actual assignment or append real open PRIMARY assignment, set existing Trip truck only, no dispatch/Trip creation/fake earning end. Immutable acceptance and operation-key/hash command journal, same-key retry/alias audit, different-choice conflict, same-Load and Driver/Truck concurrency protection including legacy writers, physical PostgreSQL tenant isolation. Whole Phase 7 COMPLETE; Phase 8 audit opens without permission request.
+- **Requirement IDs:** BE-CALC-016 Tasks 7.1–7.3 and Accept; all OPT-DEC-001…010.
+- **Files and Artifacts:** OptimizationAcceptanceService/Repository, OptimizationRunController, V33__guard_atomic_optimization_acceptance.sql, OptimizationAcceptancePostgresTest (11 methods), verifier floor/PG registry and 16 Python tests; optimizer contract/decision/plan/progress/memory.
+- **Decisions:** All previous RATE/BILL/OPT locked unchanged; OPT-DEC-010 B exact existing-Trip assignment only. No new business policy. Actual assignment soft-close remains real lifecycle command, never invented 72h pay interval. External interactions remain outside assignment transaction; DB-only facts need no invented outbox framework.
+- **Assumptions:** No business assumption; approved endpoints/credentials/status allowlists/source registrations are explicit deployment configuration. Fixture mocks external adapter only; actual financial/qualified source/assignment repositories remain real PostgreSQL.
+- **Verification:** Clean codex_regression_20261004174357934215 (/tmp/logisticsx-regression-qcfj6tp_) and populated V32→V33 clone codex_regression_20261004175111184754 (/tmp/logisticsx-regression-xvgk0h2e) PASS: 422 reported/421 executed, zero failures/errors, one legacy skip, 138 PG methods. 283 non-PG executed including 76 optimizer unit/HTTP/scope methods. 16 Python verifier tests PASS; Flyway validate PASS; V1–V32 SHA unchanged, V33 unchanged after first application; diff clean. Source V32 database unmodified. Configured Maven compile/full tests/Flyway ran; no Checkstyle/SpotBugs/ArchUnit configured in pom/CI.
+- **Validation NOT Performed:** Phase 8/final full-plan gate, production endpoint deployment/rollout or general production-readiness review. PLAN NOT COMPLETE.
+- **Open Issues and Risks:** First clean V33 run had one API test fixture error obtaining WebApplicationContext by type; changed fixture injection then both full gates green. Applied migration not edited, no new skip/test disabling. Qualified production providers/publication remain mandatory fail-closed configuration, not a fake local production fallback.
+- **Blockers:** None for Phase 7. Phase 8 genuinely unspecified interval/productive/capacity semantics require focused evidence audit and one new decision batch if missing; unsupported fleet health may remain UNAVAILABLE as already approved.
+- **Next Required Action:** Inspect relevant Truck/Trip/mileage/maintenance/history/report sources; create docs/fleet-utilization-policy-decisions.md with FLEET-DEC-001…007 accurate status/evidence/options/impacts. Ask one batch only for missing fleet semantics, continue safe assumption-free work. New schema V34+ only.
+- **Acceptance Gate:** Approved fleet lifecycle/source/period/interval definitions then Phase 8 tests, clean/previous upgrade/validate/checksums/full regression/diff; final plan gate only when all convention phases COMPLETE.
+- **Do Not Redo:** Complete Phases 0–7, applied V1–V33, RATE/BILL/OPT questions, immutable financial history or previous handoffs. No current-status history heuristic, invented fleet events, 24h capacity or fake KPI zero.
+
+### HOFF-0059 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T18:03:00+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 8 source/policy gate
+- **Status:** BLOCKED
+- **Objective:** Start Phase 8 automatically after completed Phase 7, identify only genuinely missing fleet semantics and request one batch.
+- **Inputs Read:** HOFF-0058/control/current delivery, Phase 8 plan and existing fleet placeholders; focused Truck/TruckService, Trip/TripService/mileage/stop execution, DriverBehaviorEvent/EldVehicleMapping, MaintenanceRecord/Schedule/ReportService/Repository, actual ReportController/MetricAvailability and approved cost-classification policy. Graph-first query empty; source evidence confirmed separately. Read-only real V33 schema metadata inspected.
+- **Completed:** No equivalent vehicle lifecycle/membership/capacity history exists; safety/identity mappings and optimizer prospective evidence cannot substitute. No approved productive/available/excluded mapping or event validity/order/correction contract. Current truck FK/Trip totals do not approve historical fleet-period mileage attribution. Created canonical FLEET-DEC-001…007 register with exact evidence/options/recommendations and DB/service/API/test impacts; four-question consolidated batch sent (001+003, 002, 006, 007). Removed old grouped fleet ID ambiguity, retaining prior unavailable permission.
+- **Requirement IDs:** BE-CALC-017 / Phase 8 policy gate; FLEET-DEC-001…007.
+- **Files and Artifacts:** docs/fleet-utilization-policy-decisions.md; remaining-business-decision-gates.md, convention plan/progress and memory. No Java/SQL change for this audit.
+- **Decisions:** Existing no fake history/current-status utilization/zero KPI/planned-mile fallback/report GET write rules remain locked. FLEET-DEC-004/005 NOT_APPLICABLE to already authorized V1 UNAVAILABLE result for missing downtime/breakdown source; PM/cost-mile likewise unavailable if sources unqualified. No repeat health/RATE/BILL/OPT question. All recommendations for unresolved capacity/activity/interval/period are proposals, not production policy.
+- **Assumptions:** None about fleet semantics. No useful safe event schema can be finalized before its lifecycle/validity is approved; no speculative interface/table added merely to claim progress.
+- **Verification:** Read-only information_schema on verified codex_regression_20261004174357934215 confirms event/mapping/maintenance tables but no fleet status/membership/capacity history. Source/controller inspection confirms no /fleet/health or /executive-summary route to claim extended. No production DB queried/mutated. HOFF-0058 clean/upgrade/validate baseline retained: 422 reported/421 executed, one legacy skip, 138 PG methods, 16 Python PASS. Diff clean; memory validator PASS; HOFF-0001…0058 append-only unchanged.
+- **Validation NOT Performed:** New fleet calculator/schema/tests, Phase 8 completion or final plan/system gate. No fresh regression claimed for docs-only audit. PLAN NOT COMPLETE; production readiness not claimed.
+- **Open Issues and Risks:** Exact numerator/denominator and incomplete history treatment change business KPI correctness. Period/truck attribution and numeric presentation cannot reuse Rating/optimizer policy implicitly. History before proven capture remains unavailable, not synthetic.
+- **Blockers:** BLK-007: receive canonical FLEET-DEC-001/002/003/006/007 answers, one batch already sent. Block is a new business semantic, not technical permission or a repeated locked decision.
+- **Next Required Action:** Record exact answers CONFIRMED/LOCKED; implement minimal historical evidence/reconstruction/report/availability under approved semantics with V34+ and real PostgreSQL gates; then final cross-domain regression/clean/previous-upgrade/validate/checksum/diff verification.
+- **Acceptance Gate:** Phase 8 approved lifecycle/coverage/period/source definitions, all interval/mileage/health-unavailable/tenant/report tests and migration/full regression green; only then final PLAN COMPLETE.
+- **Do Not Redo:** Complete 0–7, applied V1–V33, RATE/BILL/OPT questions or old handoffs. Do not treat missing health classification as another blocking permission or fabricate historical events to pass.
+
+### HOFF-0060 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T18:09:00+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 8 confirmed direction receipt
+- **Status:** BLOCKED
+- **Objective:** Lock the four explicit A replies without silently inventing additional numeric or conflicting-interval semantics.
+- **Inputs Read:** Four asynchronous business-owner replies to the FLEET batch, HOFF-0059/current control, canonical Fleet policy document and focused source/schema evidence retained from audit.
+- **Completed:** FLEET-DEC-001/003 versioned explicit capacity windows/mappings; 002 explicit versioned activity mapping; 006 explicit validity-bounded intervals; 007 proven completion attribution CONFIRMED/LOCKED. No repeated question about these directions. Remaining detailed reporting coverage/precision/rounding/aggregation and conflicting interval/order/correction/outside-capacity treatment were requested in the first batch but not specified by its option labels; isolated as 008/009 and sent one exact follow-up batch with complete proposed contracts/options/impacts.
+- **Requirement IDs:** BE-CALC-017, FLEET-DEC-001…009.
+- **Files and Artifacts:** Fleet decision doc, remaining decision register, convention plan/progress and memory; no Java/SQL change.
+- **Decisions:** Four A choices locked; mappings/sources must be explicit authored policy fields, no seeded status/productive defaults. Existing absent-health-source UNAVAILABLE permission remains applicable. 008/009 proposals are not approved merely because the architecture directions were selected.
+- **Assumptions:** No report precision, partial coverage, event conflict winner or clipping rule inferred. No financial/history mutation.
+- **Verification:** Documentation consistency review, git diff --check and memory validator PASS; earlier HOFF blocks preserved. No new code/schema means HOFF-0058 full V33 clean/upgrade/validate 422/421 Java /138 PG /16 Python baseline remains last actual test run, not claimed rerun.
+- **Validation NOT Performed:** Fleet calculator/schema/test gate and final system/plan gate. No fake completion.
+- **Open Issues and Risks:** Numeric/coverage/reconciliation directly affect the authoritative fleet KPI. User may approve the proposed exact contracts or provide exact alternatives; confirmed direction choices must not be reopened.
+- **Blockers:** Only FLEET-DEC-008/009 exact detailed answers, follow-up already sent. No RATE/BILL/OPT or completed Phase 7 blocker.
+- **Next Required Action:** Record 008/009 answers CONFIRMED/LOCKED, implement approved evidence/policy/interval/proven completion attribution/report with V34+, PG matrix and migration gates; then final whole-plan verification.
+- **Acceptance Gate:** All actual Phase 8 implementation/tests/migrations and final cross-domain/system gates pass before PLAN COMPLETE.
+- **Do Not Redo:** Completed 0–7/V1–V33, previous handoffs, four confirmed Fleet A directions, Rating/Billing/Optimization or already authorized health-unavailable questions.
+
+### HOFF-0061 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-04T18:11:00+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / Convention Phase 8 approved implementation
+- **Status:** DONE
+- **Objective:** Lock final exact reporting/reconciliation choices and resume implementation without repeated questions.
+- **Inputs Read:** Explicit A replies for FLEET-DEC-008/009, prior HOFF-0060/current control and Fleet source/decision contract.
+- **Completed:** Strict coverage/report arithmetic and explicit conflict/unavailable/correction A contracts CONFIRMED/LOCKED; all required Fleet V1 semantic gates resolved. Capacity/activity mappings and qualified sources remain mandatory published inputs, not seeded defaults. Preparation transitions to approved implementation.
+- **Requirement IDs:** BE-CALC-017; FLEET-DEC-001…009.
+- **Files and Artifacts:** Fleet decision doc, plan progress and memory. Java/SQL implementation starts next.
+- **Decisions:** FLEET_REPORTING_V1 v1 [from,to) Instants, explicit ZoneId for dates, sum durations, DECIMAL128 ratio8/percent2 HALF_EVEN; strict unavailable on required gaps. Identity replay/conflict, occurredAt ordering, conflicting overlaps unavailable, append-only correction, no productive outside membership/capacity clipping. All previous decisions unchanged.
+- **Assumptions:** None; exact values are user-confirmed.
+- **Verification:** Decision receipt/document checks, memory validation and diff check PASS; previous full V33 clean/upgrade baseline retained, no new code gate claimed.
+- **Validation NOT Performed:** Phase 8 implementation/full final system gate, not complete yet.
+- **Open Issues and Risks:** Real evidence/policy publication must be explicit, no fabricated history or metric zero.
+- **Blockers:** None; BLK-007 resolved by received decisions.
+- **Next Required Action:** Implement V34+ immutable published fleet policy, audited validity-bounded sources/events and provenance-preserving completion attribution, scoped SQL interval/report calculator and role-protected API; run unit/PG/clean/upgrade/validate/checksum/diff gates then final system verification.
+- **Acceptance Gate:** Phase 8 complete test matrix and final cross-domain/system gates before PLAN COMPLETE.
+- **Do Not Redo:** Completed 0–7/V1–V33, historical handoffs or any confirmed RATE/BILL/OPT/FLEET question.
+
+### HOFF-0062 — Backend Developer → QA / Tester
+
+- **Timestamp:** 2026-10-04T18:37:00+00:00
+- **From Role:** Backend Developer
+- **To Role:** QA / Tester
+- **Phase:** 7 — Backend Development / Convention Phase 8 COMPLETE → final verification
+- **Status:** DONE
+- **Objective:** Complete approved historical fleet implementation and hand off only final whole-system confirmation.
+- **Inputs Read:** HOFF-0061/current control; all exact FLEET choices, focused Truck/Trip/maintenance/real mileage/controller/cost classification source evidence; full workflow playbook and scoped exit gates. Graph impact/API impact UNKNOWN from known storage mismatch; source-confirmed callers/new symbols and actual tests used.
+- **Completed:** Immutable versioned authored fleet maps/source registration; audited validity-bounded membership/capacity/activity intervals with identity replay/conflict and single-chain correction. Scoped SQL interval sweep/coverage/conflict sums, strict unavailable, independent Fleet numeric/ZoneId policy, read-only report/health API. Immutable proven actual completion truck/mileage attribution, no current-FK/planned fallback or proportional split. Existing roles/tenant actor/provenance, no dashboard write. Unsupported health source metrics return authorized unavailable, not fake zero or summed unqualified maintenance sources. V35 forward context/time correction after V34 applied, no old SQL edit. Phase 8 COMPLETE, convention 0–8 implementation COMPLETE.
+- **Requirement IDs:** BE-CALC-017 Tasks 8.1/8.2 and health availability; all FLEET-DEC-001…009.
+- **Files and Artifacts:** FleetHistory/IntervalCalculator/Repository/Service/Controller; narrow ReportController/SecurityConfig additions; V34/V35; 12 Fleet unit and 22 PostgreSQL methods, verifier (17 Python), Fleet policy/domain docs, plan/progress/memory.
+- **Decisions:** All exact confirmed Fleet maps/validity/completion/strict coverage/conflict/numeric/report period contracts; no repeated business question. Financial/RATE/BILL/OPT and old source semantics preserved. Complete cost coverage is not inferred merely from a subset of qualified ledger projections.
+- **Assumptions:** No business assumption or seeded runtime policy; approved production source capture remains mandatory. Explicit technical scope bound 200 trucks rejects oversize, never samples. No synthetic history before proven sources.
+- **Verification:** V34 clean codex_regression_20261004182505410806 (/tmp/logisticsx-regression-lbumccpp) and populated V33→V34 codex_regression_20261004182749457307 (/tmp/logisticsx-regression-pp8s_l1t) PASS at 454/453 Java/158 PG. V35 clean codex_regression_20261004183038137069 (/tmp/logisticsx-regression-opdrt9o_) and populated V34→V35 codex_regression_20261004183335796181 (/tmp/logisticsx-regression-pkmopxom) PASS: 456 reported/455 executed, zero failures/errors, one legacy skip, 160 PG, 295 non-PG; 17 Python PASS; Flyway validate/checksums/diff PASS. Maven clean verify includes build/repackage; executable Boot JAR manifest verified. Original source DBs unmodified. Initial Java Period wildcard import ambiguity fixed before schema gates, no test disabling.
+- **Validation NOT Performed:** Final clean confirmation currently RUNNING on codex_regression_20261004183625270573 (/tmp/logisticsx-regression-uxlpmxcs); no final PLAN COMPLETE or production-ready verdict yet. Production deployment/security/load benchmark broader scope not claimed.
+- **Open Issues and Risks:** Qualified endpoints/published source policies/history capture require operational rollout; unsupported health metrics honestly unavailable. No configured Checkstyle/SpotBugs/ArchUnit exists; actual configured Maven/Flyway/verifier gates ran. Self-review defect fixed forward V35 with tests.
+- **Blockers:** None; all requested business decisions resolved.
+- **Next Required Action:** QA owner finish final clean verify/full cross-domain matrix, previous-version upgrade/validate/hash/diff and memory/decision consistency; document exact final backend gate verdict and PLAN COMPLETE only after actual PASS. Do not reopen implementation or policies absent a proven failure.
+- **Acceptance Gate:** All convention 0–8 complete and final actual system gates green, no new skips/fake metrics/hidden policy/history mutation or tenant leakage; production readiness remains separate.
+- **Do Not Redo:** Completed implementation/locked questions, applied V1–V35, original DBs or prior handoffs. Do not transform approved unavailable outcomes into invented health values.
+
+### HOFF-0063 — QA / Tester → QA / Tester
+
+- **Timestamp:** 2026-10-04T18:52:00+00:00
+- **From Role:** QA / Tester
+- **To Role:** QA / Tester
+- **Phase:** 10 — Testing / approved backend Convention V1 final gate
+- **Status:** DONE
+- **Objective:** Finish final actual cross-domain verification and hand off the completed backend plan without pretending production deployment/readiness.
+- **Inputs Read:** Current Control/Current Delivery and HOFF-0062; retained completed-source/decision/checkpoint evidence; focused existing test matrices, configured root Maven gates, final runner summaries/logs, real executable JAR/OpenAPI, applied migration manifest. No completed-phase re-audit or reopened policy.
+- **Completed:** Final same-code clean and populated previous-version upgrade, full regression and Flyway validate/history PASS. All required convention Phases 0–8 COMPLETE; PLAN COMPLETE for approved backend V1. Documented actual cross-domain evidence, approved unavailable outcomes and separate operational scope; corrected stale current progress/decision metadata without rewriting historical handoffs. Preserved unrelated dirty/staged work.
+- **Requirement IDs:** Final convention backend plan criteria; retained BE-CALC-001…017, RATE/BILL/OPT/FLEET locked decisions and immutable financial/resource/history/tenant invariants.
+- **Files and Artifacts:** docs/backend-plan-final-verification.md; docs/verification/migration-sha256-v35.txt; plan/progress/current decision/domain metadata and PROJECT_MEMORY.md. No Java/SQL change during or after final Maven runs.
+- **Decisions:** All required decisions already CONFIRMED/LOCKED; no new business assumption/question. Health unsupported-source UNAVAILABLE is approved, not a missing implementation silently returning zero. Production source endpoints/published exact policies/evidence are runtime requirements, no seeds or fake forecasts.
+- **Assumptions:** No business assumption. Executable runtime confirmation uses only a disposable local V35 DB and loopback, not production. No deployment/commit/remote account mutation authorized or performed.
+- **Verification:** Final clean codex_regression_20261004183625270573 (/tmp/logisticsx-regression-uxlpmxcs) and populated V34→V35 codex_regression_20261004184241080791 (/tmp/logisticsx-regression-ndxdre_c) PASS; source codex_regression_20261004182505410806 unchanged. Each: Maven clean verify/repackage, 456 reported/455 executed, 0 failures/errors, exactly one named legacy skip, 160 PG across 13 independent domains, 295 non-PG. Python verifier 17 PASS. Actual executable JAR GET /v3/api-docs PASS: OpenAPI 3.1.0, 134 paths, 283 schemas, all 16 required rating/billing/optimizer/fleet operations present. Process stopped after read-only verification. All 35 SQL SHA checks PASS; V1–V34 unchanged, V35 untouched after application; diff/memory validator PASS. Prior 62 handoff bodies retained unchanged.
+- **Validation NOT Performed:** Production rollout, live provider/source certification, frontend/browser E2E, broad production security/performance review. No configured Checkstyle/SpotBugs/ArchUnit/PMD/Failsafe gate exists to claim run. No coverage percentage or graph all-clear invented; graph mismatch remains UNKNOWN with source/test fallback.
+- **Open Issues and Risks:** Operational publication/capture/credentials/history rollout required for AVAILABLE runtime outcomes; historical missing sources remain honest unavailable. Broader skill production readiness remains NOT READY, outside approved backend completion. No remaining backend task/business gate.
+- **Blockers:** None for approved backend Convention V1.
+- **Next Required Action:** Hand off final verified backend V1 artifacts and preserve completed decisions/history. Any production configuration/source/release work is a separate scope; no permission assumed for deployment. Future proven schema defect uses V36+ only.
+- **Acceptance Gate:** PASS — all approved convention Phases 0–8 COMPLETE plus actual final clean/upgrade/validate/build/regression/PG/API/checksum/diff/memory evidence; no new skip, fake metric, hidden financial policy, historical mutation or tenant leakage.
+- **Do Not Redo:** Completed phases/policies, V1–V35, historical backfills, source DBs or HOFF-0001…0062. Do not turn unsupported health into fake zero or conflate backend PLAN COMPLETE with production readiness.
+
 ## 10. Final Readiness
 
 | Check | Status | Evidence / Exception |
 |---|---|---|
-| Requirements implemented and traced | IN_PROGRESS | Phases 0–2 and Tasks 3.1–3.2 verified; later tasks remain open |
-| Build successful | PASS | `./mvnw -q -DskipTests compile` after Phase 3/4 changes |
-| Tests successful | IN_PROGRESS | 87 tests, 0 failures/errors, 1 legacy skip; 8 live PostgreSQL cases; classification/later features incomplete |
-| API working | IN_PROGRESS | Implemented ledger/accessorial/report routes verified; profit/settlement routes verified; payroll and later APIs incomplete |
+| Requirements implemented and traced | PASS | Approved backend convention Phases 0–8 and final QA gates COMPLETE; not broader production release certification |
+| Build successful | PASS | Final same-code clean and populated upgrade each run Maven clean verify/repackage; executable Boot JAR startup/OpenAPI confirmed |
+| Tests successful | PASS | Final clean V35 / populated V34 upgrade: 456 reported/455 executed, 0 failures/errors, 1 named legacy skip; 160 PG and 17 Python PASS |
+| API working | PASS | Scoped controller/service/PostgreSQL auth/envelope tests and actual OpenAPI 3.1.0 134 paths/283 schemas/16 required new operations; no live production provider certification |
 | Frontend working | NOT_APPLICABLE | API-only scope |
-| Database migrations working | IN_PROGRESS | V1–V18 clean and populated V17–V18 upgrade verified; supported production tenant history not available |
-| Authentication and authorization working | IN_PROGRESS | Policy/settlement routes require payroll-related roles; PG authorization verified; payroll next |
-| Validation and error handling working | NOT_STARTED | Not verified |
+| Database migrations working | PASS | Final clean V1–V35 and populated V34→V35 clone + validate PASS; all 35 SHA verified, applied files untouched; production rollout separate |
+| Authentication and authorization working | PASS | Existing scoped roles/tenant actors, command/read ownership and physical tenant isolation verified in real integration tests; broader security review separate |
+| Validation and error handling working | PASS | Scoped domain failure/ambiguity/date/mileage/source/tax/credit/stale/resource/availability errors and retry/conflict contracts verified |
 | Security reviewed | NOT_STARTED | Not reviewed |
 | Performance reviewed | NOT_STARTED | Not reviewed |
 | No hardcoded secrets | NOT_STARTED | Not scanned |
 | Deployment and rollback working | NOT_STARTED | Not verified |
 | Observability ready | NOT_STARTED | Not verified |
-| Documentation complete | IN_PROGRESS | Phase 0 updated |
-| No unresolved release-blocking defects | FAIL | BLK-001 and later phases incomplete; classification BLK-002 resolved |
+| Documentation complete | IN_PROGRESS | Approved backend plan/decision/domain/final evidence docs complete; broader production operational documentation/review separate |
+| No unresolved release-blocking defects | PASS | No unresolved approved backend V1 implementation/business gate; production deployment/security/performance review not certified |
 
 **Production Verdict:** NOT READY
 
-**Residual Risks / Approved Exceptions:** RSK-001; RSK-002; RSK-003. No production-readiness exception is approved.
+**Backend Convention V1 Verdict:** PLAN COMPLETE — Phases 0–8/final gates PASS at V35. This scoped verdict does not override the broader Production Verdict.
+
+**Residual Risks / Approved Exceptions:** Unqualified legacy sources are fail-closed, unsupported health unavailable is explicitly approved. RSK-001 legacy qualification and RSK-002 production tenant rollout validation remain operational considerations; RSK-003 resolved. No production-readiness exception is approved.

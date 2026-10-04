@@ -23,18 +23,18 @@ import lombok.Setter;
 public abstract class BaseAuditableEntity {
 
     @CreatedDate
-    @Column(name = "\"CreatedAt\"", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
     @CreatedBy
-    @Column(name = "\"CreatedBy\"", length = 50)
+    @Column(name = "created_by", length = 50)
     private String createdBy;
 
     @LastModifiedDate
-    @Column(name = "\"LastModifiedAt\"")
+    @Column(name = "last_modified_at")
     private OffsetDateTime lastModifiedAt;
 
     @LastModifiedBy
-    @Column(name = "\"LastModifiedBy\"", length = 50)
+    @Column(name = "last_modified_by", length = 50)
     private String lastModifiedBy;
 }

@@ -12,7 +12,7 @@ PER_MILE, PER_LOAD, PERCENT_REVENUE, HOURLY, DAILY and FLAT_RATE require respect
 
 Supported mileage bases are ACTUAL_ALL_MILES and PLANNED_ALL_MILES from assignment.actual_miles/planned_miles. Existing ACTUAL/ACTUAL_MILES and PLANNED/PLANNED_MILES aliases normalize to explicit bases for new policies; historical rows are not rewritten. Loaded/practical/contract miles lack a confirmed per-driver attributable source and fail MILEAGE_BASIS_UNAVAILABLE. No actual-to-planned fallback.
 
-PERCENT_REVENUE currently supports INVOICE_SUBTOTAL only. Invoice total with tax and unmodeled linehaul sources fail REVENUE_BASIS_UNAVAILABLE. Settlement calculation/reconciliation is a separate Phase 4D gate.
+PERCENT_REVENUE has an explicit versioned revenueBasis. Rating/Billing V1 supports PRIMARY_INVOICE_REVENUE (eligible PRIMARY subtotal only) and NET_ELIGIBLE_REVENUE (eligible signed subtotal across the explicit billing chain). Tax never enters the numerator. InvoiceStatus.countsAsRevenue defines eligibility. Snapshot includes document IDs, purposes, economic signs and subtotals with policy ID/version, ratio and rounded result. Explicit historical INVOICE_SUBTOTAL remains compatibility for the original unclassified invoice; on explicitly rated billing it selects PRIMARY only, never NET and never a default. New bases reject unclassified history rather than infer a purpose. Canonical settlement work date selects policy, not invoice/payment/current date.
 
 Pay periods have create/list commands, ordered inclusive dates, optional payment date, unique periodCode and OPEN initial state. Existing contracts do not prohibit overlapping periods; settlement source eligibility/deduplication remains a separate calculation gate.
 

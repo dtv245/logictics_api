@@ -31,6 +31,10 @@ public class PayrollRunItem {
  @Column(name="payroll_policy_version") private Integer payrollPolicyVersion;
  @Column(name="effective_date") private LocalDate effectiveDate;
  @JdbcTypeCode(SqlTypes.JSON) @Column(name="calculation_snapshot_json",columnDefinition="jsonb") private String calculationSnapshotJson;
+ @Column(name="no_payment_required_at") private OffsetDateTime noPaymentRequiredAt;
+ @Column(name="no_payment_required_by") private UUID noPaymentRequiredBy;
+ @Column(name="no_payment_reason_code",length=40) private String noPaymentReasonCode;
+ @Column(name="no_payment_reason",length=1000) private String noPaymentReason;
  @ManyToMany @JoinTable(name="payroll_run_item_settlements",joinColumns=@JoinColumn(name="payroll_run_item_id"),
  inverseJoinColumns=@JoinColumn(name="settlement_id")) private List<DriverSettlement> settlements=new ArrayList<>();
  @Version @Column(nullable=false) private Long version;

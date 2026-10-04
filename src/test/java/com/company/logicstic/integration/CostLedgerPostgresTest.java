@@ -42,6 +42,8 @@ class CostLedgerPostgresTest {
     @Autowired com.company.logicstic.service.payroll.payment.PayrollPaymentSchedulingService paymentScheduling;
     @Autowired com.company.logicstic.service.payroll.payment.PayrollPaymentDispatchService paymentDispatch;
     @Autowired com.company.logicstic.service.payroll.payment.PayrollCallbackService paymentCallbacks;
+    @Autowired com.company.logicstic.service.payroll.payment.PayrollManualBankReconciliationService bankReconciliation;
+    @Autowired com.company.logicstic.service.payroll.PayrollNoPaymentDispositionService noPaymentDisposition;
 
     private com.company.logicstic.service.payroll.payment.VerifiedPayrollPaymentEvent paymentEvent(
             com.company.logicstic.dto.payroll.PayrollPaymentView payment,String outcome,String amount,String currency) {
@@ -81,13 +83,70 @@ class CostLedgerPostgresTest {
             var a=pool.submit(() -> callback(event));var b=pool.submit(() -> callback(event));
             var one=a.get(20,TimeUnit.SECONDS);var two=b.get(20,TimeUnit.SECONDS);assertEquals(one.eventId(),two.eventId());assertEquals("SUCCEEDED",two.payment().status());
         }
-        assertEquals("PAYMENT_SCHEDULED",payroll.get(run.id()).status());assertNull(payroll.get(run.id()).paidAt());
+        assertEquals("PAYMENT_SCHEDULED",payroll.get(run.id()).status());assertNull(payroll.get(run.id()).completedAt());
         assertEquals("PAID",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
         assertEquals("PAYMENT_SCHEDULED",jdbc.queryForObject("select status from settlements where id=?",String.class,other.settlement()));
-        callback(paymentEvent(second,"SUCCEEDED","90","USD"));assertEquals("PAID",payroll.get(run.id()).status());assertNotNull(payroll.get(run.id()).paidAt());
+        callback(paymentEvent(second,"SUCCEEDED","90","USD"));assertEquals("COMPLETED",payroll.get(run.id()).status());assertNotNull(payroll.get(run.id()).completedAt());
+        assertEquals("PAYMENT_PROVIDER",payroll.get(run.id()).completionSource());assertNull(payroll.get(run.id()).completedBy());
         assertTrue(payroll.get(run.id()).items().stream().allMatch(i -> i.status().equals("PAID")));
         assertEquals(costs,jdbc.queryForObject("select count(*) from shipment_costs where driver_id in (?,?)",Integer.class,f.driver(),other.driver()));
         assertEquals(1,jdbc.queryForObject("select count(*) from payroll_payment_events where source_key=?",Integer.class,event.eventId()));
+    }
+
+    @Test void zeroNetDispositionIsAuditedAndRunCompletesOnlyAfterEveryOtherItemIsPaid() throws Exception {
+        var payable=payrollFixture();var noPay=fixture();var date=java.time.LocalDate.of(2026,1,1);
+        var noPayPolicy=payPolicies.create(payPolicyRequest(UUID.randomUUID().toString(),noPay.actor(),"1",date,null));
+        var zeroSettlement=zeroLockedSettlement(noPay.actor(),payable.period(),noPayPolicy.getId());
+        var jurisdiction=payrollJurisdiction("VN");payrollProfile(payable.driver(),jurisdiction);payrollProfile(noPay.actor(),jurisdiction);
+        payrollPolicy(UUID.randomUUID().toString(),jurisdiction,date,null,"TEST_ONLY_FIXED");
+        var template=payrollRequest(payable);
+        var request=new com.company.logicstic.dto.payroll.CalculatePayrollRequest(template.idempotencyKey(),payable.period(),"USD",
+                template.effectiveDate(),java.util.List.of(payable.settlement(),zeroSettlement),null,null,null);
+        var calculated=payroll.calculate(request);
+        var payableItem=calculated.items().stream().filter(i -> i.driverId().equals(payable.driver())).findFirst().orElseThrow();
+        var noPayItem=calculated.items().stream().filter(i -> i.driverId().equals(noPay.actor())).findFirst().orElseThrow();
+        assertEquals(java.math.BigDecimal.ZERO.compareTo(noPayItem.netAmount()),0);
+        payrollWorkflow.transition(calculated.id(),"IN_REVIEW",payable.driver());
+        payrollWorkflow.transition(calculated.id(),"APPROVED",payable.driver());
+        payrollWorkflow.transition(calculated.id(),"LOCKED",payable.driver());
+
+        var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext)
+                .apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
+        var body="{\"reasonCode\":\"ZERO_NET_PAY\",\"reason\":\"No net remuneration due for this payroll period\"}";
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/items/"+noPayItem.id()+"/no-payment-required")
+                        .contentType("application/json").content(body))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+        var response=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/items/"+noPayItem.id()+"/no-payment-required")
+                .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(payable.email()).roles("ACCOUNTANT"))
+                        .contentType("application/json").content(body))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertEquals("LOCKED",tools.jackson.databind.json.JsonMapper.builder().build().readTree(response).get("status").asText());
+        var disposition=payroll.get(calculated.id()).items().stream().filter(i -> i.id().equals(noPayItem.id())).findFirst().orElseThrow();
+        assertEquals("NO_PAYMENT_REQUIRED",disposition.status());assertEquals("ZERO_NET_PAY",disposition.noPaymentReasonCode());
+        assertEquals(payable.driver(),disposition.noPaymentRequiredBy());assertNotNull(disposition.noPaymentRequiredAt());
+        assertEquals("LOCKED",jdbc.queryForObject("select status from settlements where id=?",String.class,zeroSettlement));
+        assertEquals(0,jdbc.queryForObject("select count(*) from payroll_payments where payroll_run_item_id=?",Integer.class,noPayItem.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("""
+                update payroll_runs set status='COMPLETED',completed_at=now(),completed_by=?,completion_source='NO_PAYMENT_DISPOSITION' where id=?
+                """,payable.driver(),calculated.id()));
+        var replay=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/items/"+noPayItem.id()+"/no-payment-required")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(payable.email()).roles("ACCOUNTANT"))
+                        .contentType("application/json").content(body))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertEquals("LOCKED",tools.jackson.databind.json.JsonMapper.builder().build().readTree(replay).get("status").asText());
+        var conflict="{\"reasonCode\":\"MANUAL_ADJUSTMENT_ZERO_BALANCE\",\"reason\":\"Different reason\"}";
+        assertEquals("PAYROLL_NO_PAYMENT_DISPOSITION_CONFLICT",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> noPaymentDisposition.markNoPaymentRequired(noPayItem.id(),new com.company.logicstic.dto.payroll.NoPaymentRequiredRequest(
+                        "MANUAL_ADJUSTMENT_ZERO_BALANCE","Different reason"),payable.driver())).getCode());
+
+        var payment=scheduledProviderPayment(payableItem.id(),payable.driver());
+        callback(paymentEvent(payment,"SUCCEEDED","90","USD"));
+        var completed=payroll.get(calculated.id());
+        assertEquals("COMPLETED",completed.status());assertNotNull(completed.completedAt());
+        assertEquals("PAYMENT_PROVIDER",completed.completionSource());assertNull(completed.completedBy());
+        assertTrue(completed.items().stream().allMatch(i -> java.util.Set.of("PAID","NO_PAYMENT_REQUIRED").contains(i.status())));
     }
 
     @Test void verifiedFailureAllowsNewAttemptButLateSuccessCreatesUnresolvedCase() {
@@ -118,7 +177,53 @@ class CostLedgerPostgresTest {
         assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_run_items set status='PAID' where id=?",run.items().getFirst().id()));
         assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update settlements set status='PAID' where id=?",f.settlement()));
         assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_payment_events set amount=90 where id=?",rejected.eventId()));
-        callback(good);assertEquals("PAID",payroll.get(run.id()).status());
+        callback(good);assertEquals("COMPLETED",payroll.get(run.id()).status());
+    }
+
+    @Test void manualBankEvidenceResolvesLateSuccessCaseIdempotentlyAndKeepsAudit() throws Exception {
+        var f=payrollFixture();var j=payrollJurisdiction("VN");
+        payrollPolicy(UUID.randomUUID().toString(),j,java.time.LocalDate.of(2026,1,1),null,"TEST_ONLY_FIXED");
+        var run=lockedPayroll(f,j);var payment=scheduledProviderPayment(run.items().getFirst().id(),f.driver());
+        assertEquals("FAILED",callback(paymentEvent(payment,"FAILED","90","USD")).payment().status());
+        var openCase=callback(paymentEvent(payment,"SUCCEEDED","90","USD"));
+        assertEquals("RECONCILIATION_REQUIRED",openCase.status());
+        assertTrue(bankReconciliation.openCases(0,100).getContent().stream().anyMatch(c -> c.caseEventId().equals(openCase.eventId())));
+
+        var request=new com.company.logicstic.dto.payroll.ManualPayrollBankReconciliationRequest(
+                "manual-bank-idem-"+UUID.randomUUID(),openCase.eventId(),"bank-main","bank-tx-"+UUID.randomUUID(),
+                new java.math.BigDecimal("90.00"),"usd","SUCCEEDED","fixture-account",
+                "statement:2026-01-15:row-17","Bank statement confirms this payment",java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC));
+        var pool=java.util.concurrent.Executors.newFixedThreadPool(2);
+        com.company.logicstic.dto.payroll.PayrollPaymentEventView reconciled;
+        com.company.logicstic.dto.payroll.PayrollPaymentEventView replay;
+        try {
+            var first=pool.submit(() -> bankReconciliation.reconcile(payment.id(),request,f.driver()));
+            var second=pool.submit(() -> bankReconciliation.reconcile(payment.id(),request,f.driver()));
+            reconciled=first.get();replay=second.get();
+        } finally { pool.shutdownNow(); }
+
+        assertEquals("APPLIED",reconciled.status());assertEquals(reconciled.eventId(),replay.eventId());
+        assertEquals("SUCCEEDED",reconciled.payment().status());
+        assertEquals("COMPLETED",payroll.get(run.id()).status());
+        assertEquals("PAID",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
+        assertEquals(1,jdbc.queryForObject("select count(*) from payroll_payment_events where source_type='BANK' and actor_id=? and resolves_event_id=? and provider_reference=?",Integer.class,
+                f.driver(),openCase.eventId(),request.transactionReference()));
+        assertEquals("fixture-account",jdbc.queryForObject("select verification_json->>'counterpartyReference' from payroll_payment_events where id=?",String.class,reconciled.eventId()));
+        assertEquals("statement:2026-01-15:row-17",jdbc.queryForObject("select verification_json->>'evidenceReference' from payroll_payment_events where id=?",String.class,reconciled.eventId()));
+        assertFalse(bankReconciliation.openCases(0,100).getContent().stream().anyMatch(c -> c.caseEventId().equals(openCase.eventId())));
+        assertEquals("BANK_TRANSACTION_ALREADY_CLAIMED",assertThrows(com.company.logicstic.exception.BadRequestException.class,
+                () -> bankReconciliation.reconcile(payment.id(),new com.company.logicstic.dto.payroll.ManualPayrollBankReconciliationRequest(
+                        "another-key",openCase.eventId(),request.bankSource(),request.transactionReference(),request.amount(),request.currency(),request.outcome(),
+                        request.counterpartyReference(),request.evidenceReference(),request.reason(),request.occurredAt()),f.driver())).getCode());
+        assertThrows(org.springframework.dao.DataAccessException.class,()->jdbc.update("update payroll_payments set status='FAILED' where id=?",payment.id()));
+
+        var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext)
+                .apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/payroll/reconciliation-cases"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/payroll/reconciliation-cases")
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(f.email()).roles("ACCOUNTANT")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
     }
 
     @Test void callbackEndpointIsPublicOnlyThroughConfiguredVerifier() throws Exception {
@@ -131,7 +236,7 @@ class CostLedgerPostgresTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/provider-callbacks/TEST_ONLY_ASYNC")
                         .header("x-fixture-signature","SIGNED_FIXTURE").contentType("application/json").content(body))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
-        assertEquals("PAID",payroll.get(run.id()).status());
+        assertEquals("COMPLETED",payroll.get(run.id()).status());
     }
 
     @Test void concurrentPaymentSchedulingAndDispatchPersistOneAttemptWithoutPayingPayroll() throws Exception {
@@ -153,7 +258,7 @@ class CostLedgerPostgresTest {
             var a=pool.submit(() -> paymentDispatch.dispatch(scheduled.id()));var b=pool.submit(() -> paymentDispatch.dispatch(scheduled.id()));
             assertEquals("PROCESSING",a.get(20,TimeUnit.SECONDS).status());assertEquals("PROCESSING",b.get(20,TimeUnit.SECONDS).status());
         }
-        assertEquals("PAYMENT_SCHEDULED",payroll.get(run.id()).status());assertNull(payroll.get(run.id()).paidAt());
+        assertEquals("PAYMENT_SCHEDULED",payroll.get(run.id()).status());assertNull(payroll.get(run.id()).completedAt());
         assertEquals("PAYMENT_PENDING",payroll.get(run.id()).items().getFirst().status());
         assertEquals("PAYMENT_SCHEDULED",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
         assertEquals(1,jdbc.queryForObject("select count(*) from payroll_payments where payroll_run_item_id=?",Integer.class,item.id()));
@@ -233,7 +338,7 @@ class CostLedgerPostgresTest {
             var a=pool.submit(() -> payrollWorkflow.transition(run.id(),"LOCKED",f.driver()));
             var b=pool.submit(() -> payrollWorkflow.transition(run.id(),"LOCKED",f.driver()));
             var first=a.get(20,TimeUnit.SECONDS);var second=b.get(20,TimeUnit.SECONDS);
-            assertEquals(first.lockedAt().toInstant(),second.lockedAt().toInstant());assertEquals("LOCKED",first.status());assertNull(first.paidAt());
+            assertEquals(first.lockedAt().toInstant(),second.lockedAt().toInstant());assertEquals("LOCKED",first.status());assertNull(first.completedAt());
         }
         assertEquals("CALCULATED",payroll.get(run.id()).items().getFirst().status());
         assertEquals("LOCKED",jdbc.queryForObject("select status from settlements where id=?",String.class,f.settlement()));
@@ -245,7 +350,7 @@ class CostLedgerPostgresTest {
         assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("delete from payroll_run_item_settlements where payroll_run_item_id=?",item.id()));
         assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update calculation_snapshots set result_json='{}' where entity_type='PAYROLL_ITEM' and entity_id=?",item.id()));
         jdbc.update("update payroll_runs set status='PAYMENT_SCHEDULED' where id=?",run.id());
-        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_runs set status='PAID' where id=?",run.id()));
+        assertThrows(org.springframework.dao.DataAccessException.class,() -> jdbc.update("update payroll_runs set status='COMPLETED' where id=?",run.id()));
     }
 
     @Test void payrollWorkflowApiBlocksUnavailableTaxAndUsesAuthenticatedActor() throws Exception {
@@ -319,6 +424,19 @@ class CostLedgerPostgresTest {
     private com.company.logicstic.dto.payroll.CalculatePayrollRequest payrollRequest(PayrollFixture f) {
         return new com.company.logicstic.dto.payroll.CalculatePayrollRequest(UUID.randomUUID().toString(),f.period(),"USD",
                 java.time.LocalDate.of(2026,1,31),java.util.List.of(f.settlement()),java.util.Map.of(),java.util.Map.of(),java.util.List.of());
+    }
+    private UUID zeroLockedSettlement(UUID driver, UUID period, UUID payPolicy) {
+        UUID settlement=UUID.randomUUID(),snapshot=UUID.randomUUID();
+        jdbc.update("""
+                insert into calculation_snapshots(id,entity_type,entity_id,calculation_type,engine_name,engine_version,input_json,result_json)
+                values (?,'SETTLEMENT',?,'DRIVER_PAY','ZeroNetFixture','1','{}','{}')
+                """,snapshot,settlement);
+        jdbc.update("""
+                insert into settlements(id,settlement_number,driver_id,pay_period_id,settlement_type,sequence_number,
+                    pay_policy_id,pay_policy_version,status,currency,calculation_snapshot_id,settlement_net,gross_earnings)
+                values (?, ?, ?, ?, 'ADJUSTMENT', 1, ?, 1, 'LOCKED', 'USD', ?, 0, 0)
+                """,settlement,"ZERO-"+settlement,driver,period,payPolicy,snapshot);
+        return settlement;
     }
     private com.company.logicstic.service.payroll.domain.PayrollJurisdiction payrollJurisdiction(String country) {
         return new com.company.logicstic.service.payroll.domain.PayrollJurisdiction(country,UUID.randomUUID().toString(),null);
@@ -684,12 +802,12 @@ class CostLedgerPostgresTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/pay-periods").contentType("application/json").content(periodJson)
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("PAYROLL_MANAGER")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isCreated())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value("OPEN"));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.status").value("OPEN"));
         String policyJson = "{\"policyCode\":\""+UUID.randomUUID()+"\",\"name\":\"Contract\",\"driverId\":\""+fixture.actor()+"\",\"payMethod\":\"PERCENT_REVENUE\",\"revenuePercentage\":0.25,\"revenueBasis\":\"INVOICE_SUBTOTAL\",\"currency\":\"USD\",\"effectiveFrom\":\"2026-01-01\"}";
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/driver-pay-policies").contentType("application/json").content(policyJson)
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("PAYROLL_MANAGER")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isCreated())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.revenuePercentage").value(0.25));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.revenuePercentage").value(0.25));
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/driver-pay-policies").contentType("application/json").content(policyJson.replace("0.25","25"))
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("PAYROLL_MANAGER")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest());
@@ -950,7 +1068,7 @@ class CostLedgerPostgresTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path+"/require-validation").contentType("application/json").content("{\"reason\":\"Receipt required\"}")
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("ACCOUNTANT")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value("VALIDATION_REQUIRED"));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.status").value("VALIDATION_REQUIRED"));
         assertThrows(com.company.logicstic.exception.BadRequestException.class, () -> driverPay.transition(original.id(),"APPROVED",fixture.actor()));
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path+"/resolve-validation")
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("driver").roles("DRIVER")))
@@ -958,7 +1076,7 @@ class CostLedgerPostgresTest {
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(path+"/resolve-validation")
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(fixture.email()).roles("ACCOUNTANT")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status").value("CALCULATED"));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.data.status").value("CALCULATED"));
         finalizeSettlement(original.id(),fixture.actor());
         assertThrows(com.company.logicstic.exception.BadRequestException.class, () -> driverPay.requireValidation(original.id(),"Reopen",fixture.actor()));
     }

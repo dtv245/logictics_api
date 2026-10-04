@@ -4,6 +4,7 @@ import com.company.logicstic.entity.Load;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record LoadView(
@@ -48,7 +49,9 @@ public record LoadView(
         String destinationAddressZipCode,
         String destinationAddressCountry,
         Double destinationLocationLatitude,
-        Double destinationLocationLongitude
+        Double destinationLocationLongitude,
+        LocalDate requestedPickupBusinessDate,
+        UUID pickupBusinessDateChangeId
 ) {
     public static LoadView from(Load l) {
         String dispatcherName = l.getAssignedDispatcher() != null
@@ -71,7 +74,8 @@ public record LoadView(
                 l.getOriginLocationLatitude(), l.getOriginLocationLongitude(),
                 l.getDestinationAddressLine1(), l.getDestinationAddressLine2(), l.getDestinationAddressCity(),
                 l.getDestinationAddressState(), l.getDestinationAddressZipCode(), l.getDestinationAddressCountry(),
-                l.getDestinationLocationLatitude(), l.getDestinationLocationLongitude()
+                l.getDestinationLocationLatitude(), l.getDestinationLocationLongitude(),
+                l.getRequestedPickupBusinessDate(), l.getPickupBusinessDateChangeId()
         );
     }
 }

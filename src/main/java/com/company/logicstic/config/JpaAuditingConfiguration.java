@@ -13,9 +13,14 @@ import java.security.Principal;
 import java.util.Optional;
 
 @Configuration
-@EnableJpaAuditing
+@EnableJpaAuditing(dateTimeProviderRef = "utcAuditTime")
 @Profile("!nodb")
 public class JpaAuditingConfiguration {
+
+    @Bean
+    org.springframework.data.auditing.DateTimeProvider utcAuditTime() {
+        return () -> Optional.of(java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC));
+    }
 
     @Bean
     AuditorAware<String> auditorAware() {

@@ -37,12 +37,12 @@ public class ProfitabilityService {
                 .orElseThrow(() -> new ResourceNotFoundException("Load not found: " + loadId));
         String currency = CurrencyGuard.normalize(load.getDeliveryCostCurrency());
         BigDecimal revenue = BigDecimal.ZERO;
-        for (Invoice invoice : invoiceRepository.findByLoadId(loadId).stream().toList()) {
+        for (Invoice invoice : invoiceRepository.findAllByLoadId(loadId)) {
             if (!InvoiceStatus.fromString(invoice.getStatus()).countsAsRevenue()) continue;
             if (invoice.getSubtotalAmount() == null) throw new BadRequestException("INVOICE_SUBTOTAL_MISSING", "Eligible invoice requires a subtotal");
             CurrencyGuard.requireSameCurrency(currency, invoice.getSubtotalCurrency());
             reconciliation.reconcile(invoice);
-            revenue = revenue.add(invoice.getSubtotalAmount());
+            revenue = revenue.add(invoice.getSubtotalAmount().multiply(BigDecimal.valueOf(invoice.economicSign())));
         }
         revenue = money(revenue, currency);
         BigDecimal quote = money(load.getDeliveryCostAmount(), currency); // Context only, never actual revenue.

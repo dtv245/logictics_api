@@ -15,14 +15,18 @@ public record CreateInvoiceRequest(
         OffsetDateTime dueDate,
         UUID loadId,
         UUID customerId,
-        UUID employeeId,
+        @Deprecated(forRemoval = false) UUID employeeId,
         @NotNull BigDecimal subtotalAmount,
         @NotBlank String subtotalCurrency,
         @NotNull BigDecimal taxTotalAmount,
         @NotBlank String taxTotalCurrency,
         @NotNull BigDecimal totalAmount,
         @NotBlank String totalCurrency,
-        OffsetDateTime periodStart,
-        OffsetDateTime periodEnd,
-        Double totalDistanceDriven
-) {}
+        @Deprecated(forRemoval = false) OffsetDateTime periodStart,
+        @Deprecated(forRemoval = false) OffsetDateTime periodEnd,
+        @Deprecated(forRemoval = false) Double totalDistanceDriven
+) {
+    public boolean hasLegacyPayrollFields() {
+        return employeeId != null || periodStart != null || periodEnd != null || totalDistanceDriven != null;
+    }
+}

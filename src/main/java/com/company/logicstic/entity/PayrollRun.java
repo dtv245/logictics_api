@@ -28,6 +28,8 @@ public class PayrollRun {
  @Column(name="approved_by") private UUID approvedBy;
  @Column(name="locked_at") private OffsetDateTime lockedAt;
  @Column(name="locked_by") private UUID lockedBy;
- @Column(name="paid_at") private OffsetDateTime paidAt;
+ @Column(name="completed_at") private OffsetDateTime completedAt;
+ @Column(name="completed_by") private UUID completedBy;
+ @Column(name="completion_source",length=40) private String completionSource;
  @Version @Column(nullable=false) private Long version;
 }

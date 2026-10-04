@@ -1,0 +1,33 @@
+-- Obsolete candidate migration retained for audit; not in Flyway's active *.sql migrations.
+CREATE TABLE accessorial_charges (
+    id UUID PRIMARY KEY,
+    load_id UUID NOT NULL,
+    trip_id UUID,
+    trip_stop_id UUID,
+    type VARCHAR(40) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'PENDING_APPROVAL',
+    quantity NUMERIC(19,6),
+    unit VARCHAR(30),
+    rate NUMERIC(19,6),
+    free_quantity NUMERIC(19,6) DEFAULT 0,
+    customer_amount NUMERIC(19,4) NOT NULL DEFAULT 0,
+    company_cost_amount NUMERIC(19,4) NOT NULL DEFAULT 0,
+    driver_pay_amount NUMERIC(19,4) NOT NULL DEFAULT 0,
+    currency VARCHAR(3) NOT NULL,
+    occurred_at TIMESTAMPTZ,
+    approved_at TIMESTAMPTZ,
+    approved_by UUID,
+    document_id UUID,
+    calculation_snapshot_id UUID,
+    note VARCHAR(2000),
+    version INT8 NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_accessorial_charges_load FOREIGN KEY (load_id) REFERENCES loads(id) ON DELETE CASCADE,
+    CONSTRAINT fk_accessorial_charges_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE SET NULL,
+    CONSTRAINT fk_accessorial_charges_stop FOREIGN KEY (trip_stop_id) REFERENCES trip_stops(id) ON DELETE SET NULL,
+    CONSTRAINT fk_accessorial_charges_document FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
+    CONSTRAINT fk_accessorial_charges_snapshot FOREIGN KEY (calculation_snapshot_id) REFERENCES calculation_snapshots(id) ON DELETE SET NULL
+);
+
+CREATE INDEX ix_accessorial_charges_load ON accessorial_charges(load_id);

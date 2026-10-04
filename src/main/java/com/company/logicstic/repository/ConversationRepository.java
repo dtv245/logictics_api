@@ -14,7 +14,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, UUID
     @Query("""
             SELECT DISTINCT c FROM Conversation c
             JOIN c.participants p
-            WHERE p.employeeId = :employeeId
+            WHERE p.employee.id = :employeeId
             ORDER BY c.lastMessageAt DESC
             """)
     Page<Conversation> findByParticipant(@Param("employeeId") UUID employeeId, Pageable pageable);

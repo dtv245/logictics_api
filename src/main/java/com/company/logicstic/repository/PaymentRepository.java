@@ -21,4 +21,12 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             @Param("invoiceId") UUID invoiceId,
             Pageable pageable
     );
+
+    java.util.List<Payment> findByInvoiceId(UUID invoiceId);
+
+    @Query("""
+            SELECT p FROM Payment p
+            WHERE p.invoice.customer.id = :customerId
+            """)
+    java.util.List<Payment> findByCustomerId(@Param("customerId") UUID customerId);
 }

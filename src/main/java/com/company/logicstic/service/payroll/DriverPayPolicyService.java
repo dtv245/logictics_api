@@ -22,6 +22,11 @@ public class DriverPayPolicyService {
     @Transactional(readOnly = true)
     public List<DriverPayPolicy> list() { return policies.findAllByOrderByPolicyCodeAscPolicyVersionDesc(); }
 
+    @Transactional(readOnly = true)
+    public DriverPayPolicy get(UUID id) {
+        return policies.findById(id).orElseThrow(() -> new ResourceNotFoundException("Driver pay policy not found"));
+    }
+
     @Transactional
     public DriverPayPolicy create(DriverPayPolicyRequest request) {
         if (policies.findTopByPolicyCodeOrderByPolicyVersionDesc(request.policyCode()).isPresent())
@@ -74,8 +79,8 @@ public class DriverPayPolicyService {
         if ((p.getDetentionFreeMinutes() != null && p.getDetentionFreeMinutes() < 0)
                 || (p.getDetentionBlockMinutes() != null && p.getDetentionBlockMinutes() <= 0))
             throw new BadRequestException("Detention free/block minutes are invalid");
-        if ("PERCENT_REVENUE".equals(p.getPayMethod()) && !"INVOICE_SUBTOTAL".equals(p.getRevenueBasis()))
-            throw new BadRequestException("REVENUE_BASIS_UNAVAILABLE", "Only reconciled eligible INVOICE_SUBTOTAL has a supported source");
+        if ("PERCENT_REVENUE".equals(p.getPayMethod()) && (p.getRevenueBasis()==null || !java.util.Set.of("INVOICE_SUBTOTAL","PRIMARY_INVOICE_REVENUE","NET_ELIGIBLE_REVENUE").contains(p.getRevenueBasis())))
+            throw new BadRequestException("REVENUE_BASIS_UNAVAILABLE", "Explicit versioned PRIMARY/NET revenue basis required; INVOICE_SUBTOTAL is legacy primary-only compatibility");
         boolean valid = switch (p.getPayMethod()) {
             case "PER_MILE" -> p.getPerMileRate() != null && p.getMileageBasis() != null;
             case "PER_LOAD" -> p.getPerLoadRate() != null;

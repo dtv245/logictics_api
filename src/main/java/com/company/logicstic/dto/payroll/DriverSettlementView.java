@@ -11,12 +11,17 @@ public record DriverSettlementView(UUID id, String settlementNumber, UUID driver
         BigDecimal reimbursementAmount, BigDecimal deductionAmount, BigDecimal settlementNet,
         OffsetDateTime calculatedAt, OffsetDateTime approvedAt, OffsetDateTime lockedAt,
         List<SettlementLineView> lines, UUID parentSettlementId, Integer sequenceNumber, UUID policyId,
-        Integer policyVersion, String validationReason) {
+        Integer policyVersion, String validationReason, String driverName, String payPeriodCode) {
     public static DriverSettlementView from(DriverSettlement s, List<SettlementLineView> lines) {
+        String driverName = s.getDriver() != null
+                ? (s.getDriver().getFirstName() + " " + s.getDriver().getLastName()).trim()
+                : null;
+        String payPeriodCode = s.getPayPeriod() != null ? s.getPayPeriod().getPeriodCode() : null;
         return new DriverSettlementView(s.getId(), s.getSettlementNumber(), s.getDriver().getId(), s.getPayPeriod().getId(),
                 s.getSettlementType(), s.getStatus(), s.getCurrency(), SettlementLineView.displayMoney(s.getGrossEarnings(),s.getCurrency()),
                 SettlementLineView.displayMoney(s.getReimbursementAmount(),s.getCurrency()), SettlementLineView.displayMoney(s.getDeductionAmount(),s.getCurrency()),
                 SettlementLineView.displayMoney(s.getSettlementNet(),s.getCurrency()), s.getCalculatedAt(), s.getApprovedAt(), s.getLockedAt(), lines,
-                s.getParentSettlement()==null?null:s.getParentSettlement().getId(),s.getSequenceNumber(),s.getPayPolicy().getId(),s.getPayPolicyVersion(),s.getValidationReason());
+                s.getParentSettlement()==null?null:s.getParentSettlement().getId(),s.getSequenceNumber(),s.getPayPolicy().getId(),s.getPayPolicyVersion(),s.getValidationReason(),
+                driverName, payPeriodCode);
     }
 }

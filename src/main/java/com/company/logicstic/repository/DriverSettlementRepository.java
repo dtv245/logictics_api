@@ -22,4 +22,17 @@ public interface DriverSettlementRepository extends JpaRepository<DriverSettleme
 
     @Query("SELECT COALESCE(MAX(s.sequenceNumber), 0) FROM DriverSettlement s WHERE s.parentSettlement.id = :parentId")
     Integer findMaxSequenceForParent(@Param("parentId") UUID parentId);
+
+    @Query("SELECT s FROM DriverSettlement s " +
+           "WHERE (:payPeriodId IS NULL OR s.payPeriod.id = :payPeriodId) " +
+           "AND (:driverId IS NULL OR s.driver.id = :driverId) " +
+           "AND (:status IS NULL OR s.status = :status) " +
+           "AND (:settlementType IS NULL OR s.settlementType = :settlementType) " +
+           "ORDER BY s.calculatedAt DESC, s.settlementNumber DESC")
+    List<DriverSettlement> findSettlements(
+            @Param("payPeriodId") UUID payPeriodId,
+            @Param("driverId") UUID driverId,
+            @Param("status") String status,
+            @Param("settlementType") String settlementType
+    );
 }

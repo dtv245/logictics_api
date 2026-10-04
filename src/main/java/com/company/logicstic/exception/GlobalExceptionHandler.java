@@ -28,6 +28,9 @@ public class GlobalExceptionHandler {
             ApiException exception,
             HttpServletRequest request
     ) {
+        String correlation=request.getHeader("X-Request-Id");
+        if(correlation!=null)correlation=correlation.replaceAll("[\\r\\n]","").substring(0,Math.min(correlation.replaceAll("[\\r\\n]","").length(),120));
+        log.warn("domain_failure method={} path={} correlationId={} domainCode={}",request.getMethod(),request.getRequestURI(),correlation,exception.getCode());
         ApiResponse<Void> body = ApiResponse.failure(
                 exception.getCode(),
                 exception.getMessage(),
@@ -68,6 +71,10 @@ public class GlobalExceptionHandler {
             HttpMessageNotReadableException exception,
             HttpServletRequest request
     ) {
+        for (Throwable cause = exception.getCause(); cause != null; cause = cause.getCause()) {
+            if (cause instanceof ApiException domain) return handleApiException(domain, request);
+            if (cause == cause.getCause()) break;
+        }
         log.warn("Unreadable request body for {} {}", request.getMethod(), request.getRequestURI());
         return badRequest("MALFORMED_REQUEST", "Request body is missing or malformed", List.of(), request);
     }

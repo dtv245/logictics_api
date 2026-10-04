@@ -109,4 +109,24 @@ public class Expense extends BaseAuditableEntity {
 
     @Column(name = "quantity_unit", columnDefinition = "text")
     private String quantityUnit;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "load_id")
+    private Load load;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "trip_id")
+    private Trip trip;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id")
+    private Employee employee;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "maintenance_record_id")
+    private MaintenanceRecord maintenanceRecord;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id")
+    private Document document;
 }

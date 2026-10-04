@@ -11,10 +11,8 @@ WORKDIR /build
 # along because the quality plugins are bound to validate/compile and Maven
 # reads their configuration while wiring the build.
 COPY .mvn/ .mvn/
-COPY mvnw pom.xml checkstyle.xml spotbugs-exclude.xml ./
-RUN chmod +x mvnw && ./mvnw -B -ntp -q \
-      -Dcheckstyle.skip=true -Dspotbugs.skip=true \
-      dependency:go-offline
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw -B -ntp -q dependency:go-offline
 
 COPY src/ src/
 # Tests are not run here. They need Postgres and Redis, which do not exist

@@ -43,7 +43,7 @@ class ProfitabilityServiceTest {
         Load load = new Load(); load.setId(loadId); load.setDeliveryCostCurrency("USD");
         ShipmentCost cost = new ShipmentCost(); cost.setLoad(load); cost.setCurrency("USD"); cost.setAmount(new BigDecimal("40.00")); cost.setCostBasis("ACTUAL"); cost.setStatus("APPROVED");
         ShipmentCost verified = new ShipmentCost(); verified.setLoad(load); verified.setCurrency("USD"); verified.setAmount(new BigDecimal("70.00")); verified.setCostBasis("ACTUAL"); verified.setStatus("VERIFIED");
-        when(loads.findById(loadId)).thenReturn(Optional.of(load)); when(invoices.findByLoadId(loadId)).thenReturn(Optional.of(invoice));
+        when(loads.findById(loadId)).thenReturn(Optional.of(load)); when(invoices.findAllByLoadId(loadId)).thenReturn(List.of(invoice));
         when(costs.findByLoadId(loadId)).thenReturn(List.of(cost, verified));
         var result = service.byLoad(loadId, "USD");
         assertEquals(new BigDecimal("100.00"), result.actualRevenue()); assertEquals(new BigDecimal("40.00"), result.actualCost());
@@ -54,7 +54,7 @@ class ProfitabilityServiceTest {
     @Test void rejectsMixedCurrencies() {
         UUID loadId = UUID.randomUUID(); Invoice invoice = new Invoice(); invoice.setStatus("ISSUED"); invoice.setSubtotalCurrency("USD"); invoice.setSubtotalAmount(BigDecimal.ONE);
         Load load = new Load(); load.setId(loadId); load.setDeliveryCostCurrency("USD");
-        when(loads.findById(loadId)).thenReturn(Optional.of(load)); when(invoices.findByLoadId(loadId)).thenReturn(Optional.of(invoice));
+        when(loads.findById(loadId)).thenReturn(Optional.of(load)); when(invoices.findAllByLoadId(loadId)).thenReturn(List.of(invoice));
         assertThrows(CurrencyMismatchException.class, () -> service.byLoad(loadId, "VND"));
     }
 }

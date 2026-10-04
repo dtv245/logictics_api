@@ -13,6 +13,7 @@ import com.company.logicstic.dto.payment.PaymentView;
 import com.company.logicstic.entity.Invoice;
 import com.company.logicstic.entity.Payment;
 import com.company.logicstic.exception.ResourceNotFoundException;
+import com.company.logicstic.mapper.PaymentMapper;
 import com.company.logicstic.repository.InvoiceRepository;
 import com.company.logicstic.repository.PaymentRepository;
 
@@ -22,38 +23,41 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
+    private final PaymentMapper paymentMapper;
 
-    public PaymentService(PaymentRepository paymentRepository, InvoiceRepository invoiceRepository) {
+    public PaymentService(PaymentRepository paymentRepository, InvoiceRepository invoiceRepository, PaymentMapper paymentMapper) {
         this.paymentRepository = paymentRepository;
         this.invoiceRepository = invoiceRepository;
+        this.paymentMapper = paymentMapper;
     }
 
     public PagedResponse<PaymentView> search(String status, UUID invoiceId,
                                               int page, int pageSize, String orderBy, boolean descending) {
         Sort sort = descending ? Sort.by(orderBy).descending() : Sort.by(orderBy).ascending();
         var pageable = PageRequest.of(page - 1, pageSize, sort);
-        return PagedResponse.from(paymentRepository.search(status, invoiceId, pageable).map(PaymentView::from));
+        return PagedResponse.from(paymentRepository.search(status, invoiceId, pageable).map(paymentMapper::toView));
     }
 
     public PaymentView getById(UUID id) {
         return paymentRepository.findById(id)
-                .map(PaymentView::from)
+                .map(paymentMapper::toView)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found: " + id));
     }
 
     @Transactional
     public PaymentView create(CreatePaymentRequest request) {
-        Payment payment = new Payment();
-        applyFields(payment, request);
-        return PaymentView.from(paymentRepository.save(payment));
+        Payment payment = paymentMapper.toEntity(request);
+        resolveRelations(payment, request);
+        return paymentMapper.toView(paymentRepository.save(payment));
     }
 
     @Transactional
     public PaymentView update(UUID id, CreatePaymentRequest request) {
         Payment payment = paymentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found: " + id));
-        applyFields(payment, request);
-        return PaymentView.from(paymentRepository.save(payment));
+        paymentMapper.updateEntity(request, payment);
+        resolveRelations(payment, request);
+        return paymentMapper.toView(paymentRepository.save(payment));
     }
 
     @Transactional
@@ -64,22 +68,7 @@ public class PaymentService {
         paymentRepository.deleteById(id);
     }
 
-    private void applyFields(Payment payment, CreatePaymentRequest req) {
-        payment.setStatus(req.status());
-        payment.setAmountAmount(req.amountAmount());
-        payment.setAmountCurrency(req.amountCurrency());
-        payment.setDescription(req.description());
-        payment.setReferenceNumber(req.referenceNumber());
-        payment.setStripePaymentMethodId(req.stripePaymentMethodId());
-        payment.setStripePaymentIntentId(req.stripePaymentIntentId());
-        payment.setRecordedAt(req.recordedAt());
-        payment.setBillingAddressLine1(req.billingAddressLine1());
-        payment.setBillingAddressLine2(req.billingAddressLine2());
-        payment.setBillingAddressCity(req.billingAddressCity());
-        payment.setBillingAddressState(req.billingAddressState());
-        payment.setBillingAddressZipCode(req.billingAddressZipCode());
-        payment.setBillingAddressCountry(req.billingAddressCountry());
-
+    private void resolveRelations(Payment payment, CreatePaymentRequest req) {
         if (req.invoiceId() != null) {
             Invoice invoice = invoiceRepository.findById(req.invoiceId())
                     .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + req.invoiceId()));

@@ -65,26 +65,43 @@ public class Invoice extends BaseAuditableEntity {
     @Column(name = "sent_to_email", columnDefinition = "text")
     private String sentToEmail;
 
-    @Column(name = "subtotal_amount", nullable = false, precision = 18, scale = 2)
+    @Column(name = "subtotal_amount", nullable = false, columnDefinition = "numeric")
     private BigDecimal subtotalAmount;
 
     @Column(name = "subtotal_currency", nullable = false, length = 3)
     private String subtotalCurrency;
 
-    @Column(name = "tax_total_amount", nullable = false, precision = 18, scale = 2)
+    @Column(name = "tax_total_amount", nullable = false, columnDefinition = "numeric")
     private BigDecimal taxTotalAmount;
 
     @Column(name = "tax_total_currency", nullable = false, length = 3)
     private String taxTotalCurrency;
 
-    @Column(name = "total_amount", nullable = false, precision = 18, scale = 2)
+    @Column(name = "total_amount", nullable = false, columnDefinition = "numeric")
     private BigDecimal totalAmount;
+
+    @Column(name = "invoice_purpose") private String invoicePurpose;
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.SMALLINT)
+    @Column(name = "economic_sign") private Integer economicSign;
+    @Column(name = "rating_snapshot_id") private UUID ratingSnapshotId;
+    @Column(name = "parent_invoice_id") private UUID parentInvoiceId;
+    @Column(name = "billing_chain_id") private UUID billingChainId;
+
+    /** Legacy invoices keep their verified positive-revenue behavior, without historical backfill. */
+    public int economicSign() {
+        if(invoicePurpose==null)return 1;
+        int expected="CREDIT".equals(invoicePurpose)?-1:1;
+        if(!java.util.Set.of("PRIMARY","SUPPLEMENTAL","CREDIT","REBILL").contains(invoicePurpose)
+                || economicSign==null || economicSign!=expected)
+            throw new com.company.logicstic.exception.BadRequestException("INVOICE_ECONOMIC_SIGN_INVALID","Document requires explicit consistent purpose/economic sign");
+        return economicSign;
+    }
 
     @Column(name = "total_currency", nullable = false, length = 3)
     private String totalCurrency;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "load_id", unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "load_id")
     private Load load;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -93,6 +110,7 @@ public class Invoice extends BaseAuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
+    @Deprecated(forRemoval = false)
     private Employee employee;
 
     @OneToMany(
@@ -103,15 +121,19 @@ public class Invoice extends BaseAuditableEntity {
     private List<InvoiceLineItem> lineItems = new ArrayList<>();
 
     @Column(name = "period_start")
+    @Deprecated(forRemoval = false)
     private OffsetDateTime periodStart;
 
     @Column(name = "period_end")
+    @Deprecated(forRemoval = false)
     private OffsetDateTime periodEnd;
 
     @Column(name = "total_distance_driven")
+    @Deprecated(forRemoval = false)
     private Double totalDistanceDriven;
 
     @Column(name = "total_hours_worked", precision = 10, scale = 2)
+    @Deprecated(forRemoval = false)
     private BigDecimal totalHoursWorked;
 
     @Column(name = "approved_by_id")

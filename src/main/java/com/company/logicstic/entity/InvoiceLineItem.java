@@ -51,16 +51,16 @@ public class InvoiceLineItem {
     @Column(name = "notes", length = 1000)
     private String notes;
 
-    @Column(name = "tax_rate_percent", nullable = false, precision = 5, scale = 2)
+    @Column(name = "tax_rate_percent", precision = 5, scale = 2)
     private BigDecimal taxRatePercent;
 
-    @Column(name = "tax_amount", nullable = false, precision = 18, scale = 2)
+    @Column(name = "tax_amount", nullable = false, columnDefinition = "numeric")
     private BigDecimal taxAmount;
 
     @Column(name = "tax_code", length = 50)
     private String taxCode;
 
-    @Column(name = "amount_amount", nullable = false, precision = 18, scale = 2)
+    @Column(name = "amount_amount", nullable = false, columnDefinition = "numeric")
     private BigDecimal amountAmount;
 
     @Column(name = "amount_currency", nullable = false, length = 3)

@@ -24,7 +24,7 @@ public class PayslipService {
  public List<PayslipView> issue(UUID runId,UUID actor) {
   if(actor==null || !employees.existsById(actor)) throw new BadRequestException("PAYSLIP_ACTOR_REQUIRED","Persisted payroll actor required");
   var run=runs.findByIdForUpdate(runId).orElseThrow(() -> new BadRequestException("Payroll run not found"));
-  if(!Set.of("LOCKED","PAYMENT_SCHEDULED","PAID").contains(run.getStatus())) throw new BadRequestException("PAYSLIP_PAYROLL_NOT_LOCKED","Payslips require locked payroll");
+  if(!Set.of("LOCKED","PAYMENT_SCHEDULED","COMPLETED").contains(run.getStatus())) throw new BadRequestException("PAYSLIP_PAYROLL_NOT_LOCKED","Payslips require locked payroll");
   var sourceItems=items.findByPayrollRunIdOrderById(runId);reconciliation.requireFinalizable(run,sourceItems);
   var result=new ArrayList<PayslipView>();
   for(var item:sourceItems) {

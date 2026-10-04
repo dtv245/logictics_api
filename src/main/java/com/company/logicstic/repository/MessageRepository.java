@@ -16,11 +16,11 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     @Query("""
             SELECT COUNT(m) FROM Message m
             WHERE m.conversation.id IN (
-                SELECT p.conversation.id FROM ConversationParticipant p WHERE p.employeeId = :employeeId
+                SELECT p.conversation.id FROM ConversationParticipant p WHERE p.employee.id = :employeeId
             )
             AND m.isDeleted = false
             AND NOT EXISTS (
-                SELECT r FROM MessageReadReceipt r WHERE r.message = m AND r.employeeId = :employeeId
+                SELECT r FROM MessageReadReceipt r WHERE r.message = m AND r.readBy.id = :employeeId
             )
             """)
     long countUnread(@Param("employeeId") UUID employeeId);

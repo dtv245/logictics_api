@@ -11,6 +11,10 @@ import java.util.UUID;
 
 public interface LoadRepository extends JpaRepository<Load, UUID> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT l FROM Load l WHERE l.id = :id")
+    java.util.Optional<Load> findByIdForUpdate(@Param("id") UUID id);
+
     @Query("""
             SELECT l FROM Load l
             WHERE (:search IS NULL

@@ -220,7 +220,7 @@ src/main/java/com/example/logicstic/entity/
 
 ## 6. Cấu hình entity scanning
 
-Do package entity nằm ngoài package của `LogicsticApplication`, cập nhật main class:
+Do package entity nằm ngoài package của `LogisticApplication`, cập nhật main class:
 
 ```java
 @SpringBootApplication

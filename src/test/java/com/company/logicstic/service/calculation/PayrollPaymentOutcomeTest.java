@@ -19,8 +19,8 @@ class PayrollPaymentOutcomeTest {
  }
  private PayrollPaymentOutcomeService service() {
   return new PayrollPaymentOutcomeService(mock(PayrollPaymentRepository.class),mock(PayrollRunItemRepository.class),
-   mock(DriverSettlementRepository.class),mock(PayrollRunRepository.class),mock(PayrollPaymentEventRepository.class),
-   new PayrollReconciliationService(TestRoundingPolicies.standard()));
+   mock(DriverSettlementRepository.class),mock(PayrollPaymentEventRepository.class),
+   new PayrollReconciliationService(TestRoundingPolicies.standard()),mock(com.company.logicstic.service.payroll.PayrollRunCompletionService.class));
  }
  @Test void financialIdentityMustMatchExactly() {
   var p=payment();var s=service();

@@ -37,7 +37,7 @@ class ProfitabilityFactsTest {
         invoice.setSubtotalCurrency(load.getDeliveryCostCurrency()); invoice.setSubtotalAmount(new BigDecimal(amount));
         InvoiceLineItem item = new InvoiceLineItem(); item.setAmountAmount(new BigDecimal(amount)); item.setAmountCurrency(load.getDeliveryCostCurrency());
         invoice.setLineItems(List.of(item));
-        when(invoices.findByLoadId(load.getId())).thenReturn(Optional.of(invoice));
+        when(invoices.findAllByLoadId(load.getId())).thenReturn(List.of(invoice));
         return invoice;
     }
     ShipmentCost cost(String basis, String status, String amount, String currency) {

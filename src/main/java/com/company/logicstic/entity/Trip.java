@@ -55,10 +55,25 @@ public class Trip extends BaseAuditableEntity {
     @Column(name = "status", nullable = false, columnDefinition = "text")
     private String status;
 
+    @Column(name = "planned_distance_miles", precision = 12, scale = 3)
+    private BigDecimal plannedDistanceMiles;
+
+    @Column(name = "actual_distance_miles", precision = 12, scale = 3)
+    private BigDecimal actualDistanceMiles;
+
+    @Column(name = "loaded_miles", precision = 12, scale = 3)
+    private BigDecimal loadedMiles;
+
+    @Column(name = "empty_miles", precision = 12, scale = 3)
+    private BigDecimal emptyMiles;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "truck_id")
     private Truck truck;
 
     @OneToMany(mappedBy = "trip", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     private List<TripStop> stops = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trip", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    private List<TripDriverAssignment> driverAssignments = new ArrayList<>();
 }

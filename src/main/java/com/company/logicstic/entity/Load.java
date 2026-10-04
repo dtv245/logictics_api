@@ -11,6 +11,7 @@ import org.hibernate.annotations.UuidGenerator;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -86,6 +87,13 @@ public class Load extends BaseAuditableEntity {
 
     @Column(name = "requested_pickup_date")
     private OffsetDateTime requestedPickupDate;
+
+    /** Independent promised pickup date for rating; never recomputed from the appointment instant. */
+    @Column(name = "requested_pickup_business_date")
+    private LocalDate requestedPickupBusinessDate;
+
+    @Column(name = "pickup_business_date_change_id")
+    private UUID pickupBusinessDateChangeId;
 
     @Column(name = "requested_delivery_date")
     private OffsetDateTime requestedDeliveryDate;

@@ -17,8 +17,8 @@ public record InvoiceView(
         UUID loadId,
         UUID customerId,
         String customerName,
-        UUID employeeId,
-        String employeeName,
+        @Deprecated(forRemoval = false) UUID employeeId,
+        @Deprecated(forRemoval = false) String employeeName,
         BigDecimal subtotalAmount,
         String subtotalCurrency,
         BigDecimal taxTotalAmount,
@@ -27,9 +27,11 @@ public record InvoiceView(
         String totalCurrency,
         OffsetDateTime sentAt,
         String sentToEmail,
-        OffsetDateTime periodStart,
-        OffsetDateTime periodEnd,
-        Double totalDistanceDriven
+        @Deprecated(forRemoval = false) OffsetDateTime periodStart,
+        @Deprecated(forRemoval = false) OffsetDateTime periodEnd,
+        @Deprecated(forRemoval = false) Double totalDistanceDriven,
+        String invoicePurpose, Integer economicSign, UUID ratingSnapshotId,
+        UUID parentInvoiceId, UUID billingChainId
 ) {
     public static InvoiceView from(Invoice i) {
         String empName = i.getEmployee() != null
@@ -45,7 +47,8 @@ public record InvoiceView(
                 i.getTaxTotalAmount(), i.getTaxTotalCurrency(),
                 i.getTotalAmount(), i.getTotalCurrency(),
                 i.getSentAt(), i.getSentToEmail(),
-                i.getPeriodStart(), i.getPeriodEnd(), i.getTotalDistanceDriven()
+                i.getPeriodStart(), i.getPeriodEnd(), i.getTotalDistanceDriven(),
+                i.getInvoicePurpose(),i.getEconomicSign(),i.getRatingSnapshotId(),i.getParentInvoiceId(),i.getBillingChainId()
         );
     }
 }

@@ -54,8 +54,10 @@ public class PayrollPaymentDispatchService {
  private PayrollPayment locked(UUID id) {
   var runId=payments.findPayrollRunId(id).orElseThrow(() -> new BadRequestException("Payroll payment not found"));
   var run=runs.findByIdForUpdate(runId).orElseThrow();
-  if(!Set.of("PAYMENT_SCHEDULED","PAID").contains(run.getStatus())) throw new BadRequestException("PAYMENT_RUN_NOT_SCHEDULED","Payroll payment workflow requires scheduled run");
-  return payments.findByIdForUpdate(id).orElseThrow();
+  var payment=payments.findByIdForUpdate(id).orElseThrow();
+  if("COMPLETED".equals(run.getStatus()) && Set.of("SUCCEEDED","FAILED","CANCELLED").contains(payment.getStatus())) return payment;
+  if(!"PAYMENT_SCHEDULED".equals(run.getStatus())) throw new BadRequestException("PAYMENT_RUN_NOT_SCHEDULED","Payroll payment workflow requires a scheduled, incomplete run");
+  return payment;
  }
  private OffsetDateTime now(){return OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MICROS);}
 }
