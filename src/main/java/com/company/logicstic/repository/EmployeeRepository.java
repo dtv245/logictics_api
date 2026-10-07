@@ -17,6 +17,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     Optional<Employee> findByEmail(String email);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "role")
+    @Query("SELECT e FROM Employee e WHERE e.email = :email")
+    Optional<Employee> findByEmailForLarkLogin(@Param("email") String email);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "role")
+    @Query("SELECT e FROM Employee e WHERE LOWER(TRIM(e.email)) = LOWER(TRIM(:email))")
+    java.util.List<Employee> findAllByEmailForLarkLogin(@Param("email") String email);
+
     boolean existsByEmail(String email);
 
     @Query("""
