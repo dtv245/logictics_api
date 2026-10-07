@@ -55,7 +55,7 @@ public class LarkAuthClient {
     }
 
     String base = properties.baseUrl().replaceAll("/+$", "");
-    String tokenUrl = base + "/open-apis/authen/v1/oidc/access_token";
+    String tokenUrl = base + "/open-apis/authen/v1/access_token";
 
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -63,8 +63,10 @@ public class LarkAuthClient {
     Map<String, String> requestPayload =
         Map.of(
             "grant_type", "authorization_code",
-            "client_id", properties.appId(),
-            "client_secret", properties.appSecret(),
+            "app_id", properties.appId().trim(),
+            "app_secret", properties.appSecret().trim(),
+            "client_id", properties.appId().trim(),
+            "client_secret", properties.appSecret().trim(),
             "code", code.trim());
 
     HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(requestPayload, headers);

@@ -29,4 +29,6 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             WHERE p.invoice.customer.id = :customerId
             """)
     java.util.List<Payment> findByCustomerId(@Param("customerId") UUID customerId);
+
+    java.util.Optional<Payment> findByIdempotencyKey(String idempotencyKey);
 }

@@ -65,6 +65,7 @@ public class CustomerBalanceCalculator {
     }
 
     private boolean isSettled(String status) {
-        return "completed".equalsIgnoreCase(status) || "paid".equalsIgnoreCase(status) || "succeeded".equalsIgnoreCase(status);
+        return "completed".equalsIgnoreCase(status) || "paid".equalsIgnoreCase(status)
+                || "succeeded".equalsIgnoreCase(status) || "settled".equalsIgnoreCase(status);
     }
 }

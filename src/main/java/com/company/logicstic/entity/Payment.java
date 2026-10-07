@@ -32,6 +32,19 @@ public class Payment extends BaseAuditableEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
+    @Column(name = "idempotency_key", length = 200)
+    private String idempotencyKey;
+
+    @Column(name = "input_hash", length = 64)
+    private String inputHash;
+
+    @Column(name = "input_hash_version")
+    private Short inputHashVersion;
+
     @Column(name = "status", nullable = false, columnDefinition = "text")
     private String status;
 

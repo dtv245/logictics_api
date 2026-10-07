@@ -35,9 +35,26 @@ public class TenantJwtClaimFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
         try {
             String tenantId = resolveTenantId();
+            if (SecurityContextHolder.getContext().getAuthentication() instanceof JwtAuthenticationToken
+                    && !StringUtils.hasText(tenantId)) {
+                SecurityResponses.write(request, response, 403, "INVALID_TENANT_CONTEXT", "Authenticated tenant is required");
+                return;
+            }
             if (StringUtils.hasText(tenantId)) {
+                if (TenantContext.getTenantId().filter(bound -> !bound.equals(tenantId)).isPresent()) {
+                    SecurityResponses.write(request, response, 403, "IDENTITY_TENANT_MISMATCH", "Authenticated tenant boundary does not match");
+                    return;
+                }
                 TenantContext.setTenantId(tenantId);
-                tenantDataSourceService.ensureTenantDataSource(tenantId);
+                try {
+                    tenantDataSourceService.ensureTenantDataSource(tenantId);
+                } catch (IllegalArgumentException inactiveTenant) {
+                    SecurityResponses.write(request, response, 403, "INVALID_TENANT_CONTEXT", "Authenticated tenant is not available");
+                    return;
+                } catch (IllegalStateException | org.springframework.dao.DataAccessException unavailable) {
+                    SecurityResponses.write(request, response, 503, "TENANT_UNAVAILABLE", "Tenant persistence is unavailable");
+                    return;
+                }
             }
             filterChain.doFilter(request, response);
         } finally {

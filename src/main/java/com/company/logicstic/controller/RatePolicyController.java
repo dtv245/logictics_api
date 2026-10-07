@@ -23,13 +23,13 @@ public class RatePolicyController {
     private final EmployeeRepository employees;
 
     @PostMapping("/contracts")
-    public ResponseEntity<ApiResponse<RatingContract>> createContract(@RequestBody RatingContractRequest body,
+    public ResponseEntity<ApiResponse<RatingContract>> createContract(@jakarta.validation.Valid @RequestBody RatingContractRequest body,
             Authentication authentication, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(policies.createContract(body, actor(authentication)), request));
     }
     @PostMapping("/contracts/{id}/versions")
     public ResponseEntity<ApiResponse<RatingContract>> contractVersion(@PathVariable UUID id, @RequestParam int expectedVersion,
-            @RequestBody RatingContractRequest body, Authentication authentication, HttpServletRequest request) {
+            @jakarta.validation.Valid @RequestBody RatingContractRequest body, Authentication authentication, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(policies.newContractVersion(id, expectedVersion, body, actor(authentication)), request));
     }
     @GetMapping("/contracts/{id}/versions/{version}")
@@ -37,13 +37,13 @@ public class RatePolicyController {
         return ResponseEntity.ok(ApiResponse.success(policies.getContract(id, version), request));
     }
     @PostMapping("/rules")
-    public ResponseEntity<ApiResponse<RateRule>> createRule(@RequestBody RateRuleRequest body,
+    public ResponseEntity<ApiResponse<RateRule>> createRule(@jakarta.validation.Valid @RequestBody RateRuleRequest body,
             Authentication authentication, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(policies.createRule(body, actor(authentication)), request));
     }
     @PostMapping("/rules/{id}/versions")
     public ResponseEntity<ApiResponse<RateRule>> ruleVersion(@PathVariable UUID id, @RequestParam int expectedVersion,
-            @RequestBody RateRuleRequest body, Authentication authentication, HttpServletRequest request) {
+            @jakarta.validation.Valid @RequestBody RateRuleRequest body, Authentication authentication, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(policies.newRuleVersion(id, expectedVersion, body, actor(authentication)), request));
     }
     @GetMapping("/rules/{id}/versions/{version}")

@@ -45,7 +45,7 @@ public class OptimizationApplicationService {
     private final ObjectMapper json;
     private final PlatformTransactionManager transactions;
     private static final int MAX_CANDIDATES=200; // Explicit API work bound; never silently truncate or sample.
-    public record CreateRequest(String idempotencyKey,UUID policyId,List<Target> targets,List<UUID> driverIds,List<UUID> truckIds,List<SourceSelection> sourceSelections) {}
+    public record CreateRequest(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=200) String idempotencyKey,@jakarta.validation.constraints.NotNull UUID policyId,@jakarta.validation.constraints.NotEmpty List<@jakarta.validation.constraints.NotNull @jakarta.validation.Valid Target> targets,@jakarta.validation.constraints.NotEmpty List<@jakarta.validation.constraints.NotNull UUID> driverIds,@jakarta.validation.constraints.NotEmpty List<@jakarta.validation.constraints.NotNull UUID> truckIds,@jakarta.validation.constraints.NotNull List<@jakarta.validation.constraints.NotNull @jakarta.validation.Valid SourceSelection> sourceSelections) {}
     public record Prepared(Explanation explanation,String materialFingerprint) {}
     private record DbInputs(Map<Scope,State> states,Map<Scope,Resolved> resolved) {}
 

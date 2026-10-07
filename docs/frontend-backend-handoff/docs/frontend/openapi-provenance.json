@@ -1,0 +1,20 @@
+{
+  "captured_at": "2026-10-06T20:12:50.223745+00:00",
+  "scope": "LOCAL_JAR_CONTRACT_SNAPSHOT",
+  "deployment_verified": false,
+  "source_commit": "0c795f89b7005484abcd0aff3ea13aa9cdeb1fdb",
+  "source_dirty": true,
+  "source_hash": "b69beb469fda434309c8b3f8f9d7135142872c9c563ffbc890d08e191d3b4795",
+  "jar_sha256": "aa685a2f8e159f99a44ef1d85a27a491cbafabaec9aa933780469c2bde2b40c2",
+  "build_id": "remediation-e45e40debc464c9e801ec02d874a7ac1",
+  "openapi_canonical_sha256": "2d10d31b8c7a013fa10aca92b5cf3411cadf8dcd5a1ca88f540201b3771e7774",
+  "snapshot_file_sha256": "8c4ddd9f27aa668e144819dda581ba04e16bc5be71394150c675b6e2590f8f03",
+  "openapi_version": "3.1.0",
+  "paths": 140,
+  "operations": 176,
+  "schemas": 291,
+  "normalization": "Environment-specific servers removed at root/path/operation; API contracts unchanged",
+  "disposable_database": "codex_frontend_contract_20261006201236544419",
+  "diagnostics": "/tmp/logisticsx-frontend-contract-ij3zq878",
+  "existing_runtime_modified": false
+}

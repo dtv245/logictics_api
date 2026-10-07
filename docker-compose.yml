@@ -43,10 +43,23 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://logistics-postgres:5432/${POSTGRES_DB:-us_logisticsx}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-Test12345#}
+      - SPRING_FLYWAY_ENABLED=${SPRING_FLYWAY_ENABLED:-false}
+      - SPRING_FLYWAY_LOCATIONS=${SPRING_FLYWAY_LOCATIONS:-classpath:db/migration/tenant}
       - SPRING_DATA_REDIS_HOST=${REDIS_HOST:-logistics-redis}
       - SPRING_DATA_REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_HOST=${REDIS_HOST:-logistics-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
+      - LARK_ENABLED=${LARK_ENABLED:-true}
+      - LARK_APP_ID=${LARK_APP_ID}
+      - LARK_APP_SECRET=${LARK_APP_SECRET}
+      - LARK_REDIRECT_URI=${LARK_REDIRECT_URI:-http://localhost:5173/auth/callback}
+      - LARK_BASE_URL=${LARK_BASE_URL:-https://open.larksuite.com}
+      - LARK_JWT_SECRET=${LARK_JWT_SECRET}
+      - LARK_BASE_ENABLED=${LARK_BASE_ENABLED:-true}
+      - LARK_BASE_APP_TOKEN=${LARK_BASE_APP_TOKEN}
+      - LARK_BASE_LOADS_TABLE_ID=${LARK_BASE_LOADS_TABLE_ID}
+      - LARK_BASE_DRIVERS_TABLE_ID=${LARK_BASE_DRIVERS_TABLE_ID}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173}
     depends_on:
       - postgres
       - redis

@@ -20,7 +20,7 @@ public class RatingMileageController {
     private final EmployeeRepository employees;
     @PostMapping("/api/loads/{id}/rating/contract-mileage")
     public ResponseEntity<ApiResponse<ContractMileageEvidence>> capture(@PathVariable UUID id,
-            @RequestBody ContractMileageRequest body, Authentication auth, HttpServletRequest request) {
+            @jakarta.validation.Valid @RequestBody ContractMileageRequest body, Authentication auth, HttpServletRequest request) {
         if (auth == null || !auth.isAuthenticated()) throw new ForbiddenException("Authenticated agreement actor required");
         var actor = employees.findByEmail(auth.getName()).orElseThrow(() -> new ForbiddenException("Agreement actor must map to tenant employee"));
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mileage.capture(id, body, actor.getId()), request));

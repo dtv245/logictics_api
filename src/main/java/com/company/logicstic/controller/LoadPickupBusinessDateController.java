@@ -15,7 +15,7 @@ public class LoadPickupBusinessDateController {
     private final LoadPickupBusinessDateService dates;
     @PostMapping("/api/loads/{id}/requested-pickup-business-date")
     public ResponseEntity<ApiResponse<LoadView>> remediate(@PathVariable UUID id,
-            @RequestBody SetPickupBusinessDateRequest body, HttpServletRequest request) {
+            @jakarta.validation.Valid @RequestBody SetPickupBusinessDateRequest body, HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(dates.remediate(id, body), request));
     }
 }

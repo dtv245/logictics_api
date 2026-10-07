@@ -31,6 +31,7 @@ public interface LoadMapper {
     @Mapping(target = "lastModifiedBy", ignore = true)
     @Mapping(target = "requestedPickupBusinessDate", ignore = true)
     @Mapping(target = "pickupBusinessDateChangeId", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Load toEntity(CreateLoadRequest req);
 
     @Mapping(target = "id", ignore = true)
@@ -50,6 +51,7 @@ public interface LoadMapper {
     @Mapping(target = "lastModifiedBy", ignore = true)
     @Mapping(target = "requestedPickupBusinessDate", ignore = true)
     @Mapping(target = "pickupBusinessDateChangeId", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntity(CreateLoadRequest req, @MappingTarget Load load);
 
     @Mapping(target = "customerId", expression = "java(load.getCustomer() != null ? load.getCustomer().getId() : null)")

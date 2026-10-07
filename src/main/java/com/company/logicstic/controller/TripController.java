@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.company.logicstic.dto.ApiResponse;
 import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.trip.CreateTripRequest;
+import com.company.logicstic.dto.trip.UpdateTripRequest;
 import com.company.logicstic.dto.trip.TripView;
 import com.company.logicstic.service.TripService;
 
@@ -66,7 +67,7 @@ public class TripController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TripView>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody CreateTripRequest body,
+            @Valid @RequestBody UpdateTripRequest body,
             HttpServletRequest request
     ) {
         TripView data = tripService.update(id, body);

@@ -45,7 +45,7 @@ public class LarkAuthController {
 
   @PostMapping("/callback")
   public ResponseEntity<ApiResponse<LarkAuthService.LarkLoginResult>> handleCallback(
-      @RequestBody LarkCallbackRequest body,
+      @jakarta.validation.Valid @RequestBody LarkCallbackRequest body,
       HttpServletRequest request) {
     LarkAuthService.LarkLoginResult result =
         authService.handleCallback(

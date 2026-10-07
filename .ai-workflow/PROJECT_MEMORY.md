@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 63 |
+| Revision | 71 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
-| Execution Mode | EXISTING_PROJECT |
-| Last Updated | 2026-10-04T18:52:00+00:00 |
-| Current Phase | 10 — Testing / Final approved backend convention plan verification |
-| Active Role | QA / Tester |
-| Status | DONE |
-| Next Role | QA / Tester |
-| Next Action | PLAN COMPLETE for approved backend Convention V1, Phases 0–8/final gates PASS at V35. Hand off docs/backend-plan-final-verification.md and progress; production sources/configuration/capture and release review/deployment are separate, not authorized/performed. Preserve dirty work and V1–V35; future schema V36+ only. |
-| Handoff Sequence | 63 |
+| Execution Mode | SCOPED_TASK |
+| Last Updated | 2026-10-07T09:25:33.544820+07:00 |
+| Current Phase | 7 — Backend Development / Lark employee mapping |
+| Active Role | Tech Lead |
+| Status | READY_FOR_REVIEW |
+| Next Role | Tech Lead |
+| Next Action | Review Lark mapping/profile changes and global default Checkstyle/SpotBugs failures; follow docs/lark-employee-login.md for real provider login on the matching backend build. No commit or deployment performed. |
+| Handoff Sequence | 71 |
 
 ## 2. Project Snapshot
 
@@ -25,7 +25,7 @@
 - **Core Features:** Reporting, trip execution, cost ledger, settlement, payroll, rating, optimization.
 - **Technology:** Java 21, Spring Boot 4.1, JPA, Flyway, PostgreSQL.
 - **Constraints:** Preserve user worktree changes; no inferred financial or distance semantics.
-- **Scope:** `plan-convention-v3-implementation-ready.md`.
+- **Scope:** Approved backend remediation replacement plan, signing-key fix, and explicitly approved Customer omitted-search / SETTLED reporting follow-ups; historical convention outputs retained.
 - **Out of Scope:** Production deployment in this task.
 - **Repository Baseline:** Existing Spring application; uncommitted Phase 0 documents, V2–V7 migrations, and implementation artifacts were already present.
 
@@ -33,10 +33,10 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** Approved backend Convention V1 — PLAN COMPLETE
-- **Objective:** Completed convention Phases 0–8 and actual final tests/build/migration/API/history/tenant gates; hand off evidence without conflating production readiness.
-- **Acceptance Gate:** PASS: final same-code clean V1→V35 / populated V34→V35 Maven clean verify/validate; 456 reported/455 executed, 0 failures/errors, one legacy skip, 160 PG; 17 Python; executable JAR/OpenAPI/checksums/diff/memory.
-- **Allowed Change Scope:** Handoff only; preserve completed source and immutable/applied history. Production source/configuration/capture/release review requires separate operational work; no deployment, commit, completed-phase refactor or new business-policy assumption.
+- **Feature/Task ID:** LARK-LINK-001 — persistent Lark → Employee authentication
+- **Objective:** Require persistent open_id/union_id mapping; auto-link exactly one ACTIVE employee by normalized provider email, fail closed with 403, protect concurrent first login and restore nodb. Provision the user-confirmed account with the highest supported ADMIN role as a separate authorized DB action.
+- **Acceptance Gate:** Requested unit/HTTP/PG/concurrency tests, full Maven verify, Flyway clean/upgrade and packaged nodb/runtime checks; run and report Checkstyle/SpotBugs honestly, no commit with failures. Real provider login instructions delivered.
+- **Allowed Change Scope:** Lark login/repository, supporting nodb bootstrap/config/tests, version-sensitive verification fixtures/tooling, documentation/memory; disposable PostgreSQL/JAR verification and explicitly requested single-account ADMIN provisioning in working DB. No hardcoded identity, automatic admin creation, token/secret persistence, broad style rewrite or application deployment.
 
 ### Phase Status
 
@@ -49,16 +49,16 @@
 | 4. System Architecture | Software Architect | Software Architect; Tech Lead; Security Engineer; Database Engineer | DONE | ADR-001 and ADR-002 |
 | 5. API Design | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer; Security Engineer | NOT_STARTED | — |
 | 6. Project Structure | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer | DONE | Existing Spring layout |
-| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | DONE | Convention 0–8 COMPLETE under all locked decisions; V35 implementation/final QA gates PASS; no production deployment claim |
+| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | READY_FOR_REVIEW | LARK-LINK-001 functional/runtime gates PASS; default global static checks FAIL, see HOFF-0071 and docs/lark-employee-login.md |
 | 8. Frontend Development | Frontend Developer | Frontend Developer; Tech Lead; QA / Tester; Security Engineer; Code Reviewer | NOT_APPLICABLE | API-only repository scope |
 | 9. Integration | Tech Lead | Tech Lead; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
-| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | DONE | Final same-code clean V35 / populated V34 upgrade PASS: 456 reported/455 executed, zero failures/errors, one legacy skip, 160 PG; 17 Python PASS; verify/repackage/runtime OpenAPI/hash/diff/memory PASS |
+| 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | DONE | Same-source clean V38 and populated V38 clone PASS: 563 executed, 214 PG, zero skips/failures/errors; retained V35/V36/V37 upgrade fixtures; 26 Python; JAR/Flyway/JPA/API/profile identity PASS locally |
 | 11. Security Review | Security Engineer | Security Engineer; Software Architect; Backend Developer; Frontend Developer; Code Reviewer | NOT_STARTED | — |
 | 12. Performance Review | Tech Lead | Tech Lead; Database Engineer; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
 | 13. Code Review | Code Reviewer | Code Reviewer; Tech Lead; Security Engineer | NOT_STARTED | — |
 | 14. DevOps | DevOps Engineer | DevOps Engineer; Tech Lead; Security Engineer; QA / Tester | NOT_STARTED | — |
 | 15. Observability | DevOps Engineer | DevOps Engineer; Tech Lead; Backend Developer | NOT_STARTED | — |
-| 16. Documentation | Tech Lead | Tech Lead; Product Owner; Backend Developer; Frontend Developer; Database Engineer; DevOps Engineer | IN_PROGRESS | Phase 0 documentation updated |
+| 16. Documentation | Tech Lead | Tech Lead; Product Owner; Backend Developer; Frontend Developer; Database Engineer; DevOps Engineer | DONE | Portable frontend context, 176-operation/291-schema snapshot, examples/exceptions/roles/business flows and ZIP verified; HOFF-0070 |
 | 17. Final Production Review | Code Reviewer | Code Reviewer; Product Owner; QA / Tester; Security Engineer; DevOps Engineer; Tech Lead | NOT_STARTED | — |
 
 ### Feature / Task Board
@@ -81,15 +81,23 @@
 | BE-CALC-017 | Phase 8 | Backend Developer | DONE | All Fleet decisions locked; V34/V35 immutable evidence/strict report/proven miles/tenant/context gates, 456/455 Java, 160 PG, 17 Python; clean/upgrade/validate/build/hash/diff PASS | Preserve completed history/report contracts; source production capture/deployment separate |
 | BE-CALC-FINAL | Convention Phases 0–8 final gate | QA / Tester | DONE | docs/backend-plan-final-verification.md; final clean/upgrade/validate/456-455/160PG/17Python/OpenAPI/JAR/SHA/diff PASS | Verified backend V1 handoff, not production readiness |
 
+| BE-REMED-BACKEND | BUG-BE-0001…0007; approved NEW-002/004 and Customer follow-up | Backend Developer | DONE | 563 Java / 214 PG / zero skips; 26 Python; same-source clean/clone and immutable local executable PASS | Review concrete source and release gates |
+| BE-REMED-RELEASE | Deployed completion gate | Tech Lead | NOT_STARTED | Existing runtime anonymous Payment 200; client/key/image gates unverified | Confirm readiness and separately authorized secure rollout |
+| FE-HANDOFF-001 | Frontend API/request/business-flow alignment | Tech Lead | DONE | docs/frontend-backend-integration-context.md; captured OpenAPI/index/notes/examples and portable ZIP | Frontend consumes context; implementation/E2E remains a separate task |
+
+| LARK-LINK-001 | User Lark mapping and explicit account provisioning request | Backend Developer | READY_FOR_REVIEW | 593 Java / 228 PG zero skips; 26 Python; V39 upgrade, executable profiles and ADMIN account confirmed; global static checks FAIL | Review source/static baseline; perform real provider login on matching build |
+
 ## 4. Requirements and Scope
 
 ### In Scope
 
 - Execute plan tasks in verified order.
+- Latest authorized scope: LARK-LINK-001 persistence/race/nodb changes, verification and separate highest-role provisioning for the user-confirmed account.
 
 ### Out of Scope
 
 - Guessing legacy data semantics.
+- Lark task excludes automatic ADMIN/SUPERADMIN creation, hardcoded identities, storing provider tokens/secrets, broad static-check cleanup and production application deployment.
 
 ### Traceability
 
@@ -107,15 +115,20 @@
 | BE-CALC-016 | Confirmed source/feasibility/score/tie and existing-Trip-only assignment | V30–V33 immutable policy/input/run/acceptance audit | Authorized policy/run/view/accept APIs | 44 optimizer PG + 76 unit/HTTP/scope, full regression and physical tenant gates | DONE |
 | BE-CALC-017 | Confirmed bounded history, strict availability/numeric and proven completion mileage | V34/V35 immutable policy/events/attribution | Fleet capture + read-only report/health API | 22 Fleet PG + 12 Fleet units; context/tenant/coverage/immutability and runtime OpenAPI | DONE |
 
+| Backend remediation | Confirmed BE-DEC-001…006, signing-key and Customer/SETTLED approvals | Preserved V1–V38, additive V38 history, key/version contracts and read-only paid classification | Security/messaging/payment/core/validation/build/report APIs | Actual PG/API/concurrency/profile/executable regressions; final 563/214 and 26 Python | DONE |
+| Remediation deployed completion | Source/artifact/image/tenant/client chain must match | Working runtime V35 untouched | Client readiness unverified | Authorized rollout and per-tenant evidence outstanding | NOT_STARTED |
+
+| LARK-LINK-001 | open_id then union_id; exactly one normalized-email ACTIVE employee; durable mapping before JWT; no automatic role creation | Existing V39 mapping with unique open/union IDs and employee FK; REQUIRES_NEW insert/reload | Public Lark callback, existing filter/security contracts, nodb health/security | 51 targeted; final 593/228 Java and 26 Python; local executable profiles PASS, global static checks FAIL | READY_FOR_REVIEW |
+
 ## 5. Architecture and Data Snapshot
 
 - **Architecture Style:** Tenant-aware Spring modular monolith; ADR-001 selects database per tenant.
 - **Modules / Boundaries:** Controller → service → repository/entity.
 - **Dependency Direction:** HTTP depends on services; services depend on repositories/entities.
 - **Authentication / Authorization:** JWT tenant claim routes to a tenant data source.
-- **Data Model / Migration:** Latest V35. Clean V1→V35 / populated V34→V35 + validate/build/regression PASS; V34 separately clean/V33 upgrade PASS. All earlier SHA unchanged, V35 untouched after application; financial/optimizer/fleet history immutable. Production rollout separate.
-- **API / Integration Contract:** Existing envelope/roles, real cross-domain controller/service/PostgreSQL tests; final executable local OpenAPI 3.1.0 with 134 paths/283 schemas and 16 required new operations verified. Not frontend E2E/production certification.
-- **Deployment / Runtime:** Docker assets exist but are unverified.
+- **Data Model / Migration:** Source latest V39; existing mapping migration bytes preserved. Clean V1→V39, populated V38→V39/checksum preservation and JPA validation verified. Working DB us_logisticsx was already V39 when inspected; only the explicitly authorized single-account Employee/ADMIN action wrote working data.
+- **API / Integration Contract:** Normalized 401/403, mapped messaging, mandatory Payment invoice/key/PENDING, metadata-only PUT, core expectedVersion and nested HTTP errors. Final local OpenAPI 140 paths and canonical hash verified. Client readiness remains unverified; frontend unchanged.
+- **Deployment / Runtime:** Dirty local JAR source/build identity and executable verified. OCI/release mismatch gates implemented; existing container/image unchanged, external restart observed and anonymous Payment still 200. This task did not rebuild/restart/deploy it; no production readiness inferred.
 
 ## 6. Decisions
 
@@ -137,6 +150,12 @@
 | DEC-011 | 2026-10-04 | Product Owner | OPT-DEC-004…010 exact eligibility/source/curves/weights/numeric/forecast/Accept contracts CONFIRMED/LOCKED | Explicit full user batch; docs/optimization-policy-decisions.md, verified V33 gates | Resolves DEC-010 later-detail gate; source/allowlists authored, no global defaults; existing Trip assignment only, no dispatch; Phase 7 COMPLETE | Former exact OPT blocker |
 | DEC-012 | 2026-10-04 | Product Owner | All required FLEET-DEC-001…009 A contracts CONFIRMED/LOCKED; 004/005 definition NOT_APPLICABLE to already approved unsupported-source UNAVAILABLE | Explicit first/follow-up replies; docs/fleet-utilization-policy-decisions.md; V34/V35 final gates | Authored maps/source/bounded evidence, no fabricated history, strict coverage/numeric, proven actual completion truck/miles; conflicts unavailable until audited correction; Phase 8 COMPLETE | Former fleet gate |
 
+| DEC-013 | 2026-10-06 | Product Owner | BE-DEC-001…006 CONFIRMED: pending cancel only, app-managed migration boundaries, mandatory version/invoice/key/PENDING, ADMIN tenant-chat creation and reservations | User replacement plan | Implement confirmed invariants without insecure compatibility bypass | Historical remediation proposal |
+| DEC-014 | 2026-10-06 | Product Owner | Include audited signing-key fix | Explicit user reply | Strong explicit key for enabled auth; production provisioning separate | Shared fallback |
+| DEC-015 | 2026-10-07 | Product Owner | Include both reviewed Customer omitted-search and SETTLED paid/open-balance fixes | Explicit user reply “Include both fixes”; docs/verification/backend-follow-up-proposals.md | Query casts and read-only terminal-success classification, PG HTTP/upgrade/history tests; no historical data rewrite, frontend change or deployment | Pending separate scope decision for these two findings |
+
+| DEC-016 | 2026-10-07 | Product Owner | Persistent Lark mapping with open/union priority and exact-one ACTIVE email auto-link; separately provision highest supported ADMIN for the confirmed account | Explicit latest user request and corrected email reply | Login never creates employees/roles or stores provider tokens/secrets; no hardcoded account; local verification and real-login guide, no app deployment | Prior documentation-only scope for this new task |
+
 ## 7. Assumptions, Risks, and Blockers
 
 ### Assumptions
@@ -155,6 +174,12 @@
 | RSK-004 | HIGH | Former payroll completion/Invoice legacy closure. | Approved semantics implemented; verified clean V20 and populated V19→V20. | Preserve completed baseline and read-only history. | Product Owner / Backend Developer | CLOSED |
 | RSK-005 | HIGH | Phase 6 financial correctness requires approved policy and verified sources. | RATE/BILL locked; 6A–6G verified at V29, immutable history/source/date/concurrency gates PASS. Unqualified mileage or historical NULL dates correctly fail closed. | Preserve completed baseline; no inferred mileage attribution, historical date or financial policy. | Product Owner / Tech Lead | MITIGATED |
 
+| RSK-006 | CRITICAL | Existing runtime exposes anonymous Payment and lacks verified revision/key | Same image/start, Payment 200, V35 | Authorized secure rollout, explicit secret and deployed chain verification | Tech Lead / DevOps Engineer | OPEN |
+| RSK-007 | HIGH | Client lacks inspected key/version contracts | Adjacent client read-only inventory | Confirm updates before enforcement rollout | Frontend Developer / Tech Lead | OPEN |
+| RSK-008 | HIGH | Separate candidate identity/schema semantics require audit | Opaque legacy Payment UUID/client contract provenance and audit principal length | Separate scope/audit; no inferred mappings or broad schema fixes. Customer/SETTLED explicitly approved and locally verified in DEC-015/HOFF-0069. | Tech Lead / Product Owner | OPEN |
+
+| RSK-009 | HIGH | Global default static analysis remains failing | Checkstyle 22,212 violations / 460 files; SpotBugs 491 findings; neither configured in project POM | Report failures; review scope/rules/baseline separately, no broad rewrite or clean-gate claim | Tech Lead | OPEN |
+
 ### Blockers
 
 | ID | Blocker | Needed To Unblock | Owner | Status |
@@ -168,6 +193,8 @@
 | BLK-005 | Former 6G additional tax/document/revenue-source contracts. | BILL-DEC-001…006 explicitly confirmed/locked and implemented; invoice-rating-v1-contract.md and final V29 gates. | Product Owner | RESOLVED |
 | BLK-006 | Former optimization exact-policy business gate. | All OPT-DEC-001…010 explicitly confirmed/locked in docs/optimization-policy-decisions.md; runtime authored allowlists/source qualifications mandatory. | Product Owner | RESOLVED |
 | BLK-007 | Former fleet policy gate. | Four A directions and exact FLEET-DEC-008/009 A received/locked; implement without defaults; health unavailable already authorized. | Product Owner | RESOLVED |
+
+| BLK-008 | Deployed remediation completion gate unmet | Confirm client/key/candidate audits and authorized secure image/tenant rollout; backend local scope complete | Tech Lead / DevOps Engineer | OPEN |
 
 ## 8. Artifact Index
 
@@ -184,7 +211,7 @@
 | Task 3.3 profitability contract | docs/profitability-contracts.md | Backend Developer | DONE | 100 regression tests; versioned/explainable classification and formulas verified |
 | Continuation checkpoint | plan-progress-summary.md | QA / Tester | DONE | Convention 0–8 PLAN COMPLETE; final V35 clean/upgrade 456/455 Java, 160 PG and 17 Python PASS |
 | Rating decision gate | docs/rating-policy-decisions.md | Tech Lead | DONE | All RATE-DEC-001…007 and V1 subset explicitly user-confirmed |
-| Regression runner | scripts/verify_backend_regression.py | Backend Developer | DONE | 17 Python tests PASS; final clean/upgrade verify/repackage; enforces 456/455 and 13 PG domain floors totaling 160 |
+| Regression runner | scripts/verify_backend_regression.py | Backend Developer | DONE | 26 Python; zero-skip/domain floor 214 PG; actual same-source clean/clone 563 Java |
 | Pickup date/mileage contract | docs/load-pickup-date-and-rating-mileage.md | Backend Developer | DONE | V22/V23 clean/upgrade/validate; 241 reported Java tests, 58 PG methods; accepted financial snapshot remains 6F |
 | EIA FSC implementation | docs/rating-fsc-v1.md | Backend Developer | DONE | 6D full regression: 252 reported, 58 PG; official series mapping/local HTTP parser tests |
 | Explainable rating engine | docs/rating-engine-v1.md | Backend Developer | DONE | 6E: 259 reported, 61 PG; ephemeral preview/API/source tests |
@@ -195,6 +222,21 @@
 | Fleet runtime contract | docs/fleet-history-v1-contract.md | Backend Developer | DONE | Immutable real history/attribution, strict SQL reports and V35 full clean/upgrade/tenant gates |
 | Final backend verification | docs/backend-plan-final-verification.md | QA / Tester | DONE | Actual final same-code clean/upgrade/regression/API/immutability/tenant matrix; production readiness separate |
 | Applied migration SHA manifest | docs/verification/migration-sha256-v35.txt | QA / Tester | DONE | All 35 active applied SQL files match verified SHA; no earlier migration edit |
+
+| Remediation verification | docs/verification/backend-remediation-status.md | Backend Developer | DONE | 2026-10-06 same-source clean/upgrade/executable PASS |
+| Remediation machine evidence | docs/verification/backend-remediation-final-evidence.json | Backend Developer | DONE | 551 Java / 204 PG / 26 Python; local artifact only |
+| Release/client gates | docs/verification/remediation-release-gates.md | Tech Lead | READY_FOR_REVIEW | Backend implemented; deployed/client gates open |
+| Payment command contract | docs/payment-command-contracts.md | Backend Developer | DONE | Canonical retry/reservation/history regressions PASS |
+| Signing key audit | docs/verification/lark-signing-secret-audit.md | Backend Developer | DONE | Approved source fix; actual missing-key/NoDB startup PASS |
+| Frozen V38 manifest | docs/verification/migration-sha256-v38.txt | Backend Developer | DONE | V1–V38 hashes match |
+| Authentication review checkpoint | docs/verification/backend-remediation-review-evidence-20261007.json | Backend Developer | DONE | Dated 556/207 clean/clone/JAR proof before approved follow-ups |
+| Final approved follow-up evidence | docs/verification/backend-remediation-followup-evidence-20261007.json | Backend Developer | DONE | Current same-source 563/214 clean/clone, 26 Python and immutable local JAR proof |
+| Approved follow-up scope | docs/verification/backend-follow-up-proposals.md | Product Owner | DONE | Explicit “Include both fixes”; minimal Customer query / SETTLED reports implemented and verified |
+| Frontend integration context | docs/frontend-backend-integration-context.md | Tech Lead | DONE | Vietnamese flows/roles/requests/response/error/cache/version/retry/UI acceptance and client gap inventory |
+| Frontend OpenAPI bundle | docs/frontend/ | Tech Lead | DONE | Source/JAR/canonical hashes match; 140 paths, 176 operations, 291 schemas, 669 refs resolved and 20 examples validated with explicit notes |
+| Portable frontend handoff | docs/frontend-backend-handoff.zip | Tech Lead | DONE | Same docs plus referenced domain/verification artifacts, integrity manifest; no credentials |
+
+- LARK-LINK-001: docs/lark-employee-login.md; /tmp/logisticsx-remediation-tests-on3kzg2a/maven.log; /tmp/logisticsx-regression-vx7jrvm_/maven.log; /tmp/logisticsx-lark-repackage-auj_j_au/summary.json and artifact-manifest.json; /tmp/logisticsx-artifact-2a7r1_10/summary.json; /tmp/lark-static-evidence/summary.json.
 
 ## 9. Role Handoffs
 
@@ -1531,28 +1573,202 @@
 - **Acceptance Gate:** PASS — all approved convention Phases 0–8 COMPLETE plus actual final clean/upgrade/validate/build/regression/PG/API/checksum/diff/memory evidence; no new skip, fake metric, hidden financial policy, historical mutation or tenant leakage.
 - **Do Not Redo:** Completed phases/policies, V1–V35, historical backfills, source DBs or HOFF-0001…0062. Do not turn unsupported health into fake zero or conflate backend PLAN COMPLETE with production readiness.
 
+### HOFF-0064 — QA / Tester → Backend Developer
+
+- **Timestamp:** 2026-10-06T06:50:15.531406+00:00
+- **From Role:** QA / Tester
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / remediation baseline
+- **Status:** DONE
+- **Objective:** Receive the approved replacement plan, preserve the dirty workspace and establish actual PostgreSQL evidence.
+- **Inputs Read:** User replacement plan, AGENTS.md, workflow skill/playbook, existing memory/history, active Maven/config/security/load/test sources and GitNexus graph.
+- **Completed:** Private workspace archive/full manifest; dedicated disposable PostgreSQL 16 harness; zero-skip verifier and 17 Python tests; first actual 501-test baseline exposed five failures. Repaired managed Load creation ID and forecast matcher precedence; targeted 18 PostgreSQL tests pass. Added PostgreSQL full-context and populated V35/V36/V37 upgrade tests; full repaired gate running.
+- **Requirement IDs:** Phase 0; BUG-BE-0007-A; baseline regressions linked BUG-BE-0001/0005.
+- **Files and Artifacts:** scripts/snapshot_remediation_baseline.py, scripts/run_isolated_remediation.py, scripts/run_remediation_tests.py, runner/report-gate tests, pom.xml, RemediationContextPostgresTest, LoadService/SecurityConfig narrow baseline repairs; docs/verification/backend-remediation-status.md; /tmp/logisticsx-remediation-baseline-lrvbsgns.
+- **Decisions:** User BE-DEC-001…006 confirmed; implementation supersedes the prior planning-session no-code restriction. No production deployment authority inferred. Graph bound to logictics_api at 0c795f8 using compatible repository runner; MCP storage mismatch unresolved, CLI usable.
+- **Assumptions:** Existing dirty files belong to user; frontend/deployed source identity not inferred.
+- **Verification:** V1–V35 SHA PASS, V36/V37 hashes match approved plan; Python 17 PASS; first full PostgreSQL run 501 executed/zero skipped/one failure/four errors, log /tmp/logisticsx-regression-qyrzsil9/maven.log. Targeted 18-test repair PASS at /tmp/logisticsx-remediation-tests-bkc1zexm/maven.log. Repaired full clean gate RUNNING at /tmp/logisticsx-regression-v9gc2a3b/maven.log.
+- **Open Issues and Risks:** Critical security/messaging/payment gaps remain; entity-wide Load/Trip/Truck blast radius high/critical. Runtime image remains unverified and untouched. Configured quality gates only; absent plugins not claimed PASS.
+- **Blockers:** None for backend implementation; final client readiness and authorized deployment gates remain external facts.
+- **Next Required Action:** Finish baseline, then normalized 401/403, narrow public routes, method security/CORS; messaging fail-closed; payment commands/guards; expectedVersion and real read/concurrency/HTTP validation verification.
+- **Acceptance Gate:** Full repaired baseline/upgrade validation PASS before advancing; retain full tests after each phase, no unexplained skips or historical migration edits.
+- **Do Not Redo:** Do not reset/clean/stage unrelated files, rewrite HOFF-0001…0063, change V1–V37, migrate working DB or certify production from source tests.
+
+### HOFF-0065 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-06T07:30:45.718893+00:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / remediation Phases 0–4
+- **Status:** DONE
+- **Objective:** Preserve verified security/financial phases and continue remaining backend gates.
+- **Inputs Read:** Approved remediation plan, preserved baseline, current source/graph/tests and actual PostgreSQL/API failures.
+- **Completed:** Baseline 503 PASS; security 511 PASS; mapped messaging and user-approved explicit Lark signing key 520 PASS; financial commands, invoice/key serialization and append-only SQL guards 530 PASS. Mandatory core expectedVersion and flushed response versions implemented; optimization JDBC writer advances Trip version; targeted 22 PostgreSQL regressions PASS.
+- **Requirement IDs:** BUG-BE-0001/0002/0003; Phase 4 BUG-BE-0005; NEW-002 user-approved extension; linked baseline/context infrastructure.
+- **Files and Artifacts:** docs/verification/backend-remediation-status.md; payment-command-contracts.md; runtime baseline and signing-key audit; V38 and source/API/tests. Full financial evidence /tmp/logisticsx-regression-pdlhbokc/summary.json; targeted core /tmp/logisticsx-remediation-tests-ub79y3t9/maven.log.
+- **Decisions:** BE-DEC-001…006 retained. Signing-key extension explicitly approved by user. No financial reclassification, tenant UUID reinterpretation, frontend change, commit or application deployment.
+- **Assumptions:** Runtime/client readiness requires actual evidence, never inferred from source. Adjacent frontend read-only audit shows no version/key fields in inspected contracts.
+- **Verification:** Full 530 executed, 188 PostgreSQL, zero failures/errors/skips; clean V1→V38 and populated V35/V36/V37 fixture upgrades preserve checksums and legacy financial rows. V38 frozen SHA 427c73b9741af59ff4ce1b5cfd42a42126b9860320a5ee07d99989d42823951e. Full Phase 4 clone upgrade running /tmp/logisticsx-regression-secvpt_7/maven.log from populated V37 database.
+- **Open Issues and Risks:** Persistence query-bound, remaining HTTP validation, NoDB/multitenant startup and packaged identity gates outstanding. Runtime unchanged and still anonymously exposes Payment; explicit key provisioning and frontend key/version readiness block release. Shared audit principal columns length 50 exposed by a longer fixture email, separate candidate.
+- **Blockers:** None for backend implementation; deployed artifact and client readiness remain external release facts.
+- **Next Required Action:** Complete Phase 4 full gate; Phase 5 behavioral fetch/query proof; Phase 6 HTTP/nested validation; Phase 7 actual profiles/build identity; Phase 8 same-code clean/upgrade/source/artifact verification and truthful handoff.
+- **Acceptance Gate:** Full regression after each phase, zero unexplained skips, old migration bytes unchanged. Do not certify production completion until source/artifact/schema/security chain and client readiness match.
+- **Do Not Redo:** Preserve HOFF-0001…0064 and unrelated dirty files; do not edit V1–V38, working DB, running application or production secrets. No fake metric, broad stage, insecure compatibility bypass or deployment.
+
+### HOFF-0066 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-06T12:45:41.927460+00:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / remediation source ready for review
+- **Status:** DONE
+- **Objective:** Deliver the approved backend implementation with behavioral verification and truthful release gates.
+- **Inputs Read:** User replacement plan/signing-key approval, AGENTS/GitNexus, workflow memory/playbook, preserved baseline, current source/tests/migrations, client inventory and runtime evidence.
+- **Completed:** Core full gate 534 PASS, persistence 537 PASS, HTTP validation 542 PASS. Final NoDB/multitenant/Flyway/JWT profiles, build/release identity and zero-skip CI implemented. Reproduced/fixed omitted-search Load/Trip PG typing; Customer equivalent recorded separately. Final clean/upgrade/executable scope verified.
+- **Requirement IDs:** BUG-BE-0001…0007, CANDIDATE-001/004/006, NEW-001 and user-approved NEW-002; BE-DEC-001…006 retained.
+- **Files and Artifacts:** docs/verification/backend-remediation-status.md, backend-remediation-final-evidence.json, remediation-release-gates.md, signing audit, payment contracts, migration-sha256-v38.txt, audit append and current plan banner; private diagnostics referenced therein.
+- **Decisions:** Preserve historical handoffs/audit claims. Deployed bugs remain FIXED_NOT_VERIFIED or drift OPEN. Backend local completion does not meet production/client gates. No candidate reclassification/UUID mapping, broad audit schema fix or Customer code extension.
+- **Assumptions:** Dirty source is not a reviewed clean commit; bearer interception does not prove client key/version readiness. Runtime fallback activation is a configuration inference with precise deployed source unknown.
+- **Verification:** Clean /tmp/logisticsx-regression-7luf4e52/summary.json and populated V37 clone /tmp/logisticsx-regression-f4xkwruh/summary.json each 551 executed, 204 PG, zero skips/failures/errors. Python 26 PASS. Final JAR /tmp/logisticsx-artifact-k1lthwt3/summary.json verifies build identity, 140-path required OpenAPI, anonymous protected 401, V1–V38/Flyway/JPA, NoDB without key and missing enabled-auth key startup rejection. Frozen SHA and whitespace PASS. Full tracked graph is CRITICAL/nonpartial/nontruncated with explicit discovery/untracked limits.
+- **Open Issues and Risks:** Existing runtime/image/start unchanged and Payment 200; client auth/key/version, explicit key provisioning, reviewed secure rollout and per-tenant production evidence open. Separate UUID/report/audit-length/Customer audits required. Plugins unconfigured and remote CI not run.
+- **Blockers:** No backend implementation blocker; deployed completion gate NOT MET. No production risk acceptance approved.
+- **Next Required Action:** Review concrete source and release/client/candidate gates; perform only separately authorized secure rollout and verify the full deployed chain.
+- **Acceptance Gate:** Backend ready for review. Overall remediation closes only after deployed API/security/schema/artifact and client readiness match; source tests do not close existing exposure.
+- **Do Not Redo:** Preserve HOFF-0001…0065 and unrelated work. Do not stage broadly, edit V1–V38, erase history, migrate working DB, generate production secrets, change frontend, rebuild/restart/deploy the application or certify production without authority/evidence.
+
+### HOFF-0067 — Tech Lead → Backend Developer
+
+- **Timestamp:** 2026-10-06T18:44:44.267093+00:00
+- **From Role:** Tech Lead
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / reviewed tenant authentication gaps
+- **Status:** DONE
+- **Objective:** Review current remediation and validate the remaining authorization boundaries.
+- **Inputs Read:** HOFF-0066/current memory, approved plan, workflow/review/impact skills, source/hash/artifact evidence, callback/router/JDBC/version/payment/report paths and tests.
+- **Completed:** Source hash still matches the 2026-10-06 evidence. Pickup dates use managed JPA flush/version updates. Reproduced callback role transfer in a unit fixture; actual PG anonymous callback 500 and mismatched callback 500; cached INACTIVE tenant actual request wrongly 200. Created a new labelled disposable PG server after prior diagnostic resources disappeared across the environment restart; current workspace snapshot retained privately.
+- **Requirement IDs:** BUG-BE-0001/0007 authentication and tenant boundary; retained BUG-BE-0005; separate NEW-003/004 audits.
+- **Files and Artifacts:** LarkAuthServiceTest and MultiTenantStartupPostgresTest regressions; /tmp/logisticsx-remediation-tests-ayraa2cm/maven.log; /tmp/logisticsx-remediation-baseline-0qjf02qo; disposable codex-remediation-adedbd847c1d, database codex_auth_review.
+- **Decisions:** Fix the failures inside approved authentication/routing scope. Preserve server-configured login tenant, role vocabulary and public callback contract; do not redesign tenant selection or expand unrelated candidates.
+- **Assumptions:** Unit role-transfer reproduction establishes a signed identity mismatch; actual HTTP currently fails earlier on unbound/lazy persistence. Production key/provider behavior has not been tested.
+- **Verification:** Targeted 11 tests executed, zero skips, four failures as expected: three actual PostgreSQL HTTP failures and one unit signed-role boundary failure. Source main hash unchanged before fix. Source graph EmployeeRepository CRITICAL 82 impacted; exact callback LOW 1 caller/10 flows; datasource ensure LOW lower-bound with three unresolved receivers, source-confirmed payroll caller.
+- **Open Issues and Risks:** Callback identity/query/token tenant mismatch, absent default-tenant bootstrap, detached lazy role and cached active-state bypass. Existing runtime/client/secret/candidate release gates persist. Earlier 551-test result remains dated historical evidence and misses these newly added cases.
+- **Blockers:** None for approved backend fixes; deployment/frontend/new candidate scope stays separate.
+- **Next Required Action:** Align callback lookup with configured login tenant, fail closed on mismatched principal, fetch role for detached login, recheck registry activity even with a cached pool, then targeted/full PG tests.
+- **Acceptance Gate:** New regressions green; retained financial/security/tenant/profile/version suites green without unexplained skips or historical migration changes.
+- **Do Not Redo:** Preserve HOFF-0001…0066 and dirty work. No frontend/working DB/secret edits, commit, application Docker rebuild/restart or deployment. Do not treat pool presence or UNKNOWN graph edges as authorization proof.
+
+### HOFF-0068 — Backend Developer → Backend Developer
+
+- **Timestamp:** 2026-10-07T02:15:00+07:00
+- **From Role:** Backend Developer
+- **To Role:** Backend Developer
+- **Phase:** 7 — Backend Development / approved Customer and SETTLED follow-ups
+- **Status:** DONE
+- **Objective:** Complete user-approved follow-ups while retaining verified tenant authentication fixes.
+- **Inputs Read:** User “Include both fixes” reply, concrete follow-up proposals, approved plan and graph/source/HTTP/PostgreSQL evidence.
+- **Completed:** Callback uses configured active tenant for employee/role lookup and signed identity, rejects conflicting bound/token tenants before provider calls, fetches role for detached login and restores context. Cached pools recheck active registry state; registry failure returns normalized 503. Both newly approved follow-ups reproduced and minimal source fixes applied.
+- **Requirement IDs:** BUG-BE-0001/0007 review; DEC-015 Customer availability and BUG-BE-NEW-004 reporting.
+- **Files and Artifacts:** backend-remediation-review-evidence-20261007.json; seven new PG HTTP regressions; backend-follow-up-proposals.md. Red follow-up log /tmp/logisticsx-remediation-tests-raxpz6kv/maven.log; green/retained run /tmp/logisticsx-remediation-tests-ym1vc4ak/maven.log.
+- **Decisions:** Both follow-ups explicitly approved; BE-DEC-001…006 retained. Include case-insensitive SETTLED in paid reporting without changing PENDING reservation/paid semantics or historical rows.
+- **Assumptions:** Production/client readiness remains external evidence. Prior full auth checkpoint is dated evidence, not verification of the additional code.
+- **Verification:** Auth review clean and populated V38 clone each 556 executed / 207 PG / zero failures/errors/skips; 26 Python and immutable local JAR PASS. New follow-ups: seven executed, six expected failures, zero errors/skips; omitted search 500, SETTLED paid omission and missed currency mismatch reproduced.
+- **Open Issues and Risks:** Latest source requires green/full/artifact verification. Runtime remains V35 with anonymous Payment 200; client keys/versions, explicit production signing key and secure release remain outstanding. Opaque Payment UUID and shared audit principal length remain separately scoped findings.
+- **Blockers:** None for authorized local work; production release completion remains unverified.
+- **Next Required Action:** Finish targeted and full clean/populated-clone PG tests, Python/migration/graph/preservation checks, disposable executable and truthful review handoff.
+- **Acceptance Gate:** Zero unexplained skips; retained domain invariants; V1–V38 hashes unchanged; read-only reports preserve legacy identity/rows and append no fake audit evidence.
+- **Do Not Redo:** Preserve HOFF-0001…0067 and dirty work. No frontend edits, working DB writes, production secret changes, commit, application rebuild/restart or deployment.
+
+### HOFF-0069 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-07T02:24:08.604699+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / reviewed source locally verified
+- **Status:** DONE
+- **Objective:** Deliver all approved local backend work with current behavioral evidence and explicit deployed limits.
+- **Inputs Read:** User replacement plan, signing-key approval and “Include both fixes”; reviewed source/proposals, impact graphs, actual HTTP/PG red regressions and full test/artifact/migration evidence.
+- **Completed:** Tenant authentication review fixes retained and verified. Customer nullable search predicates explicitly cast to strings. SETTLED counts as terminal paid success in both reports; PENDING reservations remain unpaid. Seven new actual PG regressions cover omitted/empty/name/email/status/pagination/two tenants, valid legacy invoice evidence, V37 upgrade/history preservation, status/currency/role/tenant behavior.
+- **Requirement IDs:** BUG-BE-0001…0007, approved NEW-002/004 and Customer availability; DEC-013…015; original confirmed BE decisions retained.
+- **Files and Artifacts:** backend-remediation-followup-evidence-20261007.json; backend-remediation-status.md; remediation-release-gates.md; proposal, current plan banner and historical audit append. Full clean /tmp/logisticsx-regression-8zevl_ok/summary.json; populated V38 clone /tmp/logisticsx-regression-ail_mbca/summary.json; executed immutable JAR /tmp/logisticsx-artifact-jbm4c1s2/summary.json.
+- **Decisions:** User-approved minimal changes only. Keep historical payment rows/hash/identity/audit unchanged; no frontend edit, production secret change, working DB migration, commit or application rebuild/restart/deployment. Preserve all historical handoffs and evidence.
+- **Assumptions:** Dirty local source hash is not clean-commit release approval. Same-source local executable/PG proof does not establish production image/client/key alignment. Effective existing signing key remains unverified.
+- **Verification:** Targeted 46 PASS after seven new tests reproduced six failures. Final clean and populated V38 clone each 563 executed Java / 214 PG / zero failures/errors/skips. Retained suites exercise populated V35/V36/V37→V38 fixtures. Python 26 PASS; frozen/historical migration SHA, Flyway/JPA, packaged identity/140-path contract/anonymous protected 401/NoDB/missing-key startup and whitespace PASS. Main-source SHA b69beb469fda434309c8b3f8f9d7135142872c9c563ffbc890d08e191d3b4795; immutable executed JAR aa685a2f8e159f99a44ef1d85a27a491cbafabaec9aa933780469c2bde2b40c2. Graph full rebuild/structured result CRITICAL, nonpartial/nontruncated, discovery/untracked limits retained.
+- **Open Issues and Risks:** Old deployed image remains V35/138 paths/anonymous Payment 200. Frontend core key/version/auth readiness, explicit production key, reviewed immutable secure release/per-tenant schema proof and remote CI unverified. Opaque Payment UUID/client provenance and audit principal length remain separate findings. Failsafe/Checkstyle/SpotBugs/ArchUnit unconfigured.
+- **Blockers:** None for authorized backend implementation; overall deployed completion gate NOT MET, no risk acceptance approved.
+- **Next Required Action:** Review concrete source and external release facts; perform only separately authorized secure rollout after client/secret/schema gates. Preserve the secure contracts and additive history guards in rollback.
+- **Acceptance Gate:** Backend locally verified and ready for review. Deployed FIXED_VERIFIED requires actual source/artifact/image/API/schema/security/client alignment; current exposure must not be certified fixed.
+- **Do Not Redo:** Preserve HOFF-0001…0068, dirty/unrelated work, frozen V1–V38 and private diagnostics. Do not infer legacy UUID mappings, rewrite historical payment statuses, use working DB for tests, broadly stage, silently accept versionless/keyless writes or return to the permissive image.
+
+### HOFF-0070 — Tech Lead → Frontend Developer
+
+- **Timestamp:** 2026-10-07T03:31:17.165687+07:00
+- **From Role:** Tech Lead
+- **To Role:** Frontend Developer
+- **Phase:** 16 — Documentation / frontend integration context
+- **Status:** DONE
+- **Objective:** Give frontend a portable, source-grounded API/request/business-flow context without relying on chat history.
+- **Inputs Read:** User request for frontend context; HOFF-0069/current controls and approved business decisions; verified source/JAR metadata; current backend controllers/DTOs/role matchers/domain contracts and read-only adjacent frontend providers/forms/types; GitNexus flows/context then source confirmation.
+- **Completed:** Vietnamese handoff covers transport/URL/auth/tenant/roles/errors, version/stale forms, employee-bound messaging, dedicated Payment commands, rating→billing, trip/cost execution, settlement→payroll, optimization/fleet/availability, frontend gap mapping/cache/acceptance and next-agent prompt. Full verified local JAR OpenAPI exported, immutable canonical contract retained; operation catalog, semantic exceptions and 20 schema examples provided. Stale Payment contract SETTLED paragraph corrected to the already approved/current source behavior. Portable ZIP and manifest prepared.
+- **Requirement IDs:** FE-HANDOFF-001; contracts from BUG-BE-0001…0007 and approved NEW-002/004/Customer; BE-DEC-001…006 and prior locked RATE/BILL/OPT/FLEET/payroll decisions retained.
+- **Files and Artifacts:** docs/frontend-backend-integration-context.md; docs/frontend/README.md, openapi-backend-remediation.json, openapi-provenance.json, api-operation-index.md, contract-notes.json, request-examples.json, handoff-verification.json; docs/frontend-backend-handoff.zip. Snapshot diagnostics /tmp/logisticsx-frontend-contract-ij3zq878; own local Java process stopped, disposable DB retained.
+- **Decisions:** Documentation-only delivery. Do not normalize all success responses to envelope: Payroll/Payslip use direct DTO/list/Spring Page. Preserve captured OpenAPI bytes/semantic hash; known null/redirect/delete exceptions are explicit notes. Real OIDC issuer/JWKS→current backend HMAC verifier compatibility is unverified, not proved by normalized-principal tests.
+- **Assumptions:** Frontend source inventory is a dated read, not completed UI/E2E evidence. Role checks do not override object/tenant/membership/financial guards. Example IDs/hashes/provider references are placeholders, not live commands or fake provenance.
+- **Verification:** Canonical OpenAPI hash matches verified JAR/source; main source hash unchanged b69beb469fda434309c8b3f8f9d7135142872c9c563ffbc890d08e191d3b4795. 140 paths/176 operations/291 schemas, 669 internal refs resolved, 19 example bodies and one required query validated with documented nullable override; 29 new local links resolved. Existing 563/214 backend evidence retained, not rerun for docs; frontend build/tests/E2E NOT RUN. Whitespace, ZIP/hash manifest and workflow validator checked before final handoff.
+- **Open Issues and Risks:** Existing deployed image/V35/anonymous Payment exposure and client/key/secure release gates remain open. Frontend wire DTO/forms lack core version/Payment key contracts; raw response modes and runtime/legacy URL config need reconciliation. Real external OIDC bearer compatibility must be proven before integration. Opaque Payment UUID/client provenance and audit principal length remain separately scoped.
+- **Blockers:** None for context delivery. Frontend source implementation/real integration/release acceptance have not been requested or verified by this documentation task.
+- **Next Required Action:** Read bundle, map screens to exact methods/paths/body/query/response modes/roles; use matching backend staging artifact and real accepted token. When assigned implementation, fix frontend in reviewed slices with version/retry/membership/domain UX and tests; preserve auth/client work already present.
+- **Acceptance Gate:** Context/package ready for frontend consumption. Frontend readiness requires its own typecheck/build/API/UI/E2E and actual artifact/token/tenant evidence; no production completion inferred.
+- **Do Not Redo:** Preserve HOFF-0001…0069 and dirty work. Do not change production code/migrations/frontend/secret/runtime for a docs task, invent APIs, silently bypass key/version constraints, publish tokens or treat container :8080 as the new contract.
+
+### HOFF-0071 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-07T09:25:33.544820+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / persistent Lark employee authentication
+- **Status:** DONE
+- **Objective:** Complete the explicitly requested Lark mapping/race/403/nodb flow and separate user-account privilege provisioning.
+- **Inputs Read:** Latest user specification and corrected email confirmation; AGENTS/GitNexus/workflow playbook; existing mapping/auth/filter/Employee/repository/SecurityConfig/Flyway/POM; prior memory, targeted/full/runtime evidence.
+- **Completed:** Reused existing V39 table/entity; removed no-repository login and singleton-query fallback, required stable identity, isolated mapping inserts in REQUIRES_NEW, trim JWT subject and reject disabled callbacks. Restored missing nodb configuration with explicit health/security component boundary. Added unit/actual HTTP/PG/open-and-union race/upgrade/profile tests. Replaced stale V38 assertions in report fixture and executable verifier with all-current-migrations checks. Provisioned confirmed account ACTIVE/ADMIN in us_logisticsx by standalone transaction and read back; no mapping fabricated.
+- **Requirement IDs:** LARK-LINK-001 and explicit user account provisioning; prior BE decisions retained.
+- **Files and Artifacts:** LarkAuthService.java; LarkUserMappingRepository.java; LogisticApplication.java; NoDbComponentFilter.java; application-nodb.yml; LarkAuthServiceTest.java; LarkEmployeeMappingPostgresTest.java; NoDbProfileTest.java; SettledPaymentReportPostgresTest.java; scripts/verify_disposable_artifact.py; docs/lark-employee-login.md; diagnostics indexed above.
+- **Decisions:** Existing V39 preserved, no new migration or account seed. ADMIN is highest existing matcher-supported role, no SUPERADMIN mechanism introduced. User's explicit account action supersedes earlier no-working-DB-write scope for that action only. Login creates no roles/employees; no secrets/tokens persist. No app rebuild/restart/deployment or commit.
+- **Assumptions:** Real Lark login needs the user's provider consent and provider email matching the account. New account mandatory salary fields initialized HOURLY/0 USD and temporary display name; update actual employee/payroll profile before payroll use.
+- **Verification:** Targeted 51 PASS after fixing Spring Data spy test harness. Full initial run 593/zero skips exposed four obsolete V38 fixture assertions; corrected and reran Maven clean verify: 593 executed Java, 228 PG, zero failures/errors/skips. Python 26 PASS. Post-build verifier found UNKNOWN/UNVERIFIED metadata; same tested source repackaged with explicit identity and final local JAR/runtime/Flyway/JPA/OpenAPI140/anonymous401/nodb/missing-key gates PASS. Source SHA 493b1945bdadde6b71a7d525fac19974aafc1db3275ad22e09e98fbcb8ddc975; JAR SHA 6970994765a207289f0d37322c3a1e483605e3d1441769f0718b1a824399a689. Whitespace PASS. Checkstyle 22,212 violations and SpotBugs 491 findings FAIL; not configured POM gates and not claimed clean.
+- **Open Issues and Risks:** Global default static checks remain failed and require scoped rule/baseline review. Graph repository impact HIGH and all-dirty-worktree CRITICAL; index discovery limits and untracked git-diff exclusions prevent claiming exhaustive no-impact. Existing deployed application and real Lark provider flow were not tested/deployed in this task; prior release/client issues remain separate and unclosed.
+- **Blockers:** No remaining functional implementation/test blocker; real provider consent and deployment validation remain external. Static checks do not pass; source ready for review, not production ready.
+- **Next Required Action:** Review functional source and static-check scope/baseline, then follow docs/lark-employee-login.md on the matching backend build for real Lark login and confirm persisted mapping/ADMIN authorization.
+- **Acceptance Gate:** Local implementation/runtime verified; global static checks openly FAIL and no commit/deployment inferred. Real-provider and deployed completion require their own evidence.
+- **Do Not Redo:** Preserve HOFF-0001…0070, unrelated dirty work and V1–V39 bytes. Do not rerun the completed 593-test suite without new changes/failures, recreate the account, invent Lark IDs, hardcode identity, auto-create admins, persist tokens or broadly reformat/stage.
+
 ## 10. Final Readiness
 
 | Check | Status | Evidence / Exception |
 |---|---|---|
-| Requirements implemented and traced | PASS | Approved backend convention Phases 0–8 and final QA gates COMPLETE; not broader production release certification |
-| Build successful | PASS | Final same-code clean and populated upgrade each run Maven clean verify/repackage; executable Boot JAR startup/OpenAPI confirmed |
-| Tests successful | PASS | Final clean V35 / populated V34 upgrade: 456 reported/455 executed, 0 failures/errors, 1 named legacy skip; 160 PG and 17 Python PASS |
-| API working | PASS | Scoped controller/service/PostgreSQL auth/envelope tests and actual OpenAPI 3.1.0 134 paths/283 schemas/16 required new operations; no live production provider certification |
+| Requirements implemented and traced | IN_PROGRESS | Current remediation supersedes prior scoped convention completion; see HOFF-0064 and verification status |
+| Build successful | PASS | Same-source clean/upgrade Maven verify/repackage and packaged identity/executable startup PASS locally |
+| Tests successful | PASS | Latest Lark scope 593 Java / 228 PG, zero failures/errors/skips and 26 Python; prior dated evidence retained; default static checks separately FAIL |
+| API working | IN_PROGRESS | Scoped actual local APIs/OpenAPI and approved Customer/report follow-ups PASS; existing runtime unaligned |
 | Frontend working | NOT_APPLICABLE | API-only scope |
-| Database migrations working | PASS | Final clean V1–V35 and populated V34→V35 clone + validate PASS; all 35 SHA verified, applied files untouched; production rollout separate |
-| Authentication and authorization working | PASS | Existing scoped roles/tenant actors, command/read ownership and physical tenant isolation verified in real integration tests; broader security review separate |
-| Validation and error handling working | PASS | Scoped domain failure/ambiguity/date/mileage/source/tax/credit/stale/resource/availability errors and retry/conflict contracts verified |
+| Database migrations working | PASS | Local clean V1→V39 and populated V38→V39/checksum preservation, executable Flyway/JPA PASS; no working DB migration performed |
+| Authentication and authorization working | IN_PROGRESS | Actual JWT/role/tenant and local 401/403 PASS; deployed anonymous Payment still 200 |
+| Validation and error handling working | PASS | Actual HTTP nested/requestId/auth precedence/no-write/422 and stale/idempotency 409 regressions PASS |
 | Security reviewed | NOT_STARTED | Not reviewed |
 | Performance reviewed | NOT_STARTED | Not reviewed |
-| No hardcoded secrets | NOT_STARTED | Not scanned |
+| No hardcoded secrets | IN_PROGRESS | Approved Lark fallback removed and explicit-key startup enforced; broader deployed property/key audit and provisioning outstanding |
 | Deployment and rollback working | NOT_STARTED | Not verified |
 | Observability ready | NOT_STARTED | Not verified |
-| Documentation complete | IN_PROGRESS | Approved backend plan/decision/domain/final evidence docs complete; broader production operational documentation/review separate |
-| No unresolved release-blocking defects | PASS | No unresolved approved backend V1 implementation/business gate; production deployment/security/performance review not certified |
+| Documentation complete | PASS | Current evidence/contracts/release gates/machine manifest and historical audit/handoff updated |
+| No unresolved release-blocking defects | IN_PROGRESS | Runtime exposure/drift, client readiness and separate audits remain open; no risk acceptance |
 
 **Production Verdict:** NOT READY
 
 **Backend Convention V1 Verdict:** PLAN COMPLETE — Phases 0–8/final gates PASS at V35. This scoped verdict does not override the broader Production Verdict.
 
 **Residual Risks / Approved Exceptions:** Unqualified legacy sources are fail-closed, unsupported health unavailable is explicitly approved. RSK-001 legacy qualification and RSK-002 production tenant rollout validation remain operational considerations; RSK-003 resolved. No production-readiness exception is approved.
+
+**Backend Remediation Verdict:** IMPLEMENTED AND LOCALLY VERIFIED — READY FOR REVIEW. Overall deployed completion gate NOT MET.
+
+**2026-10-07 Review Update:** Reproduced BUG-BE-0001/0007 tenant authentication gaps and both user-approved Customer/SETTLED follow-ups are implemented and locally verified. Backend source ready for review; deployed completion gate remains NOT MET.
+
+**2026-10-07 Lark Update:** Persistent mapping/race/nodb implementation and requested separate ADMIN account are locally verified; default Checkstyle/SpotBugs remain FAIL. Real Lark consent/login and application deployment remain unverified.

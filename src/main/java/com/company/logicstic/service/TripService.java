@@ -2,6 +2,8 @@ package com.company.logicstic.service;
 
 import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.trip.CreateTripRequest;
+import com.company.logicstic.dto.trip.UpdateTripRequest;
+import com.company.logicstic.common.ExpectedVersionGuard;
 import com.company.logicstic.dto.trip.TripView;
 import com.company.logicstic.entity.Trip;
 import com.company.logicstic.exception.ResourceNotFoundException;
@@ -50,12 +52,14 @@ public class TripService {
     }
 
     @Transactional
-    public TripView update(UUID id, CreateTripRequest request) {
+    public TripView update(UUID id, UpdateTripRequest command) {
         Trip trip = tripRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found: " + id));
+        ExpectedVersionGuard.require(command == null ? null : command.expectedVersion(), trip.getVersion());
+        CreateTripRequest request = command.toCreateRequest();
         tripMapper.updateEntity(request, trip);
         resolveRelations(trip, request);
-        return tripMapper.toView(tripRepository.save(trip));
+        return tripMapper.toView(tripRepository.saveAndFlush(trip));
     }
 
     @Transactional

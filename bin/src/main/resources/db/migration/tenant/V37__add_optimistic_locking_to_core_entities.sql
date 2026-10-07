@@ -1,0 +1,4 @@
+-- V37: Add optimistic locking version column to core mutable entities
+ALTER TABLE loads ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE trucks ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;

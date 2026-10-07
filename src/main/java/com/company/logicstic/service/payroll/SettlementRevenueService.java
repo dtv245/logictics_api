@@ -36,8 +36,8 @@ public class SettlementRevenueService {
     private final EntityManager em;
     private final ObjectMapper json;
 
-    public record Recalculate(String idempotencyKey,UUID expectedSnapshotId,String reasonCode,String reason) { }
-    public record Adjustment(String idempotencyKey,UUID affectedDocumentId,String reasonCode,String reason) { }
+    public record Recalculate(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=120) String idempotencyKey,@jakarta.validation.constraints.NotNull UUID expectedSnapshotId,@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=80) String reasonCode,@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=300) String reason) { }
+    public record Adjustment(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=120) String idempotencyKey,@jakarta.validation.constraints.NotNull UUID affectedDocumentId,@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=80) String reasonCode,@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=300) String reason) { }
     public record Impact(UUID originalSettlementId,UUID affectedDocumentId,UUID adjustmentSettlementId,
             BigDecimal economicDelta,BigDecimal payDelta,String outcome,UUID commandId) { }
 

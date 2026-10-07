@@ -44,7 +44,7 @@ class FinancialReportSecurityTest {
                 "/api/reports/fleet/maintenance", "/api/reports/costs/known-operating-cpm",
                 "/api/loads/load/financial-summary", "/api/reports/profitability/by-lane",
                 "/api/reports/profitability/by-load", "/api/reports/profitability/by-truck"}) {
-            mvc.perform(get(path)).andExpect(status().isForbidden());
+            mvc.perform(get(path)).andExpect(status().isUnauthorized());
             mvc.perform(get(path).with(user("driver").roles("DRIVER"))).andExpect(status().isForbidden());
         }
     }
@@ -54,14 +54,14 @@ class FinancialReportSecurityTest {
     }
     @Test void onlyAccountingRolesMayApproveExpenses() throws Exception {
         String path = "/api/expenses/expense/approve";
-        mvc.perform(post(path)).andExpect(status().isForbidden());
+        mvc.perform(post(path)).andExpect(status().isUnauthorized());
         mvc.perform(post(path).with(user("driver").roles("DRIVER"))).andExpect(status().isForbidden());
         mvc.perform(post(path).with(user("payroll").roles("PAYROLL"))).andExpect(status().isForbidden());
         mvc.perform(post(path).with(user("accountant").roles("ACCOUNTANT"))).andExpect(status().isOk());
     }
     @Test void dispatcherAndDriverCannotApproveAccessorials() throws Exception {
         String path = "/api/accessorial-charges/charge/approve";
-        mvc.perform(put(path)).andExpect(status().isForbidden());
+        mvc.perform(put(path)).andExpect(status().isUnauthorized());
         mvc.perform(put(path).with(user("dispatcher").roles("DISPATCHER"))).andExpect(status().isForbidden());
         mvc.perform(put(path).with(user("driver").roles("DRIVER"))).andExpect(status().isForbidden());
         mvc.perform(put(path).with(user("accountant").roles("ACCOUNTANT"))).andExpect(status().isOk());

@@ -18,13 +18,31 @@ import org.springframework.transaction.annotation.*;
 public class FleetHistoryService {
     private final FleetHistoryRepository history;private final EmployeeRepository employees;
     private final RatingFingerprintService fingerprints;private final FleetIntervalCalculator calculator;
-    public record Publish(String code,int version,Map<String,Boolean> membershipStates,Map<String,Boolean> capacityStates,
-                          Map<String,Activity> activityStates,List<Source> sources,String approvalReference) {}
-    public record Capture(UUID policyId,UUID truckId,Kind kind,String status,Instant occurredAt,Instant validUntil,
-                          Source source,String sourceEventId,UUID tripId,UUID loadId,String executionReference,
+    public record Publish(@jakarta.validation.constraints.NotBlank String code,
+                          @jakarta.validation.constraints.Min(1) int version,
+                          @jakarta.validation.constraints.NotNull Map<String,Boolean> membershipStates,
+                          @jakarta.validation.constraints.NotNull Map<String,Boolean> capacityStates,
+                          @jakarta.validation.constraints.NotNull Map<String,Activity> activityStates,
+                          @jakarta.validation.constraints.NotNull List<Source> sources,
+                          @jakarta.validation.constraints.NotBlank String approvalReference) {}
+    public record Capture(UUID policyId,
+                          @jakarta.validation.constraints.NotNull UUID truckId,
+                          @jakarta.validation.constraints.NotNull Kind kind,
+                          @jakarta.validation.constraints.NotBlank String status,
+                          @jakarta.validation.constraints.NotNull Instant occurredAt,
+                          @jakarta.validation.constraints.NotNull Instant validUntil,
+                          @jakarta.validation.constraints.NotNull Source source,
+                          String sourceEventId,UUID tripId,UUID loadId,String executionReference,
                           UUID supersedesEventId,String reasonCode,String reason) {}
-    public record Attribute(UUID policyId,UUID truckId,UUID tripId,Instant completedAt,BigDecimal loadedMiles,
-                            BigDecimal emptyMiles,BigDecimal actualMiles,Source source,String sourceEventId,
+    public record Attribute(UUID policyId,
+                            @jakarta.validation.constraints.NotNull UUID truckId,
+                            @jakarta.validation.constraints.NotNull UUID tripId,
+                            @jakarta.validation.constraints.NotNull Instant completedAt,
+                            BigDecimal loadedMiles,
+                            BigDecimal emptyMiles,
+                            @jakarta.validation.constraints.NotNull BigDecimal actualMiles,
+                            @jakarta.validation.constraints.NotNull Source source,
+                            String sourceEventId,
                             UUID supersedesId,String reasonCode,String reason) {}
     @Transactional public Policy publish(Publish r,UUID actor) {
         actor(actor);if(r==null || blank(r.code()) || r.code().length()>100 || r.version()<1 || blank(r.approvalReference())

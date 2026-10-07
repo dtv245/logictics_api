@@ -8,15 +8,17 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record CreatePaymentRequest(
-        @NotBlank String status,
-        UUID invoiceId,
-        @NotNull BigDecimal amountAmount,
+        @NotBlank @jakarta.validation.constraints.Pattern(regexp="(?i)PENDING") String status,
+        @NotNull UUID invoiceId,
+        @NotNull @jakarta.validation.constraints.DecimalMin(value="0",inclusive=false)
+        @jakarta.validation.constraints.Digits(integer=16,fraction=2) BigDecimal amountAmount,
         @NotBlank String amountCurrency,
         String description,
         String referenceNumber,
+        @NotBlank @jakarta.validation.constraints.Size(max=200) String idempotencyKey,
         String stripePaymentMethodId,
         String stripePaymentIntentId,
-        OffsetDateTime recordedAt,
+        @jakarta.validation.constraints.Null OffsetDateTime recordedAt,
         // Billing address
         @NotBlank String billingAddressLine1,
         String billingAddressLine2,

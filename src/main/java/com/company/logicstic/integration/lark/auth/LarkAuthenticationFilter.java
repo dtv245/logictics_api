@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -45,6 +46,16 @@ public class LarkAuthenticationFilter extends OncePerRequestFilter {
           Claims claims = authService.validateInternalToken(token);
           String email = claims.get("email", String.class);
           String tenant = claims.get("tenant", String.class);
+          if (!StringUtils.hasText(claims.getSubject()) || !StringUtils.hasText(email)
+              || !StringUtils.hasText(tenant)) {
+            throw new IllegalArgumentException("Authenticated identity claims are incomplete");
+          }
+          if (TenantContext.getTenantId().filter(bound -> !bound.equals(tenant)).isPresent()) {
+            com.company.logicstic.config.SecurityResponses.write(request, response, 403,
+                "IDENTITY_TENANT_MISMATCH", "Authenticated tenant boundary does not match");
+            TenantContext.clear();
+            return;
+          }
 
           @SuppressWarnings("unchecked")
           List<String> roles = claims.get("roles", List.class);
@@ -58,8 +69,16 @@ public class LarkAuthenticationFilter extends OncePerRequestFilter {
                   .map(SimpleGrantedAuthority::new)
                   .collect(Collectors.toList());
 
-          UsernamePasswordAuthenticationToken authentication =
-              new UsernamePasswordAuthenticationToken(email, null, authorities);
+          // Retain the validated subject/tenant claims through the shared Spring
+          // principal. Existing financial actor lookups still use the email name.
+          Jwt principal = Jwt.withTokenValue(token)
+              .header("typ", "JWT")
+              .claims(values -> values.putAll(claims))
+              .issuedAt(claims.getIssuedAt() == null ? null : claims.getIssuedAt().toInstant())
+              .expiresAt(claims.getExpiration() == null ? null : claims.getExpiration().toInstant())
+              .build();
+          JwtAuthenticationToken authentication =
+              new JwtAuthenticationToken(principal, authorities, email);
 
           SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -68,7 +87,7 @@ public class LarkAuthenticationFilter extends OncePerRequestFilter {
           }
         } catch (Exception ex) {
           // Token is not an internal Lark token or expired; ignore and continue filter chain
-          log.trace("Token is not a valid Lark token: {}", ex.getMessage());
+          log.trace("Bearer authentication rejected");
         }
       }
     }

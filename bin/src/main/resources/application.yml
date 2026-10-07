@@ -18,6 +18,62 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+  flyway:
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    locations: ${SPRING_FLYWAY_LOCATIONS:classpath:db/migration/tenant}
 
 server:
   port: ${SERVER_PORT:8080}
+
+app:
+  optimization:
+    single-tenant-scope: ${OPT_SINGLE_TENANT_SCOPE:}
+    providers:
+      dynamic:
+        endpoint: ${OPT_DYNAMIC_ENDPOINT:}
+        token: ${OPT_DYNAMIC_TOKEN:}
+      hos:
+        endpoint: ${OPT_HOS_ENDPOINT:}
+        token: ${OPT_HOS_TOKEN:}
+  calculation:
+    rounding:
+      version: ${ROUNDING_POLICY_VERSION:LOGISTICSX-ROUNDING-V1}
+      invoice: ${INVOICE_ROUNDING_MODE:HALF_UP}
+      report: ${REPORT_ROUNDING_MODE:HALF_UP}
+      allocation: ${ALLOCATION_ROUNDING_MODE:HALF_UP}
+  tenancy:
+    enabled: ${TENANCY_ENABLED:false}
+    registry:
+      url: ${TENANT_REGISTRY_DB_URL:}
+      username: ${TENANT_REGISTRY_DB_USERNAME:}
+      password: ${TENANT_REGISTRY_DB_PASSWORD:}
+      encryption-key: ${TENANT_REGISTRY_ENCRYPTION_KEY:}
+      auto-initialize: ${TENANT_REGISTRY_AUTO_INITIALIZE:true}
+    pool:
+      max-tenant-pools: ${TENANT_MAX_POOLS:100}
+      maximum-pool-size: ${TENANT_POOL_MAX_SIZE:10}
+      minimum-idle: ${TENANT_POOL_MIN_IDLE:1}
+    migration:
+      locations: ${TENANT_MIGRATION_LOCATIONS:classpath:db/migration/tenant}
+    provisioning:
+      admin-url: ${TENANT_PROVISIONING_ADMIN_DB_URL:}
+      admin-username: ${TENANT_PROVISIONING_ADMIN_DB_USERNAME:}
+      admin-password: ${TENANT_PROVISIONING_ADMIN_DB_PASSWORD:}
+      template-database: ${TENANT_TEMPLATE_DATABASE:}
+
+  lark:
+    enabled: ${LARK_ENABLED:true}
+    app-id: ${LARK_APP_ID:}
+    app-secret: ${LARK_APP_SECRET:}
+    redirect-uri: ${LARK_REDIRECT_URI:http://localhost:5173/auth/callback}
+    base-url: ${LARK_BASE_URL:https://open.larksuite.com}
+    jwt-secret: ${LARK_JWT_SECRET:logistics-lark-default-secret-key-at-least-256-bits-long-change-in-production!}
+    jwt-issuer: ${LARK_JWT_ISSUER:https://open.larksuite.com}
+    jwt-ttl: ${LARK_JWT_TTL:8h}
+    state-ttl: ${LARK_STATE_TTL:15m}
+    default-tenant-id: ${LARK_DEFAULT_TENANT_ID:local-development}
+    base:
+      enabled: ${LARK_BASE_ENABLED:true}
+      app-token: ${LARK_BASE_APP_TOKEN:}
+      loads-table-id: ${LARK_BASE_LOADS_TABLE_ID:}
+      drivers-table-id: ${LARK_BASE_DRIVERS_TABLE_ID:}

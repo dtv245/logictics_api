@@ -72,7 +72,7 @@ class LoadPickupBusinessDatePostgresTest {
     @Test void updateExplicitLocalDateHasItsOwnChainedAuditAndKeepsCapturedInput() {
         var f = fixture(); var first = loads.create(request(f.customer(), "2026-01-01T00:00:00Z", LocalDate.of(2026,1,1)));
         var capturedInput = rating.pricingDate(first.id());
-        var next = loads.update(first.id(), request(f.customer(), "2026-01-01T00:00:00Z", LocalDate.of(2026,1,2)));
+        var next = loads.update(first.id(), com.company.logicstic.dto.load.UpdateLoadRequest.from(request(f.customer(), "2026-01-01T00:00:00Z", LocalDate.of(2026,1,2)), first.version()));
         assertEquals(LocalDate.of(2026,1,2), next.requestedPickupBusinessDate());
         assertNotEquals(first.pickupBusinessDateChangeId(), next.pickupBusinessDateChangeId());
         assertEquals(first.pickupBusinessDateChangeId(), jdbc.queryForObject("select previous_change_id from load_pickup_business_date_changes where id=?", UUID.class, next.pickupBusinessDateChangeId()));
@@ -81,7 +81,7 @@ class LoadPickupBusinessDatePostgresTest {
     }
     @Test void appointmentEditDoesNotRecomputeOrClearPromisedDate() {
         var f = fixture(); var first = loads.create(request(f.customer(), "2026-01-01T12:00:00Z", LocalDate.of(2026,1,1)));
-        var next = loads.update(first.id(), request(f.customer(), "2027-12-31T23:45:00-12:00", null));
+        var next = loads.update(first.id(), com.company.logicstic.dto.load.UpdateLoadRequest.from(request(f.customer(), "2027-12-31T23:45:00-12:00", null), first.version()));
         assertEquals(first.requestedPickupBusinessDate(), next.requestedPickupBusinessDate());
         assertEquals(first.pickupBusinessDateChangeId(), next.pickupBusinessDateChangeId());
         assertEquals(1, jdbc.queryForObject("select count(*) from load_pickup_business_date_changes where load_id=?", Integer.class, first.id()));

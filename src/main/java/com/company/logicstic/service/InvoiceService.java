@@ -65,7 +65,7 @@ public class InvoiceService {
     @Transactional
     public InvoiceView update(UUID id, CreateInvoiceRequest request) {
         rejectLegacyPayrollFields(request);
-        Invoice invoice = invoiceRepository.findById(id)
+        Invoice invoice = invoiceRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + id));
         requireEditable(invoice);
         invoiceMapper.updateEntity(request, invoice);
@@ -75,7 +75,7 @@ public class InvoiceService {
 
     @Transactional
     public void delete(UUID id) {
-        requireEditable(invoiceRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + id)));
+        requireEditable(invoiceRepository.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + id)));
         invoiceRepository.deleteById(id);
     }
 

@@ -11,6 +11,10 @@ import java.util.UUID;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from Invoice i where i.id=:id")
+    java.util.Optional<Invoice> findByIdForUpdate(@Param("id") UUID id);
+
     @Query("""
             SELECT i FROM Invoice i
             WHERE (:status IS NULL OR i.status = :status)

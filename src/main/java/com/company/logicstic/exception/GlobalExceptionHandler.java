@@ -23,6 +23,13 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).header("Cache-Control", "no-store")
+                .body(ApiResponse.failure("FORBIDDEN", "Access is forbidden", List.of(), request));
+    }
+
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ApiResponse<Void>> handleApiException(
             ApiException exception,
@@ -84,10 +91,30 @@ public class GlobalExceptionHandler {
             DataIntegrityViolationException exception,
             HttpServletRequest request
     ) {
-        log.warn("Data integrity violation for {} {}", request.getMethod(), request.getRequestURI(), exception);
+        // PostgreSQL details can include an entire rejected row. Keep financial/message payloads out of logs.
+        log.warn("data_integrity_failure method={} path={} domainCode=DATA_INTEGRITY_VIOLATION",
+                request.getMethod(), request.getRequestURI());
         ApiResponse<Void> body = ApiResponse.failure(
                 "DATA_INTEGRITY_VIOLATION",
                 "Cannot complete request due to a data conflict",
+                List.of(),
+                request
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    @ExceptionHandler({
+            jakarta.persistence.OptimisticLockException.class,
+            org.springframework.orm.ObjectOptimisticLockingFailureException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLockException(
+            Exception exception,
+            HttpServletRequest request
+    ) {
+        log.warn("Optimistic locking conflict on {} {}", request.getMethod(), request.getRequestURI());
+        ApiResponse<Void> body = ApiResponse.failure(
+                "CONCURRENT_MODIFICATION_CONFLICT",
+                "The resource has been updated by another transaction. Please reload and retry.",
                 List.of(),
                 request
         );

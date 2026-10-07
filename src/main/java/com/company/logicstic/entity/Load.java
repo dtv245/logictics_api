@@ -40,6 +40,10 @@ public class Load extends BaseAuditableEntity {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
     @Column(name = "\"number\"", nullable = false, insertable = false, updatable = false, unique = true)
     private Long number;
 

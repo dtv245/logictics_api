@@ -22,6 +22,9 @@ public class TenantDataSourceService {
     private final TenancyProperties properties;
 
     public DataSource ensureTenantDataSource(String tenantId) {
+        // A cached connection pool does not authorize an inactive tenant.
+        tenantRegistryService.findActiveTenant(tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Tenant is not active or not registered"));
         return tenantRoutingDataSource.getRegisteredDataSource(tenantId)
                 .orElseGet(() -> createAndRegisterTenantDataSource(tenantId));
     }

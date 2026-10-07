@@ -1,0 +1,29 @@
+name: Backend PostgreSQL remediation gates
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  backend-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Report and artifact verifier regressions
+        run: python3 -m unittest discover -s scripts/tests -v
+      - name: Full isolated PostgreSQL 16 and Flyway regression (zero skips)
+        run: python3 scripts/run_isolated_remediation.py
+      - name: Upload verification manifests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-verification
+          path: |
+            /tmp/logisticsx-regression-*/summary.json
+            /tmp/logisticsx-regression-*/artifact-manifest.json
+          if-no-files-found: ignore

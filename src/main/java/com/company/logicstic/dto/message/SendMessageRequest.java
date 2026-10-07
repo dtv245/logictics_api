@@ -8,6 +8,6 @@ import java.util.UUID;
 
 public record SendMessageRequest(
         @NotNull UUID conversationId,
-        @NotNull UUID senderId,
+        @Deprecated UUID senderId,
         @NotBlank @Size(max = 2000) String content
 ) {}

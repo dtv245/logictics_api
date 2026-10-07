@@ -5,26 +5,43 @@
 # processing. Nothing from this stage reaches the final image except the jar.
 FROM eclipse-temurin:21-jdk-noble AS build
 WORKDIR /build
+ARG SOURCE_COMMIT=UNKNOWN
+ARG SOURCE_HASH=UNKNOWN
+ARG SOURCE_DIRTY=true
+ARG BUILD_ID=UNVERIFIED_LOCAL_BUILD
 
 # Copy only what resolves dependencies first, so editing a source file does not
-# invalidate the dependency layer. checkstyle.xml and spotbugs-exclude.xml come
-# along because the quality plugins are bound to validate/compile and Maven
-# reads their configuration while wiring the build.
+# invalidate the dependency layer. Quality gates are recorded by the regression
+# runner; absent plugins must not be claimed as passing gates.
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw && ./mvnw -B -ntp -q dependency:go-offline
 
 COPY src/ src/
-# Tests are not run here. They need Postgres and Redis, which do not exist
+# Tests are not run here. The persistence suites need isolated PostgreSQL,
 # during an image build; `mvn verify` on the host or in CI is what gates a
 # release. Skipping them here does not skip them from the pipeline.
-RUN ./mvnw -B -ntp -q -DskipTests package \
+RUN ./mvnw -B -ntp -q -DskipTests \
+    "-Dremediation.source.commit=${SOURCE_COMMIT}" \
+    "-Dremediation.source.hash=${SOURCE_HASH}" \
+    "-Dremediation.source.dirty=${SOURCE_DIRTY}" \
+    "-Dremediation.build.id=${BUILD_ID}" package \
     && mv target/*.jar app.jar
 
 # ── Stage 2: runtime ─────────────────────────────────────────────────────────
 # JRE only: no compiler, no Maven, no build cache, and a much smaller attack
 # surface than carrying the JDK into production.
 FROM eclipse-temurin:21-jre-noble AS runtime
+ARG SOURCE_COMMIT=UNKNOWN
+ARG SOURCE_HASH=UNKNOWN
+ARG SOURCE_DIRTY=true
+ARG BUILD_ID=UNVERIFIED_LOCAL_BUILD
+ARG APP_VERSION=1.0.0
+LABEL org.opencontainers.image.revision="${SOURCE_COMMIT}" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      io.logisticsx.source.hash="${SOURCE_HASH}" \
+      io.logisticsx.source.dirty="${SOURCE_DIRTY}" \
+      io.logisticsx.build.id="${BUILD_ID}"
 
 # curl is used by the container healthcheck below; without it Docker cannot tell
 # a booting container from a wedged one.

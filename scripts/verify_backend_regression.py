@@ -14,14 +14,16 @@ import re
 import subprocess
 import tempfile
 import xml.etree.ElementTree as ET
+try:
+    from scripts.remediation_artifact_identity import source_snapshot, maven_properties, artifact_manifest
+except ModuleNotFoundError:
+    from remediation_artifact_identity import source_snapshot, maven_properties, artifact_manifest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MIN_REPORTED_TESTS = 456
-MIN_EXECUTED_TESTS = 455
 MIN_POSTGRES_METHODS = 40
 POSTGRES_SUITE = "com.company.logicstic.integration.CostLedgerPostgresTest"
-# V35 fleet checkpoint. A larger unit suite cannot compensate for a missing
+# Retained convention and remediation checkpoint. Extra units cannot compensate for a missing
 # financial/PostgreSQL suite; preserve each completed domain's live coverage.
 POSTGRES_BASELINES = {
     POSTGRES_SUITE: MIN_POSTGRES_METHODS,
@@ -37,9 +39,21 @@ POSTGRES_BASELINES = {
     "com.company.logicstic.integration.OptimizationRunPostgresTest": 11,
     "com.company.logicstic.integration.OptimizationAcceptancePostgresTest": 11,
     "com.company.logicstic.integration.FleetUtilizationPostgresTest": 22,
+    "com.company.logicstic.integration.CurrentUserApiPostgresTest": 6,
+    "com.company.logicstic.integration.SecurityTenantApiPostgresTest": 5,
+    "com.company.logicstic.integration.MessagingAuthorizationPostgresTest": 5,
+    "com.company.logicstic.integration.PaymentCommandPostgresTest": 10,
+    "com.company.logicstic.integration.CoreStaleVersionPostgresTest": 4,
+    "com.company.logicstic.integration.PersistenceReadPostgresTest": 4,
+    "com.company.logicstic.integration.HttpRequestValidationPostgresTest": 5,
+    "com.company.logicstic.integration.RemediationContextPostgresTest": 2,
+    "com.company.logicstic.integration.MultiTenantStartupPostgresTest": 6,
+    "com.company.logicstic.integration.CustomerSearchPostgresTest": 3,
+    "com.company.logicstic.integration.SettledPaymentReportPostgresTest": 4,
 }
 MIN_POSTGRES_INTEGRATION_METHODS = sum(POSTGRES_BASELINES.values())
-LEGACY_SKIP = ("com.company.logicstic.LogicsticApplicationTests", "contextLoads")
+MIN_REPORTED_TESTS = 335 + MIN_POSTGRES_INTEGRATION_METHODS
+MIN_EXECUTED_TESTS = MIN_REPORTED_TESTS
 
 
 class VerificationFailure(Exception):
@@ -86,8 +100,8 @@ def verify_reports(report_dir):
         if executed < minimum:
             raise VerificationFailure(
                 f"PostgreSQL domain baseline shrank: {name}: {executed} executed, minimum {minimum}")
-    if totals["skipped"] != 1 or skips != [LEGACY_SKIP]:
-        raise VerificationFailure(f"Legacy skip gate changed: {skips}")
+    if totals["skipped"] or skips:
+        raise VerificationFailure(f"Zero-skip gate failed: {skips}")
     executed = totals["reported"] - totals["skipped"]
     if totals["reported"] < MIN_REPORTED_TESTS or executed < MIN_EXECUTED_TESTS:
         raise VerificationFailure(f"Regression baseline shrank: {totals['reported']} reported tests")
@@ -112,9 +126,9 @@ def migration_versions(project_root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--upgrade-from", help="Clone a verified local codex_* DB; never migrate the source")
-    parser.add_argument("--container", default="logistics-postgres")
+    parser.add_argument("--container", required=True, help="Explicit labelled disposable PostgreSQL server")
     parser.add_argument("--host", default="localhost")
-    parser.add_argument("--port", type=int, default=5433, help="Published PostgreSQL port")
+    parser.add_argument("--port", type=int, required=True, help="Verified loopback PostgreSQL port")
     args = parser.parse_args()
     if args.upgrade_from and not re.fullmatch(r"codex_[a-z0-9_]+", args.upgrade_from):
         parser.error("--upgrade-from must name an explicitly disposable local codex_* database")
@@ -125,6 +139,12 @@ def main():
     try:
         expected_versions = migration_versions(PROJECT_ROOT)
         container = json.loads(capture(["docker", "inspect", args.container]))[0]
+        bindings = container.get("NetworkSettings", {}).get("Ports", {}).get("5432/tcp") or []
+        if not args.container.startswith("codex-") or (container["Config"].get("Labels") or {}).get("logisticsx.disposable") != "true":
+            raise VerificationFailure("A labelled codex disposable server is required; working servers are forbidden")
+        if args.host not in ("localhost", "127.0.0.1") or not any(binding.get("HostIp") == "127.0.0.1" and binding.get("HostPort") == str(args.port) for binding in bindings):
+            raise VerificationFailure("TASK_DB endpoint must match the disposable server loopback binding")
+        identity = source_snapshot(PROJECT_ROOT)
         settings = dict(value.split("=", 1) for value in container["Config"]["Env"] if "=" in value)
         db_user = settings.get("POSTGRES_USER", "postgres")
         db_password = settings.get("POSTGRES_PASSWORD")
@@ -162,7 +182,7 @@ def main():
                            SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE="4",
                            SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE="0")
         with run_log.open("w") as log:
-            run = subprocess.run([str(PROJECT_ROOT / "mvnw"), "-q", "clean", "verify"],
+            run = subprocess.run([str(PROJECT_ROOT / "mvnw"), "-q", *maven_properties(identity), "clean", "verify"],
                                  cwd=PROJECT_ROOT, env=environment, stdout=log, stderr=subprocess.STDOUT)
         if run.returncode:
             raise VerificationFailure(f"Maven exited {run.returncode}; inspect {run_log}")
@@ -172,8 +192,14 @@ def main():
         actual_versions = versions(test_database)
         if actual_versions != expected_versions:
             raise VerificationFailure(f"Target Flyway history differs: {actual_versions}")
+        if source_snapshot(PROJECT_ROOT)["source_hash"] != identity["source_hash"]:
+            raise VerificationFailure("Production source inputs changed during verification")
+        jar = next((PROJECT_ROOT / "target").glob("*.jar"))
+        artifact = artifact_manifest(jar, identity)
+        (diagnostics / "artifact-manifest.json").write_text(json.dumps(artifact, indent=2) + "\n")
         summary = {"status": "PASS", "database": test_database, "source_database": args.upgrade_from,
-                   "source_versions": source_versions, "validated_versions": actual_versions, **report}
+                   "source_versions": source_versions, "validated_versions": actual_versions,
+                   "artifact_manifest": str(diagnostics / "artifact-manifest.json"), **report}
         (diagnostics / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
         print(json.dumps(summary, indent=2), flush=True)
         return 0

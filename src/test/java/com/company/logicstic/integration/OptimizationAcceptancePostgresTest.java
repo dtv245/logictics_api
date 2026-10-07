@@ -58,7 +58,7 @@ class OptimizationAcceptancePostgresTest {
     Accepted accept(Ready r,AcceptRequest body){return acceptance.accept(r.run().run().id(),r.candidate().id(),body,r.fixture().entities().actor());}
     void stale(Ready r){assertEquals("OPTIMIZATION_CANDIDATE_STALE",assertThrows(ApiException.class,()->accept(r,request(r.candidate()))).getCode());assertEquals(0,jdbc.queryForObject("select count(*) from optimization_acceptances where run_id=?",Integer.class,r.run().run().id()));}
     @Test void acceptAtomicallyAssignsExistingTripWithoutDispatchFakeEndOrFinancialSideEffects() {
-        var r=ready();var accepted=accept(r,request(r.candidate()));assertEquals(r.candidate().id(),accepted.candidateId());assertEquals(r.fixture().entities().actor(),accepted.acceptedBy());
+        var r=ready();long version=jdbc.queryForObject("select version from trips where id=?",Long.class,r.fixture().entities().trip());var accepted=accept(r,request(r.candidate()));assertEquals(version+1,jdbc.queryForObject("select version from trips where id=?",Long.class,r.fixture().entities().trip()));assertEquals(r.candidate().id(),accepted.candidateId());assertEquals(r.fixture().entities().actor(),accepted.acceptedBy());
         assertEquals(r.fixture().entities().truck(),jdbc.queryForObject("select truck_id from trips where id=?",UUID.class,r.fixture().entities().trip()));
         assertEquals("PLANNED",jdbc.queryForObject("select status from trips where id=?",String.class,r.fixture().entities().trip()));assertNull(jdbc.queryForObject("select dispatched_at from trips where id=?",OffsetDateTime.class,r.fixture().entities().trip()));
         assertNull(jdbc.queryForObject("select effective_to from trip_driver_assignments where id=?",OffsetDateTime.class,accepted.driverAssignmentId()));

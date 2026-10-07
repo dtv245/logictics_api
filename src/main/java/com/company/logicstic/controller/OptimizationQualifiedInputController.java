@@ -21,11 +21,11 @@ public class OptimizationQualifiedInputController {
     private final OptimizationQualifiedInputService inputs;
     private final EmployeeRepository employees;
     @PostMapping
-    public ResponseEntity<ApiResponse<Captured>> capture(@RequestBody CaptureRequest body, Authentication auth, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Captured>> capture(@jakarta.validation.Valid @RequestBody CaptureRequest body, Authentication auth, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(inputs.capture(body,actor(auth)),request));
     }
     @PostMapping("/forecasts")
-    public ResponseEntity<ApiResponse<Captured>> forecast(@RequestBody CaptureRequest body, Authentication auth, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Captured>> forecast(@jakarta.validation.Valid @RequestBody CaptureRequest body, Authentication auth, HttpServletRequest request) {
         if(body==null || body.kind()!=Kind.FORECAST_COST) throw new BadRequestException("FORECAST_COST_INCOMPLETE","Accounting endpoint captures approved forecasts only");
         return capture(body,auth,request);
     }

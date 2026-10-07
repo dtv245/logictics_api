@@ -71,7 +71,8 @@ public class RevenueCalculator {
         List<Payment> payments = validInvoice ? paymentRepository.findByInvoiceId(invoice.getId()) : List.of();
         if (payments != null) {
             for (Payment payment : payments) {
-                if (("completed".equalsIgnoreCase(payment.getStatus()) || "paid".equalsIgnoreCase(payment.getStatus()) || "succeeded".equalsIgnoreCase(payment.getStatus()))
+                if (("completed".equalsIgnoreCase(payment.getStatus()) || "paid".equalsIgnoreCase(payment.getStatus())
+                        || "succeeded".equalsIgnoreCase(payment.getStatus()) || "settled".equalsIgnoreCase(payment.getStatus()))
                         && payment.getAmountAmount() != null) {
                     CurrencyGuard.requireSameCurrency(currency, payment.getAmountCurrency());
                     paidAmount = paidAmount.add(payment.getAmountAmount());

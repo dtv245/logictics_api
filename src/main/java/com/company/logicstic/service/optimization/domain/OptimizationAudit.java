@@ -15,11 +15,11 @@ public final class OptimizationAudit {
     public record PublishedPolicy(UUID id, String code, int version, Policy eligibilitySourcePolicy,
                                   OptimizationScoringPolicy scoringPolicy, String approvalReference,
                                   UUID publishedBy, Instant publishedAt) {}
-    public record Target(UUID loadId, UUID tripId, UUID ratingSnapshotId, UUID pickupStopId) {
+    public record Target(@jakarta.validation.constraints.NotNull UUID loadId, @jakarta.validation.constraints.NotNull UUID tripId, @jakarta.validation.constraints.NotNull UUID ratingSnapshotId, @jakarta.validation.constraints.NotNull UUID pickupStopId) {
         /** Historical audit deserialization/fixtures only; new commands require an explicit pickup stop. */
         public Target(UUID loadId, UUID tripId, UUID ratingSnapshotId) { this(loadId,tripId,ratingSnapshotId,null); }
     }
-    public record SourceSelection(Scope scope, UUID capacityInputId, UUID qualificationInputId, UUID forecastInputId) {}
+    public record SourceSelection(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid Scope scope, @jakarta.validation.constraints.NotNull UUID capacityInputId, @jakarta.validation.constraints.NotNull UUID qualificationInputId, @jakarta.validation.constraints.NotNull UUID forecastInputId) {}
     public record RunRequest(String idempotencyKey, UUID policyId, List<Target> targets,
                              List<UUID> driverIds, List<UUID> truckIds, List<SourceSelection> sourceSelections, String tenantScope) {
         public RunRequest { targets = targets == null ? null : List.copyOf(targets);

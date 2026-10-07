@@ -1,0 +1,70 @@
+{
+  "scope": "Verified semantic notes applied alongside the immutable captured OpenAPI; no backend changes in this handoff",
+  "openapi_canonical_sha256": "2d10d31b8c7a013fa10aca92b5cf3411cadf8dcd5a1ca88f540201b3771e7774",
+  "request_schema_overrides": {
+    "UpdatePaymentRequest": {
+      "properties": {
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "referenceNumber": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "evidence": "UpdatePaymentRequest tracks property presence; PaymentService metadata command supports omitted=retain, explicit null=clear; PaymentCommandPostgresTest covers clearing."
+    }
+  },
+  "nullable_response_notes": {
+    "CurrentUserResponse": [
+      "email",
+      "employeeId"
+    ],
+    "rule": "Both fields are always present and may be null. OAS 3.1 snapshot may express legacy nullable:true; a strict JSON Schema validator/type generator must model this as a null union. Other optional response fields must be checked against source/actual fixtures; absence of nullable annotation alone is not non-null proof."
+  },
+  "operation_overrides": [
+    {
+      "method": "DELETE",
+      "path": "/api/payments/{id}",
+      "openapi_success_status": "200",
+      "actual_contract": {
+        "authorized_status": 409,
+        "code": "PAYMENT_DELETE_FORBIDDEN",
+        "ui": "Disable physical delete; use pending cancellation command"
+      },
+      "evidence": "PaymentController keeps deprecated route; PaymentService.delete always rejects an authorized mapped actor."
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/lark/login",
+      "openapi_success_status": "200",
+      "actual_contract": {
+        "status": 302,
+        "response": "Location redirect, no JSON envelope"
+      },
+      "evidence": "LarkAuthController.redirectToLark returns HttpStatus.FOUND."
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/lark/callback",
+      "conditional_validation": "Provider error with nonblank error may omit authorization code; success requires nonblank code and state; state/provider authentication remains a service rule."
+    }
+  ],
+  "adapter_notes": [
+    "152 operations have ENVELOPE JSON success; 22 RAW JSON, 1 binary PDF, 1 redirect/empty. Full per-operation modes in api-operation-index.md.",
+    "Current frontend apiClient already unwraps envelope success. Raw success needs explicit endpoint-specific responseMode:raw; errors still use the error adapter.",
+    "CORE PagedResponse queries are 1-based page/pageSize; payroll reconciliation uses 0-based page/size and raw Spring Page.",
+    "BillingInvoice identity is invoiceId; generic InvoiceView identity is id. Do not force every command DTO into Refine BaseRecord without an adapter."
+  ],
+  "validation_limits": [
+    "Schema-valid examples do not prove a real employee, invoice eligibility/balance, provenance, hash freshness, role/membership, provider authenticity or immutable-history rules.",
+    "NotBlank and conditional/domain validation are not fully represented by generated OpenAPI required/minLength.",
+    "recordedAt must be omitted on Payment create; server generates actor/time. UpdatePaymentRequest accepts only its two metadata properties.",
+    "Normalized OIDC principal test does not verify real OIDC bearer/JWKS authentication. Current backend bearer filter uses Lark internal-token verification; frontend OIDC deployment requires explicit compatible server verification."
+  ]
+}

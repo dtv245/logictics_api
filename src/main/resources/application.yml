@@ -19,12 +19,15 @@ spring:
         jdbc:
           time_zone: UTC
   flyway:
-    enabled: false
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
+    locations: ${SPRING_FLYWAY_LOCATIONS:classpath:db/migration/tenant}
 
 server:
   port: ${SERVER_PORT:8080}
 
 app:
+  security:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
   optimization:
     single-tenant-scope: ${OPT_SINGLE_TENANT_SCOPE:}
     providers:
@@ -66,7 +69,7 @@ app:
     app-secret: ${LARK_APP_SECRET:}
     redirect-uri: ${LARK_REDIRECT_URI:http://localhost:5173/auth/callback}
     base-url: ${LARK_BASE_URL:https://open.larksuite.com}
-    jwt-secret: ${LARK_JWT_SECRET:logistics-lark-default-secret-key-at-least-256-bits-long-change-in-production!}
+    jwt-secret: ${LARK_JWT_SECRET:}
     jwt-issuer: ${LARK_JWT_ISSUER:https://open.larksuite.com}
     jwt-ttl: ${LARK_JWT_TTL:8h}
     state-ttl: ${LARK_STATE_TTL:15m}

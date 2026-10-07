@@ -23,7 +23,7 @@ public class OptimizationRunController {
     private final OptimizationAcceptanceService acceptances;
     private final EmployeeRepository employees;
     @PostMapping
-    public ResponseEntity<ApiResponse<Outcome>> create(@RequestBody CreateRequest body,Authentication auth,HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Outcome>> create(@jakarta.validation.Valid @RequestBody CreateRequest body,Authentication auth,HttpServletRequest request) {
         if(auth==null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal()))throw new ForbiddenException("Authenticated optimization actor required");
         UUID actor=employees.findByEmail(auth.getName()).orElseThrow(()->new ForbiddenException("Optimization actor must map to tenant employee")).getId();
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(optimization.create(body,actor,request.getHeader("X-Correlation-Id")),request));
@@ -33,7 +33,7 @@ public class OptimizationRunController {
         return ResponseEntity.ok(ApiResponse.success(optimization.get(id),request));
     }
     @PostMapping("/{id}/assignments/{candidateId}/accept")
-    public ResponseEntity<ApiResponse<Accepted>> accept(@PathVariable UUID id,@PathVariable UUID candidateId,@RequestBody AcceptRequest body,Authentication auth,HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Accepted>> accept(@PathVariable UUID id,@PathVariable UUID candidateId,@jakarta.validation.Valid @RequestBody AcceptRequest body,Authentication auth,HttpServletRequest request) {
         if(auth==null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal()))throw new ForbiddenException("Authenticated acceptance actor required");
         UUID actor=employees.findByEmail(auth.getName()).orElseThrow(()->new ForbiddenException("Acceptance actor must map to tenant employee")).getId();
         return ResponseEntity.ok(ApiResponse.success(acceptances.accept(id,candidateId,body,actor),request));

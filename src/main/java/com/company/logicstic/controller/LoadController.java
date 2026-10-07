@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.company.logicstic.dto.ApiResponse;
 import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.load.CreateLoadRequest;
+import com.company.logicstic.dto.load.UpdateLoadRequest;
 import com.company.logicstic.dto.load.LoadView;
 import com.company.logicstic.service.LoadService;
 
@@ -68,7 +69,7 @@ public class LoadController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<LoadView>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody CreateLoadRequest body,
+            @Valid @RequestBody UpdateLoadRequest body,
             HttpServletRequest request
     ) {
         LoadView data = loadService.update(id, body);

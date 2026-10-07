@@ -18,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class OptimizationPolicyService {
     private final OptimizationAuditRepository audit;
     private final EmployeeRepository employees;
-    public record PublishRequest(String code, int version, Policy eligibilitySourcePolicy,
-                                 OptimizationScoringPolicy scoringPolicy, String approvalReference) {}
+    public record PublishRequest(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=100) String code, @jakarta.validation.constraints.Positive int version, @jakarta.validation.constraints.NotNull @jakarta.validation.Valid Policy eligibilitySourcePolicy,
+                                 @jakarta.validation.constraints.NotNull @jakarta.validation.Valid OptimizationScoringPolicy scoringPolicy, @jakarta.validation.constraints.NotBlank String approvalReference) {}
     @Transactional
     public PublishedPolicy publish(PublishRequest request, UUID actor) {
         if (actor == null || !employees.existsById(actor)) throw new ForbiddenException("Optimization policy actor must map to a tenant employee");

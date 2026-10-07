@@ -18,7 +18,7 @@ public class TaxAssessmentController {
     private final TaxAssessmentService assessments;
     private final EmployeeRepository employees;
     @PostMapping
-    public ResponseEntity<ApiResponse<TaxAssessment>> capture(@RequestBody TaxAssessmentRequest body,
+    public ResponseEntity<ApiResponse<TaxAssessment>> capture(@jakarta.validation.Valid @RequestBody TaxAssessmentRequest body,
             Authentication auth,HttpServletRequest request) {
         if(auth==null || !auth.isAuthenticated()) throw new ForbiddenException("Authenticated accounting actor required");
         UUID actor=employees.findByEmail(auth.getName()).orElseThrow(()->new ForbiddenException("Accounting actor must map to tenant employee")).getId();

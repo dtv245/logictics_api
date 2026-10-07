@@ -102,7 +102,7 @@ class RatingPolicyPostgresTest {
         var f = fixture(); var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(web)
                 .apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
         var body = "{\"customerId\":\"" + f.customer() + "\",\"currency\":\"USD\",\"effectiveFrom\":\"2026-01-01\"}";
-        mvc.perform(post("/api/rating/contracts").contentType("application/json").content(body)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/rating/contracts").contentType("application/json").content(body)).andExpect(status().isUnauthorized());
         mvc.perform(post("/api/rating/contracts").with(user(f.email()).roles("DRIVER")).contentType("application/json").content(body)).andExpect(status().isForbidden());
         var response = mvc.perform(post("/api/rating/contracts").with(user(f.email()).roles("ACCOUNTANT"))
                 .contentType("application/json").content(body)).andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();

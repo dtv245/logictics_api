@@ -115,7 +115,7 @@ class CostLedgerPostgresTest {
         var body="{\"reasonCode\":\"ZERO_NET_PAY\",\"reason\":\"No net remuneration due for this payroll period\"}";
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/items/"+noPayItem.id()+"/no-payment-required")
                         .contentType("application/json").content(body))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
         var response=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/payroll/items/"+noPayItem.id()+"/no-payment-required")
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(payable.email()).roles("ACCOUNTANT"))
                         .contentType("application/json").content(body))
@@ -220,7 +220,7 @@ class CostLedgerPostgresTest {
         var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext)
                 .apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/payroll/reconciliation-cases"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/payroll/reconciliation-cases")
                         .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(f.email()).roles("ACCOUNTANT")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk());
@@ -665,7 +665,7 @@ class CostLedgerPostgresTest {
                 "/api/reports/profitability/by-lane", "/api/reports/profitability/by-truck"};
         for (String path : paths) {
             mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path))
-                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
             mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path)
                     .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("driver").roles("DRIVER")))
                     .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
@@ -793,7 +793,7 @@ class CostLedgerPostgresTest {
         var fixture = fixture(); var mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(webContext)
                 .apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
         for (String path : new String[]{"/api/driver-pay-policies","/api/pay-periods"}) {
-            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+            mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
             mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(path)
                     .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("driver").roles("DRIVER")))
                     .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());

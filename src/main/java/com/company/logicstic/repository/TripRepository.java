@@ -11,10 +11,15 @@ import java.util.UUID;
 
 public interface TripRepository extends JpaRepository<Trip, UUID> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"truck"})
+    @Override
+    java.util.Optional<Trip> findById(UUID id);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"truck"})
     @Query("""
             SELECT t FROM Trip t
             WHERE (:search IS NULL
-                   OR LOWER(t.name) LIKE LOWER(CONCAT('%', :search, '%')))
+                   OR LOWER(t.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
               AND (:status IS NULL OR t.status = :status)
               AND (:truckId IS NULL OR t.truck.id = :truckId)
             """)

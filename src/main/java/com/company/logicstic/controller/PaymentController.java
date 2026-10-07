@@ -18,6 +18,7 @@ import com.company.logicstic.dto.ApiResponse;
 import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.payment.CreatePaymentRequest;
 import com.company.logicstic.dto.payment.PaymentView;
+import com.company.logicstic.dto.payment.UpdatePaymentRequest;
 import com.company.logicstic.service.PaymentService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,14 +66,25 @@ public class PaymentController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PaymentView>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody CreatePaymentRequest body,
+            @Valid @RequestBody UpdatePaymentRequest body,
             HttpServletRequest request
     ) {
         PaymentView data = paymentService.update(id, body);
         return ResponseEntity.ok(ApiResponse.success(data, request));
     }
 
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<PaymentView>> cancel(
+            @PathVariable UUID id,
+            @RequestParam String reason,
+            HttpServletRequest request
+    ) {
+        PaymentView data = paymentService.cancel(id, reason);
+        return ResponseEntity.ok(ApiResponse.success(data, request));
+    }
+
     @DeleteMapping("/{id}")
+    @Deprecated
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id, HttpServletRequest request) {
         paymentService.delete(id);
         return ResponseEntity.ok(ApiResponse.success(null, request));

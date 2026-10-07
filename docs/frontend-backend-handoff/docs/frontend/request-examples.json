@@ -1,0 +1,294 @@
+{
+  "scope": "SCHEMA_EXAMPLES_ONLY_NOT_LIVE_COMMANDS",
+  "notes": [
+    "IDs, provider code/state, hashes, policy/source references là placeholder có format; thay bằng dữ liệu thật từ đúng tenant ở staging.",
+    "Schema validation cùng các explicit overrides trong contract-notes.json; không chứng minh eligibility/provenance/business state.",
+    "Không chạy những mẫu financial commands trên dữ liệu production để smoke-test."
+  ],
+  "examples": [
+    {
+      "name": "Lark callback",
+      "method": "POST",
+      "path": "/api/auth/lark/callback",
+      "body": {
+        "code": "replace-with-provider-code",
+        "state": "replace-with-signed-state-from-authorize"
+      },
+      "note": "Code/state phải lấy từ flow authorize thật; không phải credential dùng được."
+    },
+    {
+      "name": "Create Load",
+      "method": "POST",
+      "path": "/api/loads",
+      "body": {
+        "name": "Load mẫu",
+        "type": "FTL",
+        "status": "draft",
+        "distance": 100,
+        "isInProximity": false,
+        "customerId": "00000002-1111-4111-8111-111111111111",
+        "source": "MANUAL",
+        "isHazmat": false,
+        "deliveryCostAmount": 100,
+        "deliveryCostCurrency": "USD",
+        "originAddressLine1": "Origin sample",
+        "originAddressCity": "City",
+        "originAddressState": "TX",
+        "originAddressZipCode": "00000",
+        "originAddressCountry": "US",
+        "originLocationLatitude": 0,
+        "originLocationLongitude": 0,
+        "destinationAddressLine1": "Destination sample",
+        "destinationAddressCity": "City",
+        "destinationAddressState": "TX",
+        "destinationAddressZipCode": "00000",
+        "destinationAddressCountry": "US",
+        "destinationLocationLatitude": 0,
+        "destinationLocationLongitude": 0
+      },
+      "note": "distance là trường legacy; số này không trở thành nguồn mileage cho rating/payroll."
+    },
+    {
+      "name": "Update Load",
+      "method": "PUT",
+      "path": "/api/loads/{id}",
+      "body": {
+        "name": "Load mẫu",
+        "type": "FTL",
+        "status": "draft",
+        "distance": 100,
+        "isInProximity": false,
+        "customerId": "00000002-1111-4111-8111-111111111111",
+        "source": "MANUAL",
+        "isHazmat": false,
+        "deliveryCostAmount": 100,
+        "deliveryCostCurrency": "USD",
+        "originAddressLine1": "Origin sample",
+        "originAddressCity": "City",
+        "originAddressState": "TX",
+        "originAddressZipCode": "00000",
+        "originAddressCountry": "US",
+        "originLocationLatitude": 0,
+        "originLocationLongitude": 0,
+        "destinationAddressLine1": "Destination sample",
+        "destinationAddressCity": "City",
+        "destinationAddressState": "TX",
+        "destinationAddressZipCode": "00000",
+        "destinationAddressCountry": "US",
+        "destinationLocationLatitude": 0,
+        "destinationLocationLongitude": 0,
+        "expectedVersion": 2
+      },
+      "note": "expectedVersion lấy từ lần đọc form; không tự thay bằng version mới sau 409."
+    },
+    {
+      "name": "Update Trip",
+      "method": "PUT",
+      "path": "/api/trips/{id}",
+      "body": {
+        "expectedVersion": 2,
+        "name": "Trip mẫu chỉnh sửa",
+        "totalDistance": 100,
+        "status": "draft",
+        "truckId": "00000005-1111-4111-8111-111111111111"
+      }
+    },
+    {
+      "name": "Update Truck",
+      "method": "PUT",
+      "path": "/api/trucks/{id}",
+      "body": {
+        "expectedVersion": 2,
+        "number": "TRUCK-EXAMPLE",
+        "type": "SEMI",
+        "vehicleCapacity": 1,
+        "status": "ACTIVE",
+        "isHazmatPlacarded": false
+      }
+    },
+    {
+      "name": "Pickup business date",
+      "method": "POST",
+      "path": "/api/loads/{id}/requested-pickup-business-date",
+      "body": {
+        "requestedPickupBusinessDate": "2026-10-07",
+        "provenance": {
+          "reasonCode": "CUSTOMER_PICKUP",
+          "reason": "Ngày khách hàng xác nhận",
+          "source": "example-customer-agreement"
+        },
+        "expectedChangeId": "00000006-1111-4111-8111-111111111111"
+      },
+      "note": "Lần đầu chưa có lịch sử dùng null; các lần sau dùng LoadView.pickupBusinessDateChangeId hiện tại."
+    },
+    {
+      "name": "Create private conversation",
+      "method": "POST",
+      "path": "/api/messages/conversations",
+      "body": {
+        "name": "Trao đổi về Load mẫu",
+        "loadId": "00000001-1111-4111-8111-111111111111",
+        "isTenantChat": false
+      },
+      "note": "API tự thêm creator; body không có participantIds. Không suy API thêm participant."
+    },
+    {
+      "name": "Send message",
+      "method": "POST",
+      "path": "/api/messages",
+      "body": {
+        "conversationId": "00000007-1111-4111-8111-111111111111",
+        "content": "Nội dung mẫu"
+      },
+      "note": "Omit senderId; server dùng employee hiện tại."
+    },
+    {
+      "name": "Create Payment",
+      "method": "POST",
+      "path": "/api/payments",
+      "body": {
+        "status": "PENDING",
+        "invoiceId": "00000003-1111-4111-8111-111111111111",
+        "amountAmount": 40.0,
+        "amountCurrency": "USD",
+        "description": "Thanh toán hóa đơn mẫu",
+        "referenceNumber": "REF-EXAMPLE-001",
+        "idempotencyKey": "example-payment-intent-001",
+        "billingAddressLine1": "123 Example Street",
+        "billingAddressCity": "Example City",
+        "billingAddressState": "TX",
+        "billingAddressZipCode": "00000",
+        "billingAddressCountry": "US"
+      },
+      "note": "201 cả create và replay. Invoice phải collectible cùng currency; có employee mapping; không gửi recordedAt."
+    },
+    {
+      "name": "Edit Payment metadata",
+      "method": "PUT",
+      "path": "/api/payments/{id}",
+      "body": {
+        "description": "Ghi chú điều chỉnh",
+        "referenceNumber": "REF-EXAMPLE-002"
+      }
+    },
+    {
+      "name": "Clear Payment description",
+      "method": "PUT",
+      "path": "/api/payments/{id}",
+      "body": {
+        "description": null
+      },
+      "note": "referenceNumber omitted được giữ nguyên; nullable schema exception được ghi trong contract-notes.json."
+    },
+    {
+      "name": "Cancel Payment",
+      "method": "POST",
+      "path": "/api/payments/{id}/cancel",
+      "query": {
+        "reason": "Hủy khoản pending theo yêu cầu người dùng"
+      },
+      "note": "reason là query, không phải JSON body; chỉ PENDING, retry cancellation giữ kết quả trước."
+    },
+    {
+      "name": "Rating preview",
+      "method": "POST",
+      "path": "/api/loads/{id}/rating/preview",
+      "body": {
+        "currency": "USD",
+        "contextSource": "Hợp đồng mẫu đã được xác nhận",
+        "accessorialIds": []
+      },
+      "note": "Ví dụ tối thiểu; selector optional được service resolve. Cần proven business date/policy/mileage phù hợp."
+    },
+    {
+      "name": "Rating accept",
+      "method": "POST",
+      "path": "/api/loads/{id}/rating/accept",
+      "body": {
+        "idempotencyKey": "example-rating-intent-001",
+        "rating": {
+          "currency": "USD",
+          "contextSource": "Hợp đồng mẫu đã được xác nhận",
+          "accessorialIds": []
+        },
+        "expectedInputHash": "replace-with-preview.inputHash",
+        "expectedResultHash": "replace-with-preview.resultHash"
+      },
+      "note": "Giữ đúng rating request và hash của preview; không tự tính/đoán hash."
+    },
+    {
+      "name": "Generate primary invoice",
+      "method": "POST",
+      "path": "/api/invoices/billing/primary",
+      "body": {
+        "idempotencyKey": "example-invoice-intent-001",
+        "snapshotId": "00000008-1111-4111-8111-111111111111",
+        "taxDecision": {
+          "requirement": "NOT_REQUIRED",
+          "reasonCode": "ACCOUNTING_TAX_NOT_REQUIRED",
+          "reason": "Ví dụ: Accounting đã xác minh không cần thuế",
+          "sourceReference": "example-authoritative-reference"
+        },
+        "lineTaxes": []
+      },
+      "note": "snapshotId là AcceptedRatingSnapshot.snapshotId; NOT_REQUIRED là quyết định Accounting có evidence, không tự mặc định."
+    },
+    {
+      "name": "Issue billing invoice",
+      "method": "POST",
+      "path": "/api/invoices/billing/{id}/issue",
+      "body": {
+        "idempotencyKey": "example-issue-intent-001"
+      }
+    },
+    {
+      "name": "Calculate settlement",
+      "method": "POST",
+      "path": "/api/driver-settlements/calculate",
+      "body": {
+        "driverId": "00000009-1111-4111-8111-111111111111",
+        "payPeriodId": "00000010-1111-4111-8111-111111111111"
+      }
+    },
+    {
+      "name": "Calculate payroll",
+      "method": "POST",
+      "path": "/api/payroll/runs/calculate",
+      "body": {
+        "idempotencyKey": "example-payroll-intent-001",
+        "payPeriodId": "00000010-1111-4111-8111-111111111111",
+        "currency": "USD",
+        "effectiveDate": "2026-10-07",
+        "settlementIds": [
+          "00000011-1111-4111-8111-111111111111"
+        ],
+        "jurisdictionOverrides": {},
+        "taxInputs": {},
+        "supplements": []
+      },
+      "note": "Settlements phải locked và có policy/profile/adapter authoritative; response có thể VALIDATION_REQUIRED, không mặc định tax=0."
+    },
+    {
+      "name": "Schedule payroll payment",
+      "method": "POST",
+      "path": "/api/payroll/items/{id}/payments",
+      "body": {
+        "idempotencyKey": "example-payroll-payment-intent-001",
+        "paymentMethod": "BANK_TRANSFER",
+        "providerKey": "replace-with-configured-provider-key",
+        "destinationReference": "replace-with-authoritative-destination"
+      },
+      "note": "PayrollPayment độc lập customer Payment; không phải chuyển tiền thành công."
+    },
+    {
+      "name": "Accept optimization candidate",
+      "method": "POST",
+      "path": "/api/optimization/runs/{id}/assignments/{candidateId}/accept",
+      "body": {
+        "idempotencyKey": "example-optimization-accept-intent-001",
+        "expectedInputFingerprint": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "note": "Chuỗi 0 chỉ minh họa format SHA-256; phải thay bằng candidate.inputFingerprint thật. Candidate phải thuộc run và hiện vẫn feasible."
+    }
+  ]
+}

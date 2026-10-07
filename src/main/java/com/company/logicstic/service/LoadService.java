@@ -2,6 +2,8 @@ package com.company.logicstic.service;
 
 import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.load.CreateLoadRequest;
+import com.company.logicstic.dto.load.UpdateLoadRequest;
+import com.company.logicstic.common.ExpectedVersionGuard;
 import com.company.logicstic.dto.load.LoadView;
 import com.company.logicstic.entity.*;
 import com.company.logicstic.exception.ResourceNotFoundException;
@@ -60,15 +62,19 @@ public class LoadService {
     public LoadView create(CreateLoadRequest request) {
         Load load = loadMapper.toEntity(request);
         resolveRelations(load, request);
-        loadRepository.saveAndFlush(load);
+        // With a non-null version Spring Data may merge a new entity. Continue
+        // with the managed result so the generated ID is available to its audit.
+        load = loadRepository.saveAndFlush(load);
         pickupDates.capture(load, request.requestedPickupBusinessDate(), request.requestedPickupDateProvenance());
         return loadMapper.toView(loadRepository.saveAndFlush(load));
     }
 
     @Transactional
-    public LoadView update(UUID id, CreateLoadRequest request) {
+    public LoadView update(UUID id, UpdateLoadRequest command) {
         Load load = loadRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Load not found: " + id));
+        ExpectedVersionGuard.require(command == null ? null : command.expectedVersion(), load.getVersion());
+        CreateLoadRequest request = command.toCreateRequest();
         loadMapper.updateEntity(request, load);
         resolveRelations(load, request);
         pickupDates.capture(load, request.requestedPickupBusinessDate(), request.requestedPickupDateProvenance());

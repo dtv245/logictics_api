@@ -15,7 +15,7 @@ public final class OptimizationEvidence {
     public record CandidateContext(UUID loadId, UUID tripId, UUID driverId, UUID truckId,
                                    Instant planningStart, Instant planningEnd) {}
     public enum SourceClass { AUTHORITATIVE_DB, TRUSTED_ADAPTER }
-    public record Source(String type, String reference, String version, SourceClass classification) {}
+    public record Source(@jakarta.validation.constraints.NotBlank String type, @jakarta.validation.constraints.NotBlank String reference, @jakarta.validation.constraints.NotBlank String version, @jakarta.validation.constraints.NotNull SourceClass classification) {}
     public record Provenance(Source source, CandidateContext context, String evidenceReference,
                              String evidenceVersion, String unit, Instant observedAt, Instant expiresAt,
                              Long maxAgeSeconds) {}

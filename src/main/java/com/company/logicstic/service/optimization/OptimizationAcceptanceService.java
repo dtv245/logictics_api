@@ -30,7 +30,7 @@ public class OptimizationAcceptanceService {
     private final EmployeeRepository employees;
     private final RatingFingerprintService fingerprints;
     private final PlatformTransactionManager transactions;
-    public record AcceptRequest(String idempotencyKey,String expectedInputFingerprint) {}
+    public record AcceptRequest(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=200) String idempotencyKey,@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp="[0-9a-f]{64}") String expectedInputFingerprint) {}
     public Accepted accept(UUID runId,UUID candidateId,AcceptRequest request,UUID actor) {
         if(actor==null || !employees.existsById(actor))throw new ForbiddenException("Acceptance actor must map to tenant employee");
         if(request==null || request.idempotencyKey()==null || request.idempotencyKey().isBlank() || request.idempotencyKey().length()>200

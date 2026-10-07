@@ -1,0 +1,41 @@
+-- Obsolete candidate migration retained for audit; not in Flyway's active *.sql migrations.
+CREATE TABLE shipment_costs (
+    id UUID PRIMARY KEY,
+    load_id UUID NOT NULL,
+    trip_id UUID,
+    truck_id UUID,
+    driver_id UUID,
+    category VARCHAR(40) NOT NULL,
+    cost_basis VARCHAR(20) NOT NULL, -- ESTIMATE, ACCRUAL, ACTUAL
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT', -- DRAFT, VERIFIED, APPROVED, POSTED, VOIDED
+    source_type VARCHAR(40) NOT NULL,
+    source_id UUID,
+    allocation_method VARCHAR(40),
+    quantity NUMERIC(19,6),
+    unit VARCHAR(30),
+    unit_rate NUMERIC(19,6),
+    amount NUMERIC(19,4) NOT NULL,
+    currency VARCHAR(3) NOT NULL,
+    incurred_at TIMESTAMPTZ,
+    verified_at TIMESTAMPTZ,
+    verified_by UUID,
+    approved_at TIMESTAMPTZ,
+    approved_by UUID,
+    posted_at TIMESTAMPTZ,
+    calculation_snapshot_id UUID,
+    note VARCHAR(2000),
+    version INT8 NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    last_modified_at TIMESTAMPTZ,
+    last_modified_by VARCHAR(50),
+
+    CONSTRAINT fk_shipment_costs_load FOREIGN KEY (load_id) REFERENCES loads(id) ON DELETE CASCADE,
+    CONSTRAINT fk_shipment_costs_trip FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE SET NULL,
+    CONSTRAINT fk_shipment_costs_truck FOREIGN KEY (truck_id) REFERENCES trucks(id) ON DELETE SET NULL,
+    CONSTRAINT fk_shipment_costs_driver FOREIGN KEY (driver_id) REFERENCES employees(id) ON DELETE SET NULL,
+    CONSTRAINT fk_shipment_costs_snapshot FOREIGN KEY (calculation_snapshot_id) REFERENCES calculation_snapshots(id) ON DELETE SET NULL
+);
+
+CREATE INDEX ix_shipment_costs_load_basis_status ON shipment_costs(load_id, cost_basis, status);
+CREATE INDEX ix_shipment_costs_source ON shipment_costs(source_type, source_id);

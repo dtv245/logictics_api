@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "source_unchanged": true,
+  "canonical_snapshot_matches_verified_artifact": true,
+  "paths": 140,
+  "operations_indexed": 176,
+  "schemas": 291,
+  "internal_refs_resolved": 669,
+  "examples": 20,
+  "bodies_schema_validated_with_explicit_notes": 19,
+  "required_queries_validated": 1,
+  "local_links_checked": 29,
+  "frontend_tests": "NOT RUN; documentation/contract handoff only",
+  "existing_runtime_modified": false
+}

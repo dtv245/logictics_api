@@ -9,7 +9,7 @@ import java.util.UUID;
 /** Append-only authoritative evidence; scope is a real candidate, not a Trip allocation heuristic. */
 public final class OptimizationQualifiedInput {
     private OptimizationQualifiedInput() {}
-    public record Scope(UUID loadId, UUID tripId, UUID driverId, UUID truckId) {
+    public record Scope(@jakarta.validation.constraints.NotNull UUID loadId, @jakarta.validation.constraints.NotNull UUID tripId, @jakarta.validation.constraints.NotNull UUID driverId, @jakarta.validation.constraints.NotNull UUID truckId) {
         public boolean matches(CandidateContext c) {
             return c != null && java.util.Objects.equals(loadId, c.loadId()) && java.util.Objects.equals(tripId, c.tripId())
                     && java.util.Objects.equals(driverId, c.driverId()) && java.util.Objects.equals(truckId, c.truckId());

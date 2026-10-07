@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record TruckView(
         UUID id,
+        Long version,
         String number,
         String type,
         Integer vehicleCapacity,
@@ -32,7 +33,7 @@ public record TruckView(
         String secondaryName = t.getSecondaryDriver() != null
                 ? t.getSecondaryDriver().getFirstName() + " " + t.getSecondaryDriver().getLastName() : null;
         return new TruckView(
-                t.getId(), t.getNumber(), t.getType(), t.getVehicleCapacity(),
+                t.getId(), t.getVersion(), t.getNumber(), t.getType(), t.getVehicleCapacity(),
                 t.getStatus(), t.getMake(), t.getModel(), t.getYear(),
                 t.getVin(), t.getLicensePlate(), t.getLicensePlateState(),
                 t.getIsHazmatPlacarded(),

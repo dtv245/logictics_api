@@ -19,7 +19,7 @@ public class OptimizationPolicyController {
     private final OptimizationPolicyService policies;
     private final EmployeeRepository employees;
     @PostMapping
-    public ResponseEntity<ApiResponse<PublishedPolicy>> publish(@RequestBody PublishRequest body, Authentication authentication, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<PublishedPolicy>> publish(@jakarta.validation.Valid @RequestBody PublishRequest body, Authentication authentication, HttpServletRequest request) {
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) throw new ForbiddenException("Authenticated optimization policy actor required");
         UUID actor = employees.findByEmail(authentication.getName()).orElseThrow(() -> new ForbiddenException("Optimization actor must map to tenant employee")).getId();
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(policies.publish(body, actor), request));

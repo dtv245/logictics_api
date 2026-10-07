@@ -51,5 +51,5 @@ public record CreateLoadRequest(
         @NotNull Double destinationLocationLatitude,
         @NotNull Double destinationLocationLongitude,
         LocalDate requestedPickupBusinessDate,
-        PickupBusinessDateProvenance requestedPickupDateProvenance
+        @jakarta.validation.Valid PickupBusinessDateProvenance requestedPickupDateProvenance
 ) {}

@@ -33,6 +33,10 @@ public class Truck {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version = 0L;
+
     @Column(name = "\"number\"", nullable = false, unique = true, columnDefinition = "text")
     private String number;
 

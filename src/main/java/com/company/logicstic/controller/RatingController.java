@@ -23,13 +23,13 @@ public class RatingController {
     private final RatingSnapshotService snapshots;
     private final EmployeeRepository employees;
     @PostMapping("/api/loads/{id}/rating/preview")
-    public ResponseEntity<ApiResponse<RatingPreview>> preview(@PathVariable UUID id,@RequestBody RatingPreviewRequest body,HttpServletRequest request){
+    public ResponseEntity<ApiResponse<RatingPreview>> preview(@PathVariable UUID id,@jakarta.validation.Valid @RequestBody RatingPreviewRequest body,HttpServletRequest request){
         String correlation=(String)request.getAttribute("correlationId");
         if(correlation==null)correlation=UUID.randomUUID().toString();
         return ResponseEntity.ok(ApiResponse.success(ratings.preview(id,body,correlation),request));
     }
     @PostMapping("/api/loads/{id}/rating/accept")
-    public ResponseEntity<ApiResponse<AcceptedRatingSnapshot>> accept(@PathVariable UUID id,@RequestBody RatingAcceptRequest body,
+    public ResponseEntity<ApiResponse<AcceptedRatingSnapshot>> accept(@PathVariable UUID id,@jakarta.validation.Valid @RequestBody RatingAcceptRequest body,
             org.springframework.security.core.Authentication auth,HttpServletRequest request){
         if(auth==null||!auth.isAuthenticated())throw new ForbiddenException("Authenticated rating actor required");
         var actor=employees.findByEmail(auth.getName()).orElseThrow(()->new ForbiddenException("Rating actor must map to tenant employee"));

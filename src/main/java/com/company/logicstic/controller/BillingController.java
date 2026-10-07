@@ -23,18 +23,18 @@ public class BillingController {
         return employees.findByEmail(auth.getName()).orElseThrow(()->new ForbiddenException("Billing actor must map to tenant employee")).getId();
     }
     @PostMapping("/primary")
-    public ResponseEntity<ApiResponse<BillingInvoice>> primary(@RequestBody GenerateInvoiceRequest body,Authentication auth,HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<BillingInvoice>> primary(@jakarta.validation.Valid @RequestBody GenerateInvoiceRequest body,Authentication auth,HttpServletRequest request) {
         String correlation=(String)request.getAttribute("correlationId");if(correlation==null)correlation=UUID.randomUUID().toString();
         return ResponseEntity.ok(ApiResponse.success(billing.generatePrimary(body,actor(auth),correlation),request));
     }
-    public record Regenerate(UUID expectedSnapshotId,GenerateInvoiceRequest generation) { }
-    public record Issue(String idempotencyKey) { }
+    public record Regenerate(@jakarta.validation.constraints.NotNull UUID expectedSnapshotId,@jakarta.validation.constraints.NotNull @jakarta.validation.Valid GenerateInvoiceRequest generation) { }
+    public record Issue(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max=120) String idempotencyKey) { }
     @PostMapping("/{id}/regenerate")
-    public ResponseEntity<ApiResponse<BillingInvoice>> regenerate(@PathVariable UUID id,@RequestBody Regenerate body,Authentication auth,HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<BillingInvoice>> regenerate(@PathVariable UUID id,@jakarta.validation.Valid @RequestBody Regenerate body,Authentication auth,HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(billing.regenerateDraft(id,body.expectedSnapshotId(),body.generation(),actor(auth)),request));
     }
     @PostMapping("/{id}/issue")
-    public ResponseEntity<ApiResponse<BillingInvoice>> issue(@PathVariable UUID id,@RequestBody Issue body,Authentication auth,HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<BillingInvoice>> issue(@PathVariable UUID id,@jakarta.validation.Valid @RequestBody Issue body,Authentication auth,HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(billing.issue(id,body.idempotencyKey(),actor(auth)),request));
     }
     @GetMapping("/{id}")
@@ -42,15 +42,15 @@ public class BillingController {
         return ResponseEntity.ok(ApiResponse.success(billing.get(id),request));
     }
     @PostMapping("/{id}/supplemental")
-    public ResponseEntity<ApiResponse<BillingInvoice>> supplemental(@PathVariable UUID id,@RequestBody BillingCorrectionRequests.Supplemental body,Authentication auth,HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<BillingInvoice>> supplemental(@PathVariable UUID id,@jakarta.validation.Valid @RequestBody BillingCorrectionRequests.Supplemental body,Authentication auth,HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(billing.supplemental(id,body,actor(auth)),request));
     }
     @PostMapping("/{id}/credit")
-    public ResponseEntity<ApiResponse<BillingInvoice>> credit(@PathVariable UUID id,@RequestBody BillingCorrectionRequests.Credit body,Authentication auth,HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<BillingInvoice>> credit(@PathVariable UUID id,@jakarta.validation.Valid @RequestBody BillingCorrectionRequests.Credit body,Authentication auth,HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(billing.credit(id,body,actor(auth)),request));
     }
     @PostMapping("/{id}/rebill")
-    public ResponseEntity<ApiResponse<BillingInvoice>> rebill(@PathVariable UUID id,@RequestBody BillingCorrectionRequests.Rebill body,Authentication auth,HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<BillingInvoice>> rebill(@PathVariable UUID id,@jakarta.validation.Valid @RequestBody BillingCorrectionRequests.Rebill body,Authentication auth,HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(billing.rebill(id,body,actor(auth)),request));
     }
 }

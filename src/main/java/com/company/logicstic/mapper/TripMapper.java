@@ -21,6 +21,7 @@ public interface TripMapper {
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "lastModifiedAt", ignore = true)
     @Mapping(target = "lastModifiedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Trip toEntity(CreateTripRequest req);
 
     @Mapping(target = "id", ignore = true)
@@ -33,6 +34,7 @@ public interface TripMapper {
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "lastModifiedAt", ignore = true)
     @Mapping(target = "lastModifiedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntity(CreateTripRequest req, @MappingTarget Trip trip);
 
     @Mapping(target = "truckId", expression = "java(trip.getTruck() != null ? trip.getTruck().getId() : null)")

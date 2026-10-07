@@ -23,9 +23,11 @@ public record LarkProperties(
     if (jwtIssuer == null || jwtIssuer.isBlank()) {
       jwtIssuer = "https://open.larksuite.com";
     }
-    if (jwtSecret == null || jwtSecret.isBlank()) {
-      jwtSecret = "logistics-lark-default-secret-key-at-least-256-bits-long-change-in-production!";
-    }
+    if (enabled && (jwtSecret == null || jwtSecret.isBlank()
+        || jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32
+        || jwtSecret.startsWith("logistics-lark-default-secret-key-")
+        || jwtSecret.startsWith("your-secure-jwt-secret-")))
+      throw new IllegalArgumentException("LARK_JWT_SECRET must be explicitly configured with at least 32 UTF-8 bytes; shared defaults are forbidden");
     if (jwtTtl == null) {
       jwtTtl = Duration.ofHours(8);
     }

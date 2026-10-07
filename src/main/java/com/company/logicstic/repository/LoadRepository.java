@@ -15,11 +15,16 @@ public interface LoadRepository extends JpaRepository<Load, UUID> {
     @Query("SELECT l FROM Load l WHERE l.id = :id")
     java.util.Optional<Load> findByIdForUpdate(@Param("id") UUID id);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"customer", "assignedTruck", "assignedDispatcher"})
+    @Override
+    java.util.Optional<Load> findById(UUID id);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"customer", "assignedTruck", "assignedDispatcher"})
     @Query("""
             SELECT l FROM Load l
             WHERE (:search IS NULL
-                   OR LOWER(l.name) LIKE LOWER(CONCAT('%', :search, '%'))
-                   OR LOWER(l.externalBrokerReference) LIKE LOWER(CONCAT('%', :search, '%')))
+                   OR LOWER(l.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%'))
+                   OR LOWER(l.externalBrokerReference) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))
               AND (:status IS NULL OR l.status = :status)
               AND (:customerId IS NULL OR l.customer.id = :customerId)
               AND (:truckId IS NULL OR l.assignedTruck.id = :truckId)

@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public record LoadView(
         UUID id,
+        Long version,
         Long number,
         String name,
         String type,
@@ -57,7 +58,7 @@ public record LoadView(
         String dispatcherName = l.getAssignedDispatcher() != null
                 ? l.getAssignedDispatcher().getFirstName() + " " + l.getAssignedDispatcher().getLastName() : null;
         return new LoadView(
-                l.getId(), l.getNumber(), l.getName(), l.getType(), l.getStatus(),
+                l.getId(), l.getVersion(), l.getNumber(), l.getName(), l.getType(), l.getStatus(),
                 l.getDistance(), l.getIsInProximity(),
                 l.getDispatchedAt(), l.getPickedUpAt(), l.getDeliveredAt(), l.getCancelledAt(),
                 l.getCustomer() != null ? l.getCustomer().getId() : null,

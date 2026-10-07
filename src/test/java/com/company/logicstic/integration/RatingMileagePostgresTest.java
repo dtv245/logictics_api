@@ -123,7 +123,7 @@ class RatingMileagePostgresTest {
         var mvc=org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(web).apply(org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity()).build();
         var json=tools.jackson.databind.json.JsonMapper.builder().build().writeValueAsString(input(f,RatingMileageComponent.LINEHAUL,"10"));
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/loads/"+f.load()+"/rating/contract-mileage")
-                .contentType("application/json").content(json)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isForbidden());
+                .contentType("application/json").content(json)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isUnauthorized());
         var result=mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/loads/"+f.load()+"/rating/contract-mileage")
                 .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(f.email()).roles("ACCOUNTANT"))
                 .contentType("application/json").content(json)).andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isCreated())

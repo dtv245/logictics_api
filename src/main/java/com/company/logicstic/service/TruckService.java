@@ -2,6 +2,8 @@ package com.company.logicstic.service;
 
 import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.truck.CreateTruckRequest;
+import com.company.logicstic.dto.truck.UpdateTruckRequest;
+import com.company.logicstic.common.ExpectedVersionGuard;
 import com.company.logicstic.dto.truck.TruckView;
 import com.company.logicstic.entity.Employee;
 import com.company.logicstic.entity.Truck;
@@ -52,14 +54,16 @@ public class TruckService {
     }
 
     @Transactional
-    public TruckView update(UUID id, CreateTruckRequest request) {
+    public TruckView update(UUID id, UpdateTruckRequest command) {
         Truck truck = truckRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Truck not found: " + id));
+        ExpectedVersionGuard.require(command == null ? null : command.expectedVersion(), truck.getVersion());
+        CreateTruckRequest request = command.toCreateRequest();
         if (!truck.getNumber().equals(request.number()) && truckRepository.existsByNumber(request.number())) {
             throw new ConflictException("Truck with number '" + request.number() + "' already exists");
         }
         applyFields(truck, request);
-        return TruckView.from(truckRepository.save(truck));
+        return TruckView.from(truckRepository.saveAndFlush(truck));
     }
 
     @Transactional

@@ -24,18 +24,18 @@ public class OptimizationQualifiedInputService {
     private final EmployeeRepository employees;
     private final OptimizationEvidenceValidator validator;
     private final RatingFingerprintService fingerprints;
-    public record WeightRequest(BigDecimal value, String unit) {}
-    public record CapacityRequest(WeightRequest cargo, WeightRequest truck) {}
-    // Nullable booleans distinguish an explicit false from an omitted business assertion.
-    public record QualificationRequest(Boolean qualifiedDriver, Boolean validLicense, Boolean hazmatDriver,
-                                       Boolean equipmentMatches, Boolean hazmatTruck, Boolean operational,
-                                       Boolean maintenanceClear, Boolean hazmatRequired, Instant effectiveFrom, Instant effectiveUntil) {}
-    public record CostRequest(UUID costId, String forecastPolicyCode, int forecastPolicyVersion, String zeroCostReason) {}
-    public record ForecastRequest(Boolean accessorialApplicable, Boolean permitApplicable, List<CostRequest> costs) {}
-    public record CaptureRequest(UUID id, UUID policyId, Kind kind, Scope scope, Source source, String unit,
-                                 Instant observedAt, Instant expiresAt, Long maxAgeSeconds, UUID supersedesInputId,
-                                 CapacityRequest capacity, QualificationRequest qualification, ForecastRequest forecast,
-                                 String approvalReference, String reasonCode, String reason) {}
+    public record WeightRequest(@jakarta.validation.constraints.NotNull @jakarta.validation.constraints.DecimalMin("0") BigDecimal value, @jakarta.validation.constraints.NotBlank String unit) {}
+    public record CapacityRequest(@jakarta.validation.constraints.NotNull @jakarta.validation.Valid WeightRequest cargo, @jakarta.validation.constraints.NotNull @jakarta.validation.Valid WeightRequest truck) {}
+    public record QualificationRequest(@jakarta.validation.constraints.NotNull Boolean qualifiedDriver, @jakarta.validation.constraints.NotNull Boolean validLicense, @jakarta.validation.constraints.NotNull Boolean hazmatDriver,
+            @jakarta.validation.constraints.NotNull Boolean equipmentMatches, @jakarta.validation.constraints.NotNull Boolean hazmatTruck, @jakarta.validation.constraints.NotNull Boolean operational,
+            @jakarta.validation.constraints.NotNull Boolean maintenanceClear, @jakarta.validation.constraints.NotNull Boolean hazmatRequired, @jakarta.validation.constraints.NotNull Instant effectiveFrom, @jakarta.validation.constraints.NotNull Instant effectiveUntil) {}
+    public record CostRequest(@jakarta.validation.constraints.NotNull UUID costId, @jakarta.validation.constraints.NotBlank String forecastPolicyCode, @jakarta.validation.constraints.Positive int forecastPolicyVersion, String zeroCostReason) {}
+    public record ForecastRequest(@jakarta.validation.constraints.NotNull Boolean accessorialApplicable, @jakarta.validation.constraints.NotNull Boolean permitApplicable, @jakarta.validation.constraints.NotEmpty List<@jakarta.validation.constraints.NotNull @jakarta.validation.Valid CostRequest> costs) {}
+    public record CaptureRequest(@jakarta.validation.constraints.NotNull UUID id, @jakarta.validation.constraints.NotNull UUID policyId, @jakarta.validation.constraints.NotNull Kind kind,
+            @jakarta.validation.constraints.NotNull @jakarta.validation.Valid Scope scope, @jakarta.validation.constraints.NotNull @jakarta.validation.Valid Source source, @jakarta.validation.constraints.NotBlank String unit,
+            @jakarta.validation.constraints.NotNull Instant observedAt, Instant expiresAt, @jakarta.validation.constraints.Positive Long maxAgeSeconds, UUID supersedesInputId,
+            @jakarta.validation.Valid CapacityRequest capacity, @jakarta.validation.Valid QualificationRequest qualification, @jakarta.validation.Valid ForecastRequest forecast,
+            @jakarta.validation.constraints.NotBlank String approvalReference, @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp="[A-Z][A-Z0-9_]{0,79}") String reasonCode, @jakarta.validation.constraints.NotBlank String reason) {}
 
     @Transactional
     public Captured capture(CaptureRequest request, UUID actor) {

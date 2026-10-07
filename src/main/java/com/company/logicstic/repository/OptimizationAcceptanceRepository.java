@@ -56,7 +56,7 @@ public class OptimizationAcceptanceRepository {
     public UUID assign(Scope scope,Run run,UUID actor,Instant acceptedAt) {
         var matching=matchingAssignments(scope,run.planningUntil(),acceptedAt);
         if(matching.size()>1)throw new com.company.logicstic.exception.ConflictException("OPTIMIZATION_CANDIDATE_STALE","Matching assignment history is ambiguous; no implicit latest-row selection");
-        jdbc.update("update trips set truck_id=? where id=?",scope.truckId(),scope.tripId());
+        jdbc.update("update trips set truck_id=?,version=version+1 where id=?",scope.truckId(),scope.tripId());
         if(!matching.isEmpty())return matching.getFirst();
         UUID id=UUID.randomUUID();
         // PRIMARY is the established TripExecutionService assignment convention, not a new optimizer pay rule.

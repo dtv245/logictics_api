@@ -29,14 +29,14 @@ public class DriverSettlementController {
 
     @PostMapping("/{id}/recalculate-revenue")
     public ResponseEntity<ApiResponse<DriverSettlementView>> recalculateRevenue(@PathVariable UUID id,
-            @RequestBody com.company.logicstic.service.payroll.SettlementRevenueService.Recalculate body,
+            @Valid @RequestBody com.company.logicstic.service.payroll.SettlementRevenueService.Recalculate body,
             Authentication authentication,HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(revenue.recalculate(id,body,actorId(authentication)),request));
     }
 
     @PostMapping("/{id}/billing-adjustments")
     public ResponseEntity<ApiResponse<com.company.logicstic.service.payroll.SettlementRevenueService.Impact>> billingAdjustment(@PathVariable UUID id,
-            @RequestBody com.company.logicstic.service.payroll.SettlementRevenueService.Adjustment body,
+            @Valid @RequestBody com.company.logicstic.service.payroll.SettlementRevenueService.Adjustment body,
             Authentication authentication,HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(revenue.adjust(id,body,actorId(authentication)),request));
     }

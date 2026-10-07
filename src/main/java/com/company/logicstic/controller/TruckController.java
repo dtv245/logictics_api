@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.company.logicstic.dto.ApiResponse;
 import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.truck.CreateTruckRequest;
+import com.company.logicstic.dto.truck.UpdateTruckRequest;
 import com.company.logicstic.dto.truck.TruckView;
 import com.company.logicstic.service.TruckService;
 
@@ -66,7 +67,7 @@ public class TruckController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TruckView>> update(
             @PathVariable UUID id,
-            @Valid @RequestBody CreateTruckRequest body,
+            @Valid @RequestBody UpdateTruckRequest body,
             HttpServletRequest request
     ) {
         TruckView data = truckService.update(id, body);

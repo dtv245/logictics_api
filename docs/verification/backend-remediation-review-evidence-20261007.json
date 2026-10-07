@@ -1,0 +1,554 @@
+{
+  "verified_at": "2026-10-06T19:08:08.304679+00:00",
+  "scope": "BUG-BE-0001/0007 reviewed tenant authentication fixes",
+  "source_status": "LOCALLY_VERIFIED",
+  "release_completion_gate": "NOT_MET",
+  "deployment_verified": false,
+  "red_regression": {
+    "tests": 11,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0,
+    "log": "/tmp/logisticsx-remediation-tests-ayraa2cm/maven.log"
+  },
+  "targeted_regression_log": "/tmp/logisticsx-remediation-tests-snj163pu/maven.log",
+  "clean_regression": {
+    "status": "PASS",
+    "database": "codex_regression_20261006185014533852",
+    "source_database": null,
+    "source_versions": [],
+    "validated_versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38
+    ],
+    "artifact_manifest": "/tmp/logisticsx-regression-aqe635x7/artifact-manifest.json",
+    "reported": 556,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "executed": 556,
+    "postgres_baseline_methods": 40,
+    "postgres_integration_methods": 207,
+    "postgres_suites": {
+      "com.company.logicstic.integration.BillingPrimaryPostgresTest": 23,
+      "com.company.logicstic.integration.CoreStaleVersionPostgresTest": 4,
+      "com.company.logicstic.integration.CostLedgerPostgresTest": 40,
+      "com.company.logicstic.integration.CurrentUserApiPostgresTest": 6,
+      "com.company.logicstic.integration.FleetUtilizationPostgresTest": 22,
+      "com.company.logicstic.integration.HttpRequestValidationPostgresTest": 5,
+      "com.company.logicstic.integration.LoadPickupBusinessDatePostgresTest": 7,
+      "com.company.logicstic.integration.MessagingAuthorizationPostgresTest": 5,
+      "com.company.logicstic.integration.MultiTenantStartupPostgresTest": 6,
+      "com.company.logicstic.integration.OptimizationAcceptancePostgresTest": 11,
+      "com.company.logicstic.integration.OptimizationAuditPostgresTest": 11,
+      "com.company.logicstic.integration.OptimizationQualifiedInputPostgresTest": 11,
+      "com.company.logicstic.integration.OptimizationRunPostgresTest": 11,
+      "com.company.logicstic.integration.PaymentCommandPostgresTest": 10,
+      "com.company.logicstic.integration.PersistenceReadPostgresTest": 4,
+      "com.company.logicstic.integration.RatingMileagePostgresTest": 5,
+      "com.company.logicstic.integration.RatingPolicyPostgresTest": 6,
+      "com.company.logicstic.integration.RatingPreviewPostgresTest": 3,
+      "com.company.logicstic.integration.RatingSnapshotPostgresTest": 6,
+      "com.company.logicstic.integration.RemediationContextPostgresTest": 2,
+      "com.company.logicstic.integration.SecurityTenantApiPostgresTest": 5,
+      "com.company.logicstic.integration.TaxAssessmentPostgresTest": 4
+    }
+  },
+  "populated_v38_clone_regression": {
+    "status": "PASS",
+    "database": "codex_regression_20261006185418902031",
+    "source_database": "codex_regression_20261006185014533852",
+    "source_versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38
+    ],
+    "validated_versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38
+    ],
+    "artifact_manifest": "/tmp/logisticsx-artifact-vbxwc3v5/artifact-manifest.json",
+    "reported": 556,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "executed": 556,
+    "postgres_baseline_methods": 40,
+    "postgres_integration_methods": 207,
+    "postgres_suites": {
+      "com.company.logicstic.integration.BillingPrimaryPostgresTest": 23,
+      "com.company.logicstic.integration.CoreStaleVersionPostgresTest": 4,
+      "com.company.logicstic.integration.CostLedgerPostgresTest": 40,
+      "com.company.logicstic.integration.CurrentUserApiPostgresTest": 6,
+      "com.company.logicstic.integration.FleetUtilizationPostgresTest": 22,
+      "com.company.logicstic.integration.HttpRequestValidationPostgresTest": 5,
+      "com.company.logicstic.integration.LoadPickupBusinessDatePostgresTest": 7,
+      "com.company.logicstic.integration.MessagingAuthorizationPostgresTest": 5,
+      "com.company.logicstic.integration.MultiTenantStartupPostgresTest": 6,
+      "com.company.logicstic.integration.OptimizationAcceptancePostgresTest": 11,
+      "com.company.logicstic.integration.OptimizationAuditPostgresTest": 11,
+      "com.company.logicstic.integration.OptimizationQualifiedInputPostgresTest": 11,
+      "com.company.logicstic.integration.OptimizationRunPostgresTest": 11,
+      "com.company.logicstic.integration.PaymentCommandPostgresTest": 10,
+      "com.company.logicstic.integration.PersistenceReadPostgresTest": 4,
+      "com.company.logicstic.integration.RatingMileagePostgresTest": 5,
+      "com.company.logicstic.integration.RatingPolicyPostgresTest": 6,
+      "com.company.logicstic.integration.RatingPreviewPostgresTest": 3,
+      "com.company.logicstic.integration.RatingSnapshotPostgresTest": 6,
+      "com.company.logicstic.integration.RemediationContextPostgresTest": 2,
+      "com.company.logicstic.integration.SecurityTenantApiPostgresTest": 5,
+      "com.company.logicstic.integration.TaxAssessmentPostgresTest": 4
+    }
+  },
+  "retained_upgrade_fixtures": [
+    "V35 to V38",
+    "V36 to V38",
+    "V37 to V38"
+  ],
+  "python_tests": {
+    "executed": 26,
+    "failures": 0,
+    "log": "/tmp/logisticsx-20261007-python.log"
+  },
+  "artifact": {
+    "source_commit": "0c795f89b7005484abcd0aff3ea13aa9cdeb1fdb",
+    "source_hash": "e2bc18255f77d334271d2ebd306ebd0aca641282130ed2dda60e2f3ffaca7394",
+    "dirty": true,
+    "build_id": "remediation-72c39544056c4f508bfa687e1b06f8aa",
+    "jar_path": "/tmp/logisticsx-artifact-vbxwc3v5/application.jar",
+    "jar_sha256": "bdfa07fe7d9aca91282b212e01544431324c3721b2d86ee0538e8fcb0545affb",
+    "packaged_build": {
+      "build.artifact": "logicstic",
+      "build.group": "com.company",
+      "build.id": "remediation-72c39544056c4f508bfa687e1b06f8aa",
+      "build.name": "logicstic",
+      "build.source.commit": "0c795f89b7005484abcd0aff3ea13aa9cdeb1fdb",
+      "build.source.dirty": "true",
+      "build.source.hash": "e2bc18255f77d334271d2ebd306ebd0aca641282130ed2dda60e2f3ffaca7394",
+      "build.time": "2026-10-06T18\\:54\\:20.310Z",
+      "build.version": "1.0.0"
+    },
+    "packaged_migrations": {
+      "V1__baseline_business_schema.sql": "ba79b21487e2e4fafefb990726958eb1d5eadd9d224ab333117fbc657ad92803",
+      "V13__protect_settlement_financial_history.sql": "5eb346401063d7d960f7aa0c25f24a664d9084e879d85dbc5b9a937cac8ba1b6",
+      "V14__add_multi_jurisdiction_payroll_framework.sql": "56ac5692d2b05c0fc80cb9f48973904ca3cbbdc2ffdc40ff5b73f5f8f2076313",
+      "V22__add_audited_load_pickup_business_date.sql": "d3c0ef7127ec4d93beed00f44a6a3608cfdc6ac3487a93a7b439beb2802776aa",
+      "V4__extend_trip_stops_execution.sql": "22765d475a249573280b25e37ffeb8e7ec6c0e16eb23030813f5cdf38ecdd007",
+      "V27__enforce_signed_billing_chains_and_credit_caps.sql": "a52097caeb8a38beec1dd62e720094bc6201c38f88f90305142deee22b694f94",
+      "V26__link_rated_primary_invoices_and_command_audit.sql": "32f96f766d404b4171aa2915abc250f5041aad74b9dadfc77661bf82e7d2acf2",
+      "V36__add_payment_financial_integrity_and_idempotency.sql": "7f0aec5cb47e0c79a11333bb39ccfc04ac817a91321f9e4e6f77f5bcf836127e",
+      "V12__normalize_legacy_audit_column_names.sql": "62cfd80215ce0af3c5ef484f954e0fecea6b85b9c7e97f15b8f0257a93f1fff9",
+      "V5__extend_expenses_attribution.sql": "f5176348cca415962cedb736459ce73354d4fd6bad5696a8827301ed754d1d44",
+      "V6__create_load_events.sql": "7fb04b9b0043968d723647bc8aae9a187f6e6928e220d0462608d2311dc4843e",
+      "V19__add_audited_manual_payroll_bank_reconciliation.sql": "c3488003738f885e8cd69f46e02140678dea4e1b081bcbb2b1fec782179c73ec",
+      "V30__create_immutable_optimization_policy_and_run_audit.sql": "7002cebd33400a84d954736c6065d117926349cc896539ca74d86086691bd0f5",
+      "V20__complete_payroll_runs_and_zero_payment_disposition.sql": "6aafea9bcf6277c8e2c4ad020b03bc259dad7871e8b12459c7037e1a120b84b7",
+      "V37__add_optimistic_locking_to_core_entities.sql": "90ef2e090fdda8d038e8fa671e65a634201b0c2648322d9baf7f50ed1133a882",
+      "V16__preserve_immutable_payslip_artifacts.sql": "124f0711956fdd731dfbe142be54703d4a823b74b717b029c1ad8cbe06bb9690",
+      "V35__guard_fleet_execution_context_and_capture_time.sql": "8454d34dc909368694f881651ca5b4d2c21f301d838e8814f6036bd514a3d8de",
+      "V15__protect_locked_payroll_history.sql": "12c349fc7b13baa3edfde5ee3f844dcde4676bd5a9d59878e148f8e96cf2adbc",
+      "V23__add_immutable_contract_load_rating_mileage.sql": "9194cc4c9c38be7d05a928d3003068b1ac74c9f73a6bafe75732fd1321405052",
+      "V3__add_trip_mileage_breakdown.sql": "8d8e70ac6f89d895452f6c88812a01dffeaaa07647a64c362e272d8adeb3ae32",
+      "V32__capture_qualified_candidate_source_inputs.sql": "1bea5325ee5f6b3152444c33eba83cd93b6599e494d441f6f385bd627063d0e7",
+      "V28__audit_settlement_billing_recalculations_and_adjustments.sql": "dfefa0e7489c4b219957707e16cf0928656802873fd54c3ef17b8f468b4aa74e",
+      "V21__create_versioned_customer_rate_policies.sql": "ad852793d687c72205bb948146a4510247e9cf966edef9b56fb72535517bffb4",
+      "V10__create_driver_pay_and_settlement_tables.sql": "6ab026768aeaecb7bc8a4033c0ea04f5054283559617cc5d7fb4525f3e84c27e",
+      "V2__create_trip_driver_assignments.sql": "c3826ae47c54fb9ea251af34c50aaef9ea37cbbd157633019b642aeaa3897bd9",
+      "V8__preserve_trip_driver_assignment_history.sql": "88d47293b5dd97b8762e4e13194f20868450439d9111a929909573bb8cbfe89d",
+      "V7__create_calculation_snapshots.sql": "b4c165b18babeffa5152150961963dd13c88e2969be2671935dcafe7e2847d72",
+      "V25__create_immutable_invoice_tax_assessments.sql": "01df70bfd3db3daadf4ad01fb65728b2b617955268177210f9ce6368d784c390",
+      "V9__create_shipment_costs_and_accessorial_charges.sql": "10c1808077691789e4ce7056f8764d4b72a1a53d255a95186a4cc3fb3b4692bd",
+      "V17__add_immutable_payroll_payment_attempts.sql": "80d310edc7384c6508faf2689222ec529cd635858afe9d394f7082bf73b364a0",
+      "V38__protect_payment_command_history.sql": "427c73b9741af59ff4ce1b5cfd42a42126b9860320a5ee07d99989d42823951e",
+      "V34__capture_immutable_fleet_history_and_mileage_attribution.sql": "69d76b97347674692c4c0e38b7d3657e80fe9a51a27087f4fd12abb15fd5e959",
+      "V24__create_immutable_accepted_rating_snapshots.sql": "12042954956795acea0395069594fee1d40bb3fc4c2d548e8d0a4a8396219515",
+      "V18__journal_verified_payroll_payment_events.sql": "e38cc8846984b7ffea3d9010b55f7d066de83276651821f72f60009e8daea936",
+      "V11__create_payroll_and_payslip_tables.sql": "b250faec23992bb77131579a33f8b91a4bb39a5e022dfdffe4df27acb644058a",
+      "V29__preserve_driver_settlement_calculation_history.sql": "b5ec8247cb458fc807c5ad274a99d073a871d12acbfa42ed10987a9677d3088f",
+      "V31__allow_unscored_infeasible_optimization_candidates.sql": "320b3a76a07fa587138c5cb6eb336aeaec3c85680f4677b97dcbde0e9a5b4d2b",
+      "V33__guard_atomic_optimization_acceptance.sql": "0dcebd90aa844d27bc656134211b5ae9d4618345baa66c19f7623734f164e3d0"
+    },
+    "artifact_kind": "LOCAL_JAR",
+    "image_id": null,
+    "deployment_verified": false,
+    "openapi_canonical_sha256": "2d10d31b8c7a013fa10aca92b5cf3411cadf8dcd5a1ca88f540201b3771e7774"
+  },
+  "disposable_executable": {
+    "status": "PASS",
+    "verification_scope": "LOCAL_JAR",
+    "deployment_verified": false,
+    "database": "codex_artifact_20261006185753264175",
+    "diagnostics": "/tmp/logisticsx-artifact-vbxwc3v5",
+    "profiles": {
+      "single-tenant": {
+        "status": "PASS",
+        "verification_scope": "LOCAL_JAR",
+        "jar_sha256": "bdfa07fe7d9aca91282b212e01544431324c3721b2d86ee0538e8fcb0545affb",
+        "runtime_build": {
+          "version": "1.0.0",
+          "sourceCommit": "0c795f89b7005484abcd0aff3ea13aa9cdeb1fdb",
+          "sourceHash": "e2bc18255f77d334271d2ebd306ebd0aca641282130ed2dda60e2f3ffaca7394",
+          "buildId": "remediation-72c39544056c4f508bfa687e1b06f8aa",
+          "dirty": true,
+          "builtAt": "2026-10-06T18:54:20.310Z"
+        },
+        "openapi_canonical_sha256": "2d10d31b8c7a013fa10aca92b5cf3411cadf8dcd5a1ca88f540201b3771e7774",
+        "openapi_paths": 140,
+        "anonymous_protected_status": 401,
+        "artifact_runtime_verified": true,
+        "deployment_verified": false
+      },
+      "nodb": {
+        "status": "PASS",
+        "health": 200,
+        "protected": 401,
+        "persistence": "DISABLED"
+      },
+      "missing-key": {
+        "status": "PASS",
+        "startup": "REJECTED_MISSING_KEY"
+      }
+    },
+    "flyway_history": [
+      {
+        "version": "1",
+        "checksum": 1235460717,
+        "success": true
+      },
+      {
+        "version": "2",
+        "checksum": -1753929907,
+        "success": true
+      },
+      {
+        "version": "3",
+        "checksum": 335931305,
+        "success": true
+      },
+      {
+        "version": "4",
+        "checksum": 786071911,
+        "success": true
+      },
+      {
+        "version": "5",
+        "checksum": 2080020273,
+        "success": true
+      },
+      {
+        "version": "6",
+        "checksum": -1608767630,
+        "success": true
+      },
+      {
+        "version": "7",
+        "checksum": -119727677,
+        "success": true
+      },
+      {
+        "version": "8",
+        "checksum": -823793861,
+        "success": true
+      },
+      {
+        "version": "9",
+        "checksum": -1093759091,
+        "success": true
+      },
+      {
+        "version": "10",
+        "checksum": -1886770013,
+        "success": true
+      },
+      {
+        "version": "11",
+        "checksum": 38005325,
+        "success": true
+      },
+      {
+        "version": "12",
+        "checksum": 302047376,
+        "success": true
+      },
+      {
+        "version": "13",
+        "checksum": -1423130546,
+        "success": true
+      },
+      {
+        "version": "14",
+        "checksum": -126464795,
+        "success": true
+      },
+      {
+        "version": "15",
+        "checksum": 882720897,
+        "success": true
+      },
+      {
+        "version": "16",
+        "checksum": -1123530322,
+        "success": true
+      },
+      {
+        "version": "17",
+        "checksum": 173517802,
+        "success": true
+      },
+      {
+        "version": "18",
+        "checksum": -1316679077,
+        "success": true
+      },
+      {
+        "version": "19",
+        "checksum": 1809740214,
+        "success": true
+      },
+      {
+        "version": "20",
+        "checksum": -542812573,
+        "success": true
+      },
+      {
+        "version": "21",
+        "checksum": -1909249244,
+        "success": true
+      },
+      {
+        "version": "22",
+        "checksum": 394595446,
+        "success": true
+      },
+      {
+        "version": "23",
+        "checksum": -1022322726,
+        "success": true
+      },
+      {
+        "version": "24",
+        "checksum": -10662956,
+        "success": true
+      },
+      {
+        "version": "25",
+        "checksum": -897273989,
+        "success": true
+      },
+      {
+        "version": "26",
+        "checksum": -255656652,
+        "success": true
+      },
+      {
+        "version": "27",
+        "checksum": 4706305,
+        "success": true
+      },
+      {
+        "version": "28",
+        "checksum": 558798271,
+        "success": true
+      },
+      {
+        "version": "29",
+        "checksum": -210072599,
+        "success": true
+      },
+      {
+        "version": "30",
+        "checksum": -284566628,
+        "success": true
+      },
+      {
+        "version": "31",
+        "checksum": -1456429909,
+        "success": true
+      },
+      {
+        "version": "32",
+        "checksum": -2134547884,
+        "success": true
+      },
+      {
+        "version": "33",
+        "checksum": -747133388,
+        "success": true
+      },
+      {
+        "version": "34",
+        "checksum": 169929680,
+        "success": true
+      },
+      {
+        "version": "35",
+        "checksum": -1851627744,
+        "success": true
+      },
+      {
+        "version": "36",
+        "checksum": 354075607,
+        "success": true
+      },
+      {
+        "version": "37",
+        "checksum": 1990229231,
+        "success": true
+      },
+      {
+        "version": "38",
+        "checksum": -2126931529,
+        "success": true
+      }
+    ]
+  },
+  "graph": {
+    "summary": {
+      "changed_count": 491,
+      "affected_count": 327,
+      "changed_files": 156,
+      "risk_level": "critical"
+    },
+    "partial": false,
+    "truncated": false,
+    "index_nodes": 13475,
+    "index_edges": 35107,
+    "index_flows": 864,
+    "full_rebuild": true,
+    "raw_result": "/tmp/logisticsx-20261007-graph.json",
+    "limits": [
+      "Untracked additions are not mapped by git diff",
+      "Flow discovery drops candidate/branch paths; impact can be a lower bound"
+    ]
+  },
+  "preservation": {
+    "baseline": "/tmp/logisticsx-remediation-baseline-0qjf02qo",
+    "snapshot_entries": 1049,
+    "unchanged_entries": 1043,
+    "changed_existing_paths": [
+      ".ai-workflow/PROJECT_MEMORY.md",
+      "scripts/verify_backend_regression.py",
+      "src/main/java/com/company/logicstic/config/TenantJwtClaimFilter.java",
+      "src/main/java/com/company/logicstic/integration/lark/auth/LarkAuthService.java",
+      "src/test/java/com/company/logicstic/config/TenantJwtClaimFilterTests.java",
+      "src/test/java/com/company/logicstic/integration/MultiTenantStartupPostgresTest.java"
+    ],
+    "missing_original_paths": []
+  },
+  "frozen_migration_manifest": "docs/verification/migration-sha256-v38.txt",
+  "existing_runtime": "docs/verification/remediation-runtime-review-20261007.json",
+  "pending_scope_decision": "docs/verification/backend-follow-up-proposals.md",
+  "unconfigured_gates": [
+    "Failsafe",
+    "Checkstyle",
+    "SpotBugs",
+    "ArchUnit"
+  ]
+}
