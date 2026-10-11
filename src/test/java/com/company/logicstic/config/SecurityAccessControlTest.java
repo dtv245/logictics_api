@@ -56,7 +56,6 @@ class SecurityAccessControlTest {
                 "/api/employees",
                 "/api/roles",
                 "/api/documents",
-                "/api/messages",
                 "/api/notifications",
                 "/api/inspections"
         };
@@ -180,7 +179,6 @@ class SecurityAccessControlTest {
         @GetMapping("/api/inspections") String inspections() { return "ok"; }
         @GetMapping("/api/payments") String payments() { return "ok"; }
         @GetMapping("/api/invoices") String invoices() { return "ok"; }
-        @GetMapping("/api/messages") String messages() { return "ok"; }
         @GetMapping("/api/notifications") String notifications() { return "ok"; }
     }
 }

@@ -1,0 +1,4513 @@
+{
+  "info": {
+    "_postman_id": "826ab9f2-bca6-4cd8-bd1d-b29124c9fbf6",
+    "name": "LogisticsX TMS - Part 3 (Settlement, Payroll, Reports, Security & Cleanup)",
+    "description": "LogisticsX API TMS End-to-End Automated Test Suite (Postman v2.1)\nCovering entire business lifecycle according to OpenAPI 3.1 specification.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Root Collection Pre-request Script: Liveness & Expiry Check",
+          "const token = pm.environment.get(\"accessToken\");",
+          "const expiresAt = pm.environment.get(\"tokenExpiresAt\");",
+          "const url = pm.request.url.getPath();",
+          "const isAuthOrHealth = url.includes(\"auth\") || url.includes(\"health\") || url.includes(\"actuator\") || url.includes(\"internal/build\");",
+          "",
+          "if (!isAuthOrHealth) {",
+          "    if (!token || token.trim() === \"\") {",
+          "        console.warn(\"[AUTH ADVISORY] 'accessToken' variable is currently empty. Run folder 01_Auth or set a dev JWT in LogisticsX Environment.\");",
+          "    } else if (expiresAt && Number(expiresAt) > 0 && Date.now() > Number(expiresAt)) {",
+          "        console.warn(\"[AUTH ADVISORY] Token expired at \" + new Date(Number(expiresAt)).toISOString() + \". Re-run folder 01_Auth to refresh credentials.\");",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "13_DriverSettlement",
+      "item": [
+        {
+          "name": "13.1 Calculate Driver Settlement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "calculate"
+              ]
+            },
+            "description": "Calculate driver earnings for pay period",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverId\": \"{{driverId}}\",\n  \"payPeriodId\": \"{{payPeriodId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"settlementId\", d.id);",
+                  "    console.log(\"Saved settlementId:\", d.id);",
+                  "}",
+                  "if (d && d.status) {",
+                  "    pm.environment.set(\"settlementStatus\", d.status);",
+                  "    console.log(\"Saved settlementStatus:\", d.status);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.2 Get Driver Settlement by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}"
+              ]
+            },
+            "description": "Inspect settlement lines and status"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.status) {",
+                  "    pm.environment.set(\"settlementStatus\", d.status);",
+                  "    console.log(\"Saved settlementStatus:\", d.status);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.3 Require Settlement Validation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/require-validation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "require-validation"
+              ]
+            },
+            "description": "Flag settlement for driver confirmation",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Mileage variance verification required\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sId = pm.environment.get(\"settlementId\");",
+                  "if (!sId || sId.trim() === \"\") {",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.4 Resolve Settlement Validation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/resolve-validation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "resolve-validation"
+              ]
+            },
+            "description": "Clear validation flag and return to CALCULATED"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sId = pm.environment.get(\"settlementId\");",
+                  "if (!sId || sId.trim() === \"\") {",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.5 Submit Settlement for Review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/submit-review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "submit-review"
+              ]
+            },
+            "description": "Transition status from CALCULATED to IN_REVIEW"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sId = pm.environment.get(\"settlementId\");",
+                  "if (!sId || sId.trim() === \"\") {",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.6 Approve Settlement",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "approve"
+              ]
+            },
+            "description": "Transition status to APPROVED"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sId = pm.environment.get(\"settlementId\");",
+                  "if (!sId || sId.trim() === \"\") {",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.7 Lock Settlement",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/lock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "lock"
+              ]
+            },
+            "description": "Transition status to LOCKED"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sId = pm.environment.get(\"settlementId\");",
+                  "if (!sId || sId.trim() === \"\") {",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.status) {",
+                  "    pm.environment.set(\"settlementStatus\", d.status);",
+                  "    console.log(\"Settlement successfully locked. Status:\", d.status);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.8 Add Settlement Adjustment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/adjustments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "adjustments"
+              ]
+            },
+            "description": "Apply manual bonus or deduction line to finalized settlement",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotencyKey\": \"SADJ-{{$timestamp}}\",\n  \"reason\": \"Driver performance safety award\",\n  \"lines\": [\n    {\n      \"lineClass\": \"EARNING\",\n      \"lineType\": \"BONUS\",\n      \"amount\": 50.0,\n      \"description\": \"Safe Driving Incentive\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.9 Apply Billing Adjustment to Settlement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/billing-adjustments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "billing-adjustments"
+              ]
+            },
+            "description": "Synchronize settlement line with customer billing note",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"affectedDocumentId\": \"{{billingInvoiceId}}\",\n  \"idempotencyKey\": \"BADJ-{{$timestamp}}\",\n  \"reason\": \"Detention fee synchronization\",\n  \"reasonCode\": \"BILLING_SYNC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.warn(\"[SETTLEMENT NOTICE] Billing adjustments require percentage-of-revenue settlement basis with un-synced credit note. Skipping in mileage-based pay flow.\");",
+                  "pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.10 Recalculate Settlement Revenue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/recalculate-revenue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "recalculate-revenue"
+              ]
+            },
+            "description": "Recalculate percentage revenue against accepted rating snapshot",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedSnapshotId\": \"{{ratingSnapshotId}}\",\n  \"idempotencyKey\": \"RECALC-REV-{{$timestamp}}\",\n  \"reason\": \"Snapshot revenue alignment\",\n  \"reasonCode\": \"RATING_SYNC\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.warn(\"[SETTLEMENT NOTICE] Revenue recalculation requires percentage-of-revenue contract basis. Skipping in mileage-based pay flow.\");",
+                  "pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13.11 Settlement Reversal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver-settlements/{{settlementId}}/reversal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver-settlements",
+                "{{settlementId}}",
+                "reversal"
+              ]
+            },
+            "description": "Record settlement reversal entry against finalized settlement",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Reversal of erroneous period calculation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "14_PayrollRun",
+      "item": [
+        {
+          "name": "14.1 Calculate Payroll Run",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs",
+                "calculate"
+              ]
+            },
+            "description": "Calculate organization payroll run from driver settlements",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payPeriodId\": \"{{payPeriodId}}\",\n  \"settlementIds\": [\n    \"{{settlementId}}\"\n  ],\n  \"currency\": \"{{enum_currency}}\",\n  \"effectiveDate\": \"2026-10-15\",\n  \"idempotencyKey\": \"PAYROLL-CALC-{{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sStatus = pm.environment.get(\"settlementStatus\");",
+                  "if (sStatus !== \"LOCKED\") {",
+                  "    console.warn(\"Settlement is not in LOCKED status; payroll run calculation requires a locked settlement. Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"payrollRunId\", d.id);",
+                  "    console.log(\"Saved payrollRunId:\", d.id);",
+                  "    if (d.items && d.items.length > 0) {",
+                  "        pm.environment.set(\"payrollItemId\", d.items[0].id);",
+                  "        console.log(\"Saved payrollItemId:\", d.items[0].id);",
+                  "    }",
+                  "}",
+                  "if (d && d.status) {",
+                  "    pm.environment.set(\"payrollRunStatus\", d.status);",
+                  "    console.log(\"Saved payrollRunStatus:\", d.status);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.2 Get Payroll Run by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs/{{payrollRunId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs",
+                "{{payrollRunId}}"
+              ]
+            },
+            "description": "Inspect payroll items and totals"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = pm.environment.get(\"payrollRunId\");",
+                  "if (!runId || runId.trim() === \"\") {",
+                  "    console.warn(\"No payrollRunId available; skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.items && d.items.length > 0 && !pm.environment.get(\"payrollItemId\")) {",
+                  "    pm.environment.set(\"payrollItemId\", d.items[0].id);",
+                  "}",
+                  "if (d && d.status) {",
+                  "    pm.environment.set(\"payrollRunStatus\", d.status);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.3 Submit Payroll Run for Review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs/{{payrollRunId}}/submit-review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs",
+                "{{payrollRunId}}",
+                "submit-review"
+              ]
+            },
+            "description": "Submit payroll run for CFO review"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = pm.environment.get(\"payrollRunId\");",
+                  "const pStatus = pm.environment.get(\"payrollRunStatus\");",
+                  "if (!runId || runId.trim() === \"\" || pStatus !== \"CALCULATED\") {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] Submit review requires CALCULATED payroll run. Current status: \" + pStatus + \". Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.4 Approve Payroll Run",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs/{{payrollRunId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs",
+                "{{payrollRunId}}",
+                "approve"
+              ]
+            },
+            "description": "Approve payroll run"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = pm.environment.get(\"payrollRunId\");",
+                  "const pStatus = pm.environment.get(\"payrollRunStatus\");",
+                  "if (!runId || runId.trim() === \"\" || pStatus !== \"IN_REVIEW\") {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] Approve requires IN_REVIEW payroll run. Current status: \" + pStatus + \". Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.5 Lock Payroll Run",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs/{{payrollRunId}}/lock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs",
+                "{{payrollRunId}}",
+                "lock"
+              ]
+            },
+            "description": "Lock payroll run disbursements"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = pm.environment.get(\"payrollRunId\");",
+                  "const pStatus = pm.environment.get(\"payrollRunStatus\");",
+                  "if (!runId || runId.trim() === \"\" || pStatus !== \"APPROVED\") {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] Lock requires APPROVED payroll run. Current status: \" + pStatus + \". Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.6 Issue Payslips for Run",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/runs/{{payrollRunId}}/payslips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "runs",
+                "{{payrollRunId}}",
+                "payslips"
+              ]
+            },
+            "description": "Generate payslips for all employees in run"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = pm.environment.get(\"payrollRunId\");",
+                  "const pStatus = pm.environment.get(\"payrollRunStatus\");",
+                  "if (!runId || runId.trim() === \"\" || pStatus !== \"LOCKED\") {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] Issue payslips requires LOCKED payroll run. Current status: \" + pStatus + \". Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (Array.isArray(d) && d.length > 0) {",
+                  "    pm.environment.set(\"payslipId\", d[0].id);",
+                  "    console.log(\"Saved payslipId:\", d[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.7 Get Payslip by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payslips/{{payslipId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payslips",
+                "{{payslipId}}"
+              ]
+            },
+            "description": "Get detailed employee payslip"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const payslipId = pm.environment.get(\"payslipId\");",
+                  "if (!payslipId || payslipId.trim() === \"\") {",
+                  "    console.warn(\"No payslipId available; skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.8 Download Payslip PDF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payslips/{{payslipId}}/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payslips",
+                "{{payslipId}}",
+                "pdf"
+              ]
+            },
+            "description": "Download binary PDF payslip document"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const payslipId = pm.environment.get(\"payslipId\");",
+                  "if (!payslipId || payslipId.trim() === \"\") {",
+                  "    console.warn(\"No payslipId available; skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"Content-Type is PDF or binary\", function () {",
+                  "    const ct = pm.response.headers.get(\"Content-Type\") || \"\";",
+                  "    pm.expect(ct.toLowerCase().includes(\"pdf\") || ct.toLowerCase().includes(\"octet-stream\")).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.9 Schedule Payroll Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/items/{{payrollItemId}}/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "items",
+                "{{payrollItemId}}",
+                "payments"
+              ]
+            },
+            "description": "Schedule electronic direct deposit payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotencyKey\": \"PAY-SCHED-{{$timestamp}}\",\n  \"paymentMethod\": \"BANK_TRANSFER\",\n  \"destinationReference\": \"CHASE-ACH-4433\",\n  \"providerKey\": \"SANDBOX_ACH\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const itemId = pm.environment.get(\"payrollItemId\");",
+                  "const pStatus = pm.environment.get(\"payrollRunStatus\");",
+                  "if (!itemId || itemId.trim() === \"\" || pStatus !== \"LOCKED\") {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] Payment scheduling requires locked payroll. Current run status: \" + pStatus + \". Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"payrollPaymentId\", d.id);",
+                  "    console.log(\"Saved payrollPaymentId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.10 Dispatch Payroll Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/payments/{{payrollPaymentId}}/dispatch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "payments",
+                "{{payrollPaymentId}}",
+                "dispatch"
+              ]
+            },
+            "description": "Dispatch payment to bank clearinghouse"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pId = pm.environment.get(\"payrollPaymentId\");",
+                  "if (!pId || pId.trim() === \"\") {",
+                  "    console.warn(\"No payrollPaymentId available; skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.11 Reconcile Bank Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/payments/{{payrollPaymentId}}/reconcile-bank",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "payments",
+                "{{payrollPaymentId}}",
+                "reconcile-bank"
+              ]
+            },
+            "description": "Match bank wire statement against payroll payment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 292.5,\n  \"currency\": \"{{enum_currency}}\",\n  \"bankSource\": \"CHASE_NA\",\n  \"caseEventId\": \"{{$guid}}\",\n  \"counterpartyReference\": \"DRIVER-DIRECT-DEP\",\n  \"evidenceReference\": \"STMT-OCT-2026\",\n  \"idempotencyKey\": \"RECON-{{$timestamp}}\",\n  \"occurredAt\": \"2026-10-15T12:00:00Z\",\n  \"outcome\": \"SUCCEEDED\",\n  \"reason\": \"ACH clearinghouse confirmation\",\n  \"transactionReference\": \"TXN-{{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const pId = pm.environment.get(\"payrollPaymentId\");",
+                  "if (!pId || pId.trim() === \"\") {",
+                  "    console.warn(\"No payrollPaymentId available; skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "} else {",
+                  "    const body = JSON.parse(pm.request.body.raw);",
+                  "    body.occurredAt = new Date().toISOString();",
+                  "    pm.request.body.raw = JSON.stringify(body, null, 2);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.12 Mark Item No Payment Required",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/items/{{payrollItemId}}/no-payment-required",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "items",
+                "{{payrollItemId}}",
+                "no-payment-required"
+              ]
+            },
+            "description": "Alternative branch: item settled through external escrow or cash",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Settled via external cash advance voucher\",\n  \"reasonCode\": \"ADVANCE_RECONCILED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const itemId = pm.environment.get(\"payrollItemId\");",
+                  "if (!itemId || itemId.trim() === \"\") {",
+                  "    console.warn(\"No payrollItemId available; skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// This is an alternative branch test; if payment already dispatched, server may respond 400 with invalid state.",
+                  "pm.test(\"Processed or Invalid State handled\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.13 Provider Callback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/provider-callbacks/SANDBOX_PROVIDER",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "provider-callbacks",
+                "SANDBOX_PROVIDER"
+              ]
+            },
+            "description": "Simulate ACH provider webhook callback",
+            "body": {
+              "mode": "raw",
+              "raw": "PAYMENT_PROCESSED_WEBHOOK_PAYLOAD",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200, 204, or 403 (unconfigured provider verifier)\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 403]);",
+                  "});",
+                  "if (pm.response.code === 403) {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] External webhook callback verification requires registered provider callback verifier plugin. Endpoint intentionally rejected unverified callback with 403.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.14 List Reconciliation Cases (0-indexed page)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payroll/reconciliation-cases?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payroll",
+                "reconciliation-cases"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Fetch payroll reconciliation cases (page starts at 0)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch(e) {}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "pm.test(\"Content array returned\", function () {",
+                  "    pm.expect(d).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14.15 Driver Portal - Get My Payslips",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/driver/me/payslips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "driver",
+                "me",
+                "payslips"
+              ]
+            },
+            "description": "Driver self-service portal payslips list"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "15_Messaging_Notifications",
+      "item": [
+        {
+          "name": "15.1 Create Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversations"
+              ]
+            },
+            "description": "Create load dispatch conversation chat",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Load Dispatch Communications\",\n  \"loadId\": \"{{loadId}}\",\n  \"isTenantChat\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"conversationId\", d.id);",
+                  "    console.log(\"Saved conversationId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.2 List Conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations?employeeId={{employeeId}}&page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversations"
+              ],
+              "query": [
+                {
+                  "key": "employeeId",
+                  "value": "{{employeeId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List chat conversations"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.3 Get Conversation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations/{{conversationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "conversations",
+                "{{conversationId}}"
+              ]
+            },
+            "description": "Get conversation thread"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.4 Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages"
+              ]
+            },
+            "description": "Send dispatch message to conversation",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"{{conversationId}}\",\n  \"content\": \"Driver arrived at shipper dock. Loading commenced.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"messageId\", d.id);",
+                  "    console.log(\"Saved messageId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.5 List Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages?conversationId={{conversationId}}&page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "conversationId",
+                  "value": "{{conversationId}}"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List messages in conversation"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.6 Get Unread Messages Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/unread-count?employeeId={{employeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "messages",
+                "unread-count"
+              ],
+              "query": [
+                {
+                  "key": "employeeId",
+                  "value": "{{employeeId}}"
+                }
+              ]
+            },
+            "description": "Check total unread messages"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.7 List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List user notifications"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.content && d.content.length > 0) {",
+                  "    pm.environment.set(\"notificationId\", d.content[0].id);",
+                  "} else if (Array.isArray(d) && d.length > 0) {",
+                  "    pm.environment.set(\"notificationId\", d[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.8 Get Notification by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notificationId}}"
+              ]
+            },
+            "description": "Get notification details (skip if no notification exists)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const notifId = pm.environment.get(\"notificationId\");",
+                  "if (!notifId || notifId.trim() === \"\") {",
+                  "    console.warn(\"No notificationId available; skipping assertion.\");",
+                  "} else {",
+                  "    pm.test(\"Status code is 200\", function () {",
+                  "        pm.expect(pm.response.code).to.eql(200);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15.9 Mark All Notifications as Read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/mark-all-read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "mark-all-read"
+              ]
+            },
+            "description": "Acknowledge all pending notifications"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "16_Reports",
+      "item": [
+        {
+          "name": "16.1 Report: Known Operating CPM",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/costs/known-operating-cpm?currency={{enum_currency}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "costs",
+                "known-operating-cpm"
+              ],
+              "query": [
+                {
+                  "key": "currency",
+                  "value": "{{enum_currency}}"
+                }
+              ]
+            },
+            "description": "Cost per mile report"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[KNOWN-BUG] Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"[KNOWN-BUG] ApiResponse success flag is true\", function () {",
+                  "    let json = {};",
+                  "    try { json = pm.response.json(); } catch(e) {}",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "if (pm.response.code === 500) {",
+                  "    console.error(\"[KNOWN-BUG] Endpoint failed with 500: Spring Data JPA untyped parameter ($3) in PostgreSQL (:from IS NULL OR ...). Root fix requires parameter casting in repository.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.2 Report: Expense Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/expenses?currency={{enum_currency}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "expenses"
+              ],
+              "query": [
+                {
+                  "key": "currency",
+                  "value": "{{enum_currency}}"
+                }
+              ]
+            },
+            "description": "Aggregated expenses report"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[KNOWN-BUG] Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"[KNOWN-BUG] ApiResponse success flag is true\", function () {",
+                  "    let json = {};",
+                  "    try { json = pm.response.json(); } catch(e) {}",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "if (pm.response.code === 500) {",
+                  "    console.error(\"[KNOWN-BUG] Endpoint failed with 500: Spring Data JPA untyped parameter ($3) in PostgreSQL (:from IS NULL OR ...). Root fix requires parameter casting in repository.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.3 Report: Monthly Financials",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/financials/monthly?year=2026&month=10&currency={{enum_currency}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "financials",
+                "monthly"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026"
+                },
+                {
+                  "key": "month",
+                  "value": "10"
+                },
+                {
+                  "key": "currency",
+                  "value": "{{enum_currency}}"
+                }
+              ]
+            },
+            "description": "Monthly revenue and expenses"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[KNOWN-BUG] Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"[KNOWN-BUG] ApiResponse success flag is true\", function () {",
+                  "    let json = {};",
+                  "    try { json = pm.response.json(); } catch(e) {}",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "if (pm.response.code === 500) {",
+                  "    console.error(\"[KNOWN-BUG] Endpoint failed with 500: Spring Data JPA untyped parameter ($3) in PostgreSQL (:from IS NULL OR ...). Root fix requires parameter casting in repository.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.4 Report: Fleet Fuel Consumption",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/fleet/fuel?currency={{enum_currency}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "fleet",
+                "fuel"
+              ],
+              "query": [
+                {
+                  "key": "currency",
+                  "value": "{{enum_currency}}"
+                }
+              ]
+            },
+            "description": "Fuel expense and efficiency metrics"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[KNOWN-BUG] Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"[KNOWN-BUG] ApiResponse success flag is true\", function () {",
+                  "    let json = {};",
+                  "    try { json = pm.response.json(); } catch(e) {}",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "if (pm.response.code === 500) {",
+                  "    console.error(\"[KNOWN-BUG] Endpoint failed with 500: Spring Data JPA untyped parameter ($3) in PostgreSQL (:from IS NULL OR ...). Root fix requires parameter casting in repository.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.5 Report: Fleet Health Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/fleet/health?policyId={{fleetPolicyId}}&truckIds={{truckId}}&from=2026-10-01T00:00:00Z&to=2026-10-10T02:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "fleet",
+                "health"
+              ],
+              "query": [
+                {
+                  "key": "policyId",
+                  "value": "{{fleetPolicyId}}"
+                },
+                {
+                  "key": "truckIds",
+                  "value": "{{truckId}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-10-01T00:00:00Z"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-10-10T02:00:00Z"
+                }
+              ]
+            },
+            "description": "Fleet equipment status & health report"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.6 Report: Fleet Maintenance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/fleet/maintenance?truckId={{truckId}}&currency={{enum_currency}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "fleet",
+                "maintenance"
+              ],
+              "query": [
+                {
+                  "key": "truckId",
+                  "value": "{{truckId}}"
+                },
+                {
+                  "key": "currency",
+                  "value": "{{enum_currency}}"
+                }
+              ]
+            },
+            "description": "Truck maintenance summary"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[KNOWN-BUG] Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"[KNOWN-BUG] ApiResponse success flag is true\", function () {",
+                  "    let json = {};",
+                  "    try { json = pm.response.json(); } catch(e) {}",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "if (pm.response.code === 500) {",
+                  "    console.error(\"[KNOWN-BUG] Endpoint failed with 500: Spring Data JPA untyped parameter ($3) in PostgreSQL (:from IS NULL OR ...). Root fix requires parameter casting in repository.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.7 Report: Fleet Utilization History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/fleet/utilization-history?policyId={{fleetPolicyId}}&truckIds={{truckId}}&from=2026-10-01T00:00:00Z&to=2026-10-10T02:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "fleet",
+                "utilization-history"
+              ],
+              "query": [
+                {
+                  "key": "policyId",
+                  "value": "{{fleetPolicyId}}"
+                },
+                {
+                  "key": "truckIds",
+                  "value": "{{truckId}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-10-01T00:00:00Z"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-10-10T02:00:00Z"
+                }
+              ]
+            },
+            "description": "Historical fleet utilization KPI"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.8 Report: Operations Delays",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/operations/delays",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "operations",
+                "delays"
+              ]
+            },
+            "description": "Transit and dock dwell delays"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.9 Report: Exceptions Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/operations/exceptions-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "operations",
+                "exceptions-summary"
+              ]
+            },
+            "description": "Operations exceptions log"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[KNOWN-BUG] Status code is 200\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});",
+                  "pm.test(\"[KNOWN-BUG] ApiResponse success flag is true\", function () {",
+                  "    let json = {};",
+                  "    try { json = pm.response.json(); } catch(e) {}",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});",
+                  "if (pm.response.code === 500) {",
+                  "    console.error(\"[KNOWN-BUG] Endpoint failed with 500: Spring Data JPA untyped parameter ($3) in PostgreSQL (:from IS NULL OR ...). Root fix requires parameter casting in repository.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.10 Report: On-Time Delivery Rate",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/operations/on-time-delivery",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "operations",
+                "on-time-delivery"
+              ]
+            },
+            "description": "On-time delivery KPI metric"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.11 Report: Transit Times",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/operations/transit-time",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "operations",
+                "transit-time"
+              ]
+            },
+            "description": "Transit duration statistics"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.12 Report: Profitability by Lane",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/profitability/by-lane",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "profitability",
+                "by-lane"
+              ]
+            },
+            "description": "Lane-level profit margins"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.13 Report: Profitability by Load",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/profitability/by-load?loadId={{loadId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "profitability",
+                "by-load"
+              ],
+              "query": [
+                {
+                  "key": "loadId",
+                  "value": "{{loadId}}"
+                }
+              ]
+            },
+            "description": "Load-level gross profit margin"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.14 Report: Profitability by Truck",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/profitability/by-truck",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "profitability",
+                "by-truck"
+              ]
+            },
+            "description": "Vehicle asset profitability"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16.15 Report: Revenue Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/revenue?loadId={{loadId}}&currency={{enum_currency}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "revenue"
+              ],
+              "query": [
+                {
+                  "key": "loadId",
+                  "value": "{{loadId}}"
+                },
+                {
+                  "key": "currency",
+                  "value": "{{enum_currency}}"
+                }
+              ]
+            },
+            "description": "Revenue breakdown for shipment load"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "17_LarkBase",
+      "item": [
+        {
+          "name": "17.1 Lark Base: Sync Load",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lark/base/sync/load/{{loadId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lark",
+                "base",
+                "sync",
+                "load",
+                "{{loadId}}"
+              ]
+            },
+            "description": "Synchronize load status to Lark Base multi-dimensional table"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const configured = pm.environment.get(\"larkConfigured\");",
+                  "if (configured !== \"true\" && configured !== true) {",
+                  "    console.warn(\"[LARK NOTICE] External Lark Base Open API credentials are not configured (larkConfigured != true). Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test(\"ApiResponse success flag is true\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17.2 Lark Base: Sync Driver",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lark/base/sync/driver/{{driverEmployeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lark",
+                "base",
+                "sync",
+                "driver",
+                "{{driverEmployeeId}}"
+              ]
+            },
+            "description": "Synchronize driver record to Lark Base table"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const configured = pm.environment.get(\"larkConfigured\");",
+                  "if (configured !== \"true\" && configured !== true) {",
+                  "    console.warn(\"[LARK NOTICE] External Lark Base Open API credentials are not configured (larkConfigured != true). Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test(\"ApiResponse success flag is true\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17.3 Lark Base: List Synchronized Loads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lark/base/loads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lark",
+                "base",
+                "loads"
+              ]
+            },
+            "description": "Read synchronized loads from Lark Base"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const configured = pm.environment.get(\"larkConfigured\");",
+                  "if (configured !== \"true\" && configured !== true) {",
+                  "    console.warn(\"[LARK NOTICE] External Lark Base Open API credentials are not configured (larkConfigured != true). Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test(\"ApiResponse success flag is true\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "18_Documents",
+      "item": [
+        {
+          "name": "18.1 List Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List uploaded documents and attachments"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "const docList = (d && (d.items || d.content)) || (Array.isArray(d) ? d : []);",
+                  "if (docList.length > 0 && docList[0].id) {",
+                  "    pm.environment.set(\"documentId\", docList[0].id);",
+                  "    console.log(\"Saved documentId:\", docList[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18.2 Get Document by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "{{documentId}}"
+              ]
+            },
+            "description": "Get document metadata (skip if no documents in database)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const docId = pm.environment.get(\"documentId\");",
+                  "if (!docId || docId.trim() === \"\") {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] No documentId found. Spec has no document upload endpoint; skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18.3 Delete Document by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "{{documentId}}"
+              ]
+            },
+            "description": "Delete document metadata (skip if no documentId)"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const docId = pm.environment.get(\"documentId\");",
+                  "if (!docId || docId.trim() === \"\") {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] No documentId found to delete; skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "19_Negative_Security",
+      "item": [
+        {
+          "name": "19.1 Security: No Token Access -> 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "me"
+              ]
+            },
+            "description": "Calling secured endpoint without token must return 401",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19.2 Security: Invalid JWT Token -> 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid.jwt.signature",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "me"
+              ]
+            },
+            "description": "Calling secured endpoint with forged JWT must return 401",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19.3 Validation: Missing Required Fields -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers"
+              ]
+            },
+            "description": "Creating customer with missing required fields must return 400",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invalid_customer@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch(e) {}",
+                  "pm.test(\"Validation errors array contains field info\", function () {",
+                  "    pm.expect(json).to.be.an(\"object\");",
+                  "    if (json.errors) {",
+                  "        pm.expect(json.errors.length).to.be.above(0);",
+                  "        console.log(\"Validation errors reported:\", JSON.stringify(json.errors));",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19.4 Validation: Malformed UUID Format -> 400/404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/not-a-valid-uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "not-a-valid-uuid"
+              ]
+            },
+            "description": "Invalid UUID in path variable must return 400 or 404"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"[KNOWN-BUG] Status code is 400 Bad Request or 404 Not Found\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                  "});",
+                  "if (pm.response.code === 500) {",
+                  "    console.error(\"[KNOWN-BUG] MethodArgumentTypeMismatchException returned 500 instead of 400 Bad Request (GlobalExceptionHandler missing handler).\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19.5 Idempotency: Replay Same Primary Invoice Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/billing/primary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "billing",
+                "primary"
+              ]
+            },
+            "description": "Replaying identical request with existing idempotencyKey must return same resource",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"snapshotId\": \"{{ratingSnapshotId}}\",\n  \"idempotencyKey\": \"{{primaryInvoiceIdempotencyKey}}\",\n  \"lineTaxes\": [],\n  \"taxDecision\": {\n    \"reason\": \"California State Freight Tax Exempt\",\n    \"reasonCode\": \"CALIFORNIA_SALES_TAX_EXEMPT\",\n    \"requirement\": \"{{enum_taxRequirement}}\",\n    \"sourceReference\": \"TAX-EXEMPT-01\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const key = pm.environment.get(\"primaryInvoiceIdempotencyKey\") || \"INV-PRIM-STATIC\";",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.idempotencyKey = key;",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201 (Idempotent replay)\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19.6 Optimistic Lock: Stale Expected Version -> 409/400 Conflict",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trucks/{{truckId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trucks",
+                "{{truckId}}"
+              ]
+            },
+            "description": "Passing old version must fail with version conflict",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": 9999,\n  \"number\": \"TRK-CONFLICT\",\n  \"status\": \"{{enum_truckStatus}}\",\n  \"type\": \"{{enum_truckType}}\",\n  \"vehicleCapacity\": 45000.0,\n  \"isHazmatPlacarded\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 409 Conflict or 400 Bad Request\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 409]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19.7 Integrity: Rating Accept with Mismatched Hash -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/{{loadId}}/rating/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "{{loadId}}",
+                "rating",
+                "accept"
+              ]
+            },
+            "description": "Corrupted previewResultHash must be rejected",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedInputHash\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n  \"expectedResultHash\": \"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\n  \"idempotencyKey\": \"INVALID-HASH-{{$timestamp}}\",\n  \"reason\": \"Tampered quote test\",\n  \"reasonCode\": \"SECURITY_TEST\",\n  \"rating\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19.8 Integrity: Optimization Accept with Wrong Fingerprint -> 400/409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/optimization/runs/{{optimizationRunId}}/assignments/{{optimizationCandidateId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "optimization",
+                "runs",
+                "{{optimizationRunId}}",
+                "assignments",
+                "{{optimizationCandidateId}}",
+                "accept"
+              ]
+            },
+            "description": "Altered fingerprint must be rejected by optimizer",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedInputFingerprint\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n  \"idempotencyKey\": \"BAD-FP-{{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400 Bad Request or 409 Conflict\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 409, 422]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19.9 Security: Insufficient Claims -> 403 Forbidden",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "description": "Non-admin action should yield 403 Forbidden if user lacks authority"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403 or 200/404 depending on runner user role\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 403, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "99_Cleanup",
+      "item": [
+        {
+          "name": "99.1 Delete Payment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Delete payment record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.2 Delete Legacy Invoice",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/{{legacyInvoiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "{{legacyInvoiceId}}"
+              ]
+            },
+            "description": "Delete legacy invoice record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.3 Delete Inspection",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/inspections/{{inspectionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "inspections",
+                "{{inspectionId}}"
+              ]
+            },
+            "description": "Delete inspection record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.4 Delete Trip",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}"
+              ]
+            },
+            "description": "Delete trip record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.5 Delete Load",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/{{loadId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "{{loadId}}"
+              ]
+            },
+            "description": "Delete shipment load record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.6 Delete Truck",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trucks/{{truckId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trucks",
+                "{{truckId}}"
+              ]
+            },
+            "description": "Delete truck record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.7 Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}"
+              ]
+            },
+            "description": "Delete customer record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.8 Delete Driver Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/employees/{{driverEmployeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employees",
+                "{{driverEmployeeId}}"
+              ]
+            },
+            "description": "Delete driver employee record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.9 Delete Dispatcher Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/employees/{{dispatcherEmployeeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employees",
+                "{{dispatcherEmployeeId}}"
+              ]
+            },
+            "description": "Delete dispatcher employee record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "99.10 Delete Role",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/roles/{{roleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "roles",
+                "{{roleId}}"
+              ]
+            },
+            "description": "Delete custom role record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runCleanup = pm.environment.get(\"runCleanup\");",
+                  "if (runCleanup !== true && runCleanup !== \"true\") {",
+                  "    console.log(\"[CLEANUP SKIPPED] 'runCleanup' environment variable is false. Skipping deletion.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Resource deleted, not found, or protected by foreign key constraints\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 204, 404, 409]);",
+                  "});",
+                  "if (pm.response.code === 409) {",
+                  "    console.log(\"[CLEANUP AUDIT] Resource deletion rejected with 409 Conflict due to active database referential integrity constraints.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

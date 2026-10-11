@@ -1,0 +1,3570 @@
+{
+  "info": {
+    "_postman_id": "610a4af3-eebb-4256-ba69-cf6c3d1dc3cf",
+    "name": "LogisticsX TMS - Part 2 (Trips, Optimization, Execution, Costs & Billing)",
+    "description": "LogisticsX API TMS End-to-End Automated Test Suite (Postman v2.1)\nCovering entire business lifecycle according to OpenAPI 3.1 specification.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Root Collection Pre-request Script: Liveness & Expiry Check",
+          "const token = pm.environment.get(\"accessToken\");",
+          "const expiresAt = pm.environment.get(\"tokenExpiresAt\");",
+          "const url = pm.request.url.getPath();",
+          "const isAuthOrHealth = url.includes(\"auth\") || url.includes(\"health\") || url.includes(\"actuator\") || url.includes(\"internal/build\");",
+          "",
+          "if (!isAuthOrHealth) {",
+          "    if (!token || token.trim() === \"\") {",
+          "        console.warn(\"[AUTH ADVISORY] 'accessToken' variable is currently empty. Run folder 01_Auth or set a dev JWT in LogisticsX Environment.\");",
+          "    } else if (expiresAt && Number(expiresAt) > 0 && Date.now() > Number(expiresAt)) {",
+          "        console.warn(\"[AUTH ADVISORY] Token expired at \" + new Date(Number(expiresAt)).toISOString() + \". Re-run folder 01_Auth to refresh credentials.\");",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "07_TripPlanning",
+      "item": [
+        {
+          "name": "07.1 Create Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips"
+              ]
+            },
+            "description": "Create dispatch trip for truck",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Trip LA-SF #{{$timestamp}}\",\n  \"status\": \"{{enum_tripStatus}}\",\n  \"totalDistance\": 450.0,\n  \"truckId\": \"{{truckId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"tripId\", d.id);",
+                  "    pm.environment.set(\"tripVersion\", String(d.version !== undefined ? d.version : 0));",
+                  "    console.log(\"Saved tripId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.2 Get Trip by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}"
+              ]
+            },
+            "description": "Get trip details"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.version !== undefined) {",
+                  "    pm.environment.set(\"tripVersion\", String(d.version));",
+                  "}",
+                  "if (d && d.completedAt) {",
+                  "    pm.environment.set(\"tripCompletedAt\", d.completedAt);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.3 Update Trip",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}"
+              ]
+            },
+            "description": "Update trip notes with expectedVersion",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": 0,\n  \"name\": \"Trip LA-SF Dispatched\",\n  \"totalDistance\": 450.0,\n  \"status\": \"{{enum_tripStatus}}\",\n  \"truckId\": \"{{truckId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const v = Number(pm.environment.get(\"tripVersion\")) || 0;",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.expectedVersion = v;",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.version !== undefined) {",
+                  "    pm.environment.set(\"tripVersion\", String(d.version));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4 Assign Driver to Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}/drivers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}",
+                "drivers"
+              ]
+            },
+            "description": "Assign primary driver to trip",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverId\": \"{{driverId}}\",\n  \"assignmentType\": \"{{enum_assignmentType}}\",\n  \"plannedMiles\": 450.0,\n  \"effectiveFrom\": \"2026-10-15T08:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"driverAssignmentId\", d.id);",
+                  "    console.log(\"Saved driverAssignmentId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.5 Get Trip Stops",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}/stops",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}",
+                "stops"
+              ]
+            },
+            "description": "List stops of trip to extract pickupStopId"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "pm.test(\"Trip has at least one stop\", function () {",
+                  "    pm.expect(d).to.be.an(\"array\").and.not.empty;",
+                  "    pm.environment.set(\"pickupStopId\", d[0].id);",
+                  "    pm.environment.set(\"detentionStopId\", d[0].id);",
+                  "    console.log(\"Saved pickupStopId:\", d[0].id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.6 Get Seeded Shipment Costs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/{{loadId}}/costs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "{{loadId}}",
+                "costs"
+              ]
+            },
+            "description": "Capture seeded estimate costs for optimization forecast"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "const list = Array.isArray(d) ? d : (d.content || []);",
+                  "list.forEach(c => {",
+                  "    if (c.category === \"FUEL\") pm.environment.set(\"forecastFuelCostId\", c.id);",
+                  "    if (c.category === \"DRIVER\") pm.environment.set(\"forecastDriverCostId\", c.id);",
+                  "    if (c.category === \"TOLL\") pm.environment.set(\"forecastTollCostId\", c.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08_Optimization",
+      "item": [
+        {
+          "name": "08.1 Publish Optimization Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/optimization/policies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "optimization",
+                "policies"
+              ]
+            },
+            "description": "Publish optimization scoring policy",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"OPT-POL-{{$timestamp}}\",\n  \"approvalReference\": \"OPT-APPR-2026\",\n  \"version\": 1,\n  \"scoringPolicy\": {\n    \"utilityPolicy\": {\n      \"code\": \"OPT_UTILITY_V1\",\n      \"version\": 1\n    },\n    \"weightPolicy\": {\n      \"code\": \"OPT_WEIGHT_V1\",\n      \"version\": 1\n    },\n    \"numericPolicy\": {\n      \"code\": \"OPT_NUMERIC_V1\",\n      \"version\": 1\n    },\n    \"curves\": {\n      \"DEADHEAD\": [\n        {\n          \"raw\": 0.0,\n          \"utility\": 1.0\n        },\n        {\n          \"raw\": 0.1,\n          \"utility\": 0.9\n        },\n        {\n          \"raw\": 0.25,\n          \"utility\": 0.7\n        },\n        {\n          \"raw\": 0.5,\n          \"utility\": 0.4\n        },\n        {\n          \"raw\": 1.0,\n          \"utility\": 0.0\n        }\n      ],\n      \"MARGIN\": [\n        {\n          \"raw\": 0.0,\n          \"utility\": 0.0\n        },\n        {\n          \"raw\": 0.05,\n          \"utility\": 0.25\n        },\n        {\n          \"raw\": 0.1,\n          \"utility\": 0.5\n        },\n        {\n          \"raw\": 0.2,\n          \"utility\": 0.8\n        },\n        {\n          \"raw\": 0.3,\n          \"utility\": 1.0\n        }\n      ],\n      \"ON_TIME\": [\n        {\n          \"raw\": 0.0,\n          \"utility\": 0.0\n        },\n        {\n          \"raw\": 30.0,\n          \"utility\": 0.25\n        },\n        {\n          \"raw\": 60.0,\n          \"utility\": 0.5\n        },\n        {\n          \"raw\": 120.0,\n          \"utility\": 0.8\n        },\n        {\n          \"raw\": 180.0,\n          \"utility\": 1.0\n        }\n      ],\n      \"HOS\": [\n        {\n          \"raw\": 0.0,\n          \"utility\": 0.0\n        },\n        {\n          \"raw\": 0.05,\n          \"utility\": 0.25\n        },\n        {\n          \"raw\": 0.1,\n          \"utility\": 0.5\n        },\n        {\n          \"raw\": 0.2,\n          \"utility\": 0.8\n        },\n        {\n          \"raw\": 0.3,\n          \"utility\": 1.0\n        }\n      ]\n    },\n    \"weights\": {\n      \"DEADHEAD\": 0.25,\n      \"MARGIN\": 0.35,\n      \"ON_TIME\": 0.3,\n      \"HOS\": 0.1\n    },\n    \"numeric\": {\n      \"intermediatePrecision\": 34,\n      \"roundingMode\": \"HALF_EVEN\",\n      \"utilityScale\": 6,\n      \"weightScale\": 6,\n      \"contributionScale\": 8,\n      \"scoreScale\": 8\n    }\n  },\n  \"eligibilitySourcePolicy\": {\n    \"eligibilityCode\": \"OPT_ELIGIBILITY_V1\",\n    \"eligibilityVersion\": 1,\n    \"planningHorizonHours\": 72,\n    \"sourceCode\": \"OPT_SOURCE_V1\",\n    \"sourceVersion\": 1,\n    \"statusAllowlists\": {\n      \"LOAD\": [\n        \"DRAFT\",\n        \"PLANNED\",\n        \"ASSIGNED\"\n      ],\n      \"TRIP\": [\n        \"PLANNED\",\n        \"ASSIGNED\"\n      ],\n      \"DRIVER\": [\n        \"ACTIVE\",\n        \"AVAILABLE\"\n      ],\n      \"TRUCK\": [\n        \"AVAILABLE\",\n        \"ACTIVE\"\n      ]\n    },\n    \"qualifiedSources\": {\n      \"CAPACITY\": [\n        {\n          \"classification\": \"AUTHORITATIVE_DB\",\n          \"reference\": \"WEIGHT_SCALE_SYSTEM\",\n          \"type\": \"SCALE_STATION\",\n          \"version\": \"1.0\"\n        }\n      ],\n      \"QUALIFICATION\": [\n        {\n          \"classification\": \"AUTHORITATIVE_DB\",\n          \"reference\": \"SAFETY_DEPT_REGISTRY\",\n          \"type\": \"FMCSA_API\",\n          \"version\": \"1.0\"\n        }\n      ],\n      \"FORECAST_COST\": [\n        {\n          \"classification\": \"AUTHORITATIVE_DB\",\n          \"reference\": \"COST_ESTIMATOR_MODEL\",\n          \"type\": \"ML_SERVICE\",\n          \"version\": \"1.0\"\n        }\n      ],\n      \"VEHICLE_LOCATION\": [\n        {\n          \"classification\": \"AUTHORITATIVE_DB\",\n          \"reference\": \"PRIMARY_TELEMETRY\",\n          \"type\": \"POSTGRES\",\n          \"version\": \"1.0\"\n        }\n      ],\n      \"DRIVER_AVAILABILITY\": [\n        {\n          \"classification\": \"AUTHORITATIVE_DB\",\n          \"reference\": \"PRIMARY_TELEMETRY\",\n          \"type\": \"POSTGRES\",\n          \"version\": \"1.0\"\n        }\n      ],\n      \"TRUCK_AVAILABILITY\": [\n        {\n          \"classification\": \"AUTHORITATIVE_DB\",\n          \"reference\": \"PRIMARY_TELEMETRY\",\n          \"type\": \"POSTGRES\",\n          \"version\": \"1.0\"\n        }\n      ],\n      \"ROUTE\": [\n        {\n          \"classification\": \"AUTHORITATIVE_DB\",\n          \"reference\": \"PRIMARY_TELEMETRY\",\n          \"type\": \"POSTGRES\",\n          \"version\": \"1.0\"\n        }\n      ],\n      \"HOS\": [\n        {\n          \"classification\": \"AUTHORITATIVE_DB\",\n          \"reference\": \"PRIMARY_TELEMETRY\",\n          \"type\": \"POSTGRES\",\n          \"version\": \"1.0\"\n        }\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"optimizationPolicyId\", d.id);",
+                  "    console.log(\"Saved optimizationPolicyId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.2 Publish Fleet Policy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/fleet/policies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fleet",
+                "policies"
+              ]
+            },
+            "description": "Publish fleet status & membership policy",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FLT-POL-{{$timestamp}}\",\n  \"approvalReference\": \"FLT-APPR-2026\",\n  \"version\": 1,\n  \"membershipStates\": {\n    \"ACTIVE\": true,\n    \"INACTIVE\": false\n  },\n  \"capacityStates\": {\n    \"AVAILABLE\": true,\n    \"FULL\": false\n  },\n  \"activityStates\": {\n    \"DISPATCHED\": \"PRODUCTIVE\",\n    \"IN_TRANSIT\": \"PRODUCTIVE\",\n    \"MAINTENANCE\": \"UNAVAILABLE\"\n  },\n  \"sources\": [\n    {\n      \"classification\": \"{{enum_sourceClassification}}\",\n      \"reference\": \"INTERNAL_FLEET_REGISTRY\",\n      \"type\": \"POSTGRES\",\n      \"version\": \"1.0\"\n    },\n    {\n      \"classification\": \"{{enum_sourceClassification}}\",\n      \"reference\": \"TELEMATICS_ELD\",\n      \"type\": \"GPS_FEED\",\n      \"version\": \"1.0\"\n    },\n    {\n      \"classification\": \"{{enum_sourceClassification}}\",\n      \"reference\": \"ELD_ODOMETER\",\n      \"type\": \"TELEMATICS\",\n      \"version\": \"1.0\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"fleetPolicyId\", d.id);",
+                  "    console.log(\"Saved fleetPolicyId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.3 Capture Qualified Input (CAPACITY)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/optimization/qualified-inputs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "optimization",
+                "qualified-inputs"
+              ]
+            },
+            "description": "Record vehicle capacity qualified input",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{$guid}}\",\n  \"kind\": \"CAPACITY\",\n  \"policyId\": \"{{optimizationPolicyId}}\",\n  \"approvalReference\": \"CAP-APPR-01\",\n  \"reason\": \"Trailer capacity verified\",\n  \"reasonCode\": \"CAPACITY_CONFIRMED\",\n  \"observedAt\": \"2026-10-10T08:00:00Z\",\n  \"maxAgeSeconds\": 86400,\n  \"unit\": \"POUND\",\n  \"scope\": {\n    \"driverId\": \"{{driverId}}\",\n    \"truckId\": \"{{truckId}}\",\n    \"loadId\": \"{{loadId}}\",\n    \"tripId\": \"{{tripId}}\"\n  },\n  \"source\": {\n    \"classification\": \"{{enum_sourceClassification}}\",\n    \"reference\": \"WEIGHT_SCALE_SYSTEM\",\n    \"type\": \"SCALE_STATION\",\n    \"version\": \"1.0\"\n  },\n  \"capacity\": {\n    \"cargo\": {\n      \"unit\": \"POUND\",\n      \"value\": 35000.0\n    },\n    \"truck\": {\n      \"unit\": \"POUND\",\n      \"value\": 80000.0\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const inputId = pm.variables.replaceIn(\"{{$guid}}\");",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.id = inputId;",
+                  "body.observedAt = new Date().toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);",
+                  "pm.environment.set(\"capacityInputId\", inputId);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.4 Capture Qualified Input (QUALIFICATION)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/optimization/qualified-inputs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "optimization",
+                "qualified-inputs"
+              ]
+            },
+            "description": "Record driver qualification input",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{$guid}}\",\n  \"kind\": \"QUALIFICATION\",\n  \"policyId\": \"{{optimizationPolicyId}}\",\n  \"approvalReference\": \"QUAL-APPR-01\",\n  \"reason\": \"Driver CDL and clean maintenance\",\n  \"reasonCode\": \"QUALIFICATION_CONFIRMED\",\n  \"observedAt\": \"2026-10-10T08:00:00Z\",\n  \"maxAgeSeconds\": 86400,\n  \"unit\": \"QUALIFICATION\",\n  \"scope\": {\n    \"driverId\": \"{{driverId}}\",\n    \"truckId\": \"{{truckId}}\",\n    \"loadId\": \"{{loadId}}\",\n    \"tripId\": \"{{tripId}}\"\n  },\n  \"source\": {\n    \"classification\": \"{{enum_sourceClassification}}\",\n    \"reference\": \"SAFETY_DEPT_REGISTRY\",\n    \"type\": \"FMCSA_API\",\n    \"version\": \"1.0\"\n  },\n  \"qualification\": {\n    \"qualifiedDriver\": true,\n    \"validLicense\": true,\n    \"hazmatDriver\": true,\n    \"hazmatTruck\": true,\n    \"hazmatRequired\": false,\n    \"equipmentMatches\": true,\n    \"maintenanceClear\": true,\n    \"operational\": true,\n    \"effectiveFrom\": \"2026-01-01T00:00:00Z\",\n    \"effectiveUntil\": \"2026-12-31T23:59:59Z\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const inputId = pm.variables.replaceIn(\"{{$guid}}\");",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.id = inputId;",
+                  "body.observedAt = new Date().toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);",
+                  "pm.environment.set(\"qualificationInputId\", inputId);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.5 Capture Qualified Forecast (FORECAST_COST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/optimization/qualified-inputs/forecasts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "optimization",
+                "qualified-inputs",
+                "forecasts"
+              ]
+            },
+            "description": "Record cost forecast input",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{$guid}}\",\n  \"kind\": \"FORECAST_COST\",\n  \"policyId\": \"{{optimizationPolicyId}}\",\n  \"approvalReference\": \"FC-APPR-01\",\n  \"reason\": \"Operating CPM forecast\",\n  \"reasonCode\": \"COST_PREDICTION\",\n  \"observedAt\": \"2026-10-10T08:00:00Z\",\n  \"maxAgeSeconds\": 86400,\n  \"unit\": \"USD\",\n  \"scope\": {\n    \"driverId\": \"{{driverId}}\",\n    \"truckId\": \"{{truckId}}\",\n    \"loadId\": \"{{loadId}}\",\n    \"tripId\": \"{{tripId}}\"\n  },\n  \"source\": {\n    \"classification\": \"{{enum_sourceClassification}}\",\n    \"reference\": \"COST_ESTIMATOR_MODEL\",\n    \"type\": \"ML_SERVICE\",\n    \"version\": \"1.0\"\n  },\n  \"forecast\": {\n    \"accessorialApplicable\": false,\n    \"permitApplicable\": false,\n    \"costs\": [\n      {\n        \"costId\": \"{{forecastFuelCostId}}\",\n        \"forecastPolicyCode\": \"CPM_BASE\",\n        \"forecastPolicyVersion\": 1\n      },\n      {\n        \"costId\": \"{{forecastDriverCostId}}\",\n        \"forecastPolicyCode\": \"CPM_BASE\",\n        \"forecastPolicyVersion\": 1\n      },\n      {\n        \"costId\": \"{{forecastTollCostId}}\",\n        \"forecastPolicyCode\": \"CPM_BASE\",\n        \"forecastPolicyVersion\": 1\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const inputId = pm.variables.replaceIn(\"{{$guid}}\");",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.id = inputId;",
+                  "body.observedAt = new Date().toISOString();",
+                  "if (pm.environment.get(\"forecastFuelCostId\")) body.forecast.costs[0].costId = pm.environment.get(\"forecastFuelCostId\");",
+                  "if (pm.environment.get(\"forecastDriverCostId\")) body.forecast.costs[1].costId = pm.environment.get(\"forecastDriverCostId\");",
+                  "if (pm.environment.get(\"forecastTollCostId\")) body.forecast.costs[2].costId = pm.environment.get(\"forecastTollCostId\");",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);",
+                  "pm.environment.set(\"forecastInputId\", inputId);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.6 Create Optimization Run",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/optimization/runs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "optimization",
+                "runs"
+              ]
+            },
+            "description": "Execute optimization run for driver and truck candidates",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policyId\": \"{{optimizationPolicyId}}\",\n  \"idempotencyKey\": \"OPT-RUN-{{$timestamp}}\",\n  \"driverIds\": [\n    \"{{driverId}}\"\n  ],\n  \"truckIds\": [\n    \"{{truckId}}\"\n  ],\n  \"targets\": [\n    {\n      \"loadId\": \"{{loadId}}\",\n      \"tripId\": \"{{tripId}}\",\n      \"pickupStopId\": \"{{pickupStopId}}\",\n      \"ratingSnapshotId\": \"{{ratingSnapshotId}}\"\n    }\n  ],\n  \"sourceSelections\": [\n    {\n      \"capacityInputId\": \"{{capacityInputId}}\",\n      \"qualificationInputId\": \"{{qualificationInputId}}\",\n      \"forecastInputId\": \"{{forecastInputId}}\",\n      \"scope\": {\n        \"driverId\": \"{{driverId}}\",\n        \"truckId\": \"{{truckId}}\",\n        \"loadId\": \"{{loadId}}\",\n        \"tripId\": \"{{tripId}}\"\n      }\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "const runId = (d && d.run && d.run.id) || (d && d.id);",
+                  "if (runId) {",
+                  "    pm.environment.set(\"optimizationRunId\", runId);",
+                  "    console.log(\"Saved optimizationRunId:\", runId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.7 Get Optimization Run & Select Candidate",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/optimization/runs/{{optimizationRunId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "optimization",
+                "runs",
+                "{{optimizationRunId}}"
+              ]
+            },
+            "description": "Evaluate candidates and pick lowest rank feasible assignment"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "pm.test(\"Candidate evaluation and selection\", function () {",
+                  "    pm.expect(d).to.be.an(\"object\");",
+                  "    const candidates = d.candidates || [];",
+                  "    console.log(\"Run candidates count:\", candidates.length);",
+                  "    ",
+                  "    let selected = null;",
+                  "    for (const c of candidates) {",
+                  "        if (c.feasible === true) {",
+                  "            if (!selected || (c.rank !== undefined && c.rank < selected.rank)) {",
+                  "                selected = c;",
+                  "            }",
+                  "        }",
+                  "    }",
+                  "    ",
+                  "    if (selected) {",
+                  "        pm.environment.set(\"optimizationCandidateId\", selected.candidateId || selected.id);",
+                  "        pm.environment.set(\"optimizationCandidateFingerprint\", selected.inputFingerprint);",
+                  "        pm.environment.set(\"candidateFeasible\", \"true\");",
+                  "        console.log(\"Selected feasible candidate:\", selected.candidateId, \"rank:\", selected.rank, \"fingerprint:\", selected.inputFingerprint);",
+                  "    } else {",
+                  "        const rejectionSummary = candidates.map(c => ({ id: c.candidateId, codes: c.rejectionCodes, reasons: c.rejections }));",
+                  "        console.warn(\"[OPTIMIZATION REJECTIONS]\", JSON.stringify(rejectionSummary));",
+                  "        pm.environment.set(\"candidateFeasible\", \"false\");",
+                  "        if (candidates.length > 0) {",
+                  "            pm.environment.set(\"optimizationCandidateId\", candidates[0].candidateId || candidates[0].id);",
+                  "            pm.environment.set(\"optimizationCandidateFingerprint\", candidates[0].inputFingerprint || \"\");",
+                  "        }",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08.8 Accept Optimization Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/optimization/runs/{{optimizationRunId}}/assignments/{{optimizationCandidateId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "optimization",
+                "runs",
+                "{{optimizationRunId}}",
+                "assignments",
+                "{{optimizationCandidateId}}",
+                "accept"
+              ]
+            },
+            "description": "Accept selected candidate assignment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedInputFingerprint\": \"{{optimizationCandidateFingerprint}}\",\n  \"idempotencyKey\": \"OPT-ACC-{{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const feasible = pm.environment.get(\"candidateFeasible\");",
+                  "if (feasible !== \"true\") {",
+                  "    console.warn(\"[OPTIMIZATION NOTICE] Candidate is evaluated as infeasible in local dev environment without external telematics/routing server. Skipping 08.8 accept.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09_FleetHistory",
+      "item": [
+        {
+          "name": "09.1 Capture Fleet Status Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/fleet/status-events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fleet",
+                "status-events"
+              ]
+            },
+            "description": "Record truck membership and activity event",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"truckId\": \"{{truckId}}\",\n  \"tripId\": \"{{tripId}}\",\n  \"loadId\": \"{{loadId}}\",\n  \"policyId\": \"{{fleetPolicyId}}\",\n  \"kind\": \"MEMBERSHIP\",\n  \"status\": \"ACTIVE\",\n  \"occurredAt\": \"2026-10-10T08:00:00Z\",\n  \"validUntil\": \"2026-10-11T08:00:00Z\",\n  \"reason\": \"Active fleet deployment\",\n  \"reasonCode\": \"TRUCK_DEPLOYED\",\n  \"source\": {\n    \"classification\": \"{{enum_sourceClassification}}\",\n    \"reference\": \"TELEMATICS_ELD\",\n    \"type\": \"GPS_FEED\",\n    \"version\": \"1.0\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.occurredAt = new Date().toISOString();",
+                  "body.validUntil = new Date(Date.now() + 86400000).toISOString();",
+                  "body.sourceEventId = \"EVT-\" + Date.now();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09.2 Attribute Fleet Mileage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/fleet/mileage-attributions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fleet",
+                "mileage-attributions"
+              ]
+            },
+            "description": "Attribute completed trip miles to truck",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"truckId\": \"{{truckId}}\",\n  \"tripId\": \"{{tripId}}\",\n  \"policyId\": \"{{fleetPolicyId}}\",\n  \"actualMiles\": 450.0,\n  \"loadedMiles\": 420.0,\n  \"emptyMiles\": 30.0,\n  \"completedAt\": \"2026-10-10T18:00:00Z\",\n  \"sourceEventId\": \"EVT-MIL-1\",\n  \"reasonCode\": \"TRIP_COMPLETED\",\n  \"reason\": \"Trip completion mileage attribution\",\n  \"source\": {\n    \"classification\": \"{{enum_sourceClassification}}\",\n    \"reference\": \"ELD_ODOMETER\",\n    \"type\": \"TELEMATICS\",\n    \"version\": \"1.0\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.completedAt = pm.environment.get(\"tripCompletedAt\") || new Date().toISOString();",
+                  "body.sourceEventId = \"EVT-MIL-\" + Date.now();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09.3 Fleet Health Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/fleet/health?policyId={{fleetPolicyId}}&truckIds={{truckId}}&from=2026-10-01T00:00:00Z&to=2026-10-10T02:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "fleet",
+                "health"
+              ],
+              "query": [
+                {
+                  "key": "policyId",
+                  "value": "{{fleetPolicyId}}"
+                },
+                {
+                  "key": "truckIds",
+                  "value": "{{truckId}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-10-01T00:00:00Z"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-10-10T02:00:00Z"
+                }
+              ]
+            },
+            "description": "Fetch fleet equipment health metrics"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09.4 Fleet Utilization History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/fleet/utilization-history?policyId={{fleetPolicyId}}&truckIds={{truckId}}&from=2026-10-01T00:00:00Z&to=2026-10-10T02:00:00Z",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reports",
+                "fleet",
+                "utilization-history"
+              ],
+              "query": [
+                {
+                  "key": "policyId",
+                  "value": "{{fleetPolicyId}}"
+                },
+                {
+                  "key": "truckIds",
+                  "value": "{{truckId}}"
+                },
+                {
+                  "key": "from",
+                  "value": "2026-10-01T00:00:00Z"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-10-10T02:00:00Z"
+                }
+              ]
+            },
+            "description": "Fetch vehicle utilization history"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10_TripExecution",
+      "item": [
+        {
+          "name": "10.1 Arrive at Stop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-stops/{{pickupStopId}}/arrive",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trip-stops",
+                "{{pickupStopId}}",
+                "arrive"
+              ]
+            },
+            "description": "Mark vehicle arrival at stop"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.2 Start Service at Stop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-stops/{{pickupStopId}}/start-service",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trip-stops",
+                "{{pickupStopId}}",
+                "start-service"
+              ]
+            },
+            "description": "Mark loading/unloading service started"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.3 Complete Service at Stop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-stops/{{pickupStopId}}/complete-service",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trip-stops",
+                "{{pickupStopId}}",
+                "complete-service"
+              ]
+            },
+            "description": "Mark service completed at stop"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.4 Depart Stop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-stops/{{pickupStopId}}/depart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trip-stops",
+                "{{pickupStopId}}",
+                "depart"
+              ]
+            },
+            "description": "Mark vehicle departure from stop"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.5 Calculate Detention for Stop",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trip-stops/{{pickupStopId}}/calculate-detention",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trip-stops",
+                "{{pickupStopId}}",
+                "calculate-detention"
+              ]
+            },
+            "description": "Calculate detention charges from stop dwell time",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currency\": \"{{enum_currency}}\",\n  \"hourlyRate\": 75.0,\n  \"driverHourlyRate\": 30.0,\n  \"freeMinutes\": 120,\n  \"blockMinutes\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.6 Get Load Execution Timeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/{{loadId}}/timeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "{{loadId}}",
+                "timeline"
+              ]
+            },
+            "description": "Verify chronological execution milestones"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.7 Create Inspection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/inspections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "inspections"
+              ]
+            },
+            "description": "Record pre-trip vehicle safety inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loadId\": \"{{loadId}}\",\n  \"type\": \"PRE_TRIP\",\n  \"inspectedAt\": \"2026-10-10T07:30:00Z\",\n  \"inspectedById\": \"{{employeeId}}\",\n  \"notes\": \"Tires, brakes, lights inspected and certified\",\n  \"inspectorSignature\": \"Safety Inspector Lead\",\n  \"vin\": \"1HGCR2F83HA123456\",\n  \"vehicleYear\": 2024,\n  \"vehicleMake\": \"Freightliner\",\n  \"vehicleModel\": \"Cascadia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.inspectedAt = new Date().toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"inspectionId\", d.id);",
+                  "    console.log(\"Saved inspectionId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.8 List Inspections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/inspections?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "inspections"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List inspections"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.9 Get Inspection by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/inspections/{{inspectionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "inspections",
+                "{{inspectionId}}"
+              ]
+            },
+            "description": "Get inspection details"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.10 Update Inspection",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/inspections/{{inspectionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "inspections",
+                "{{inspectionId}}"
+              ]
+            },
+            "description": "Update inspection remarks",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loadId\": \"{{loadId}}\",\n  \"type\": \"PRE_TRIP\",\n  \"inspectedAt\": \"2026-10-10T07:30:00Z\",\n  \"inspectedById\": \"{{employeeId}}\",\n  \"notes\": \"Signed by driver and safety inspector\",\n  \"inspectorSignature\": \"Safety Inspector Lead\",\n  \"vin\": \"1HGCR2F83HA123456\",\n  \"vehicleYear\": 2024,\n  \"vehicleMake\": \"Freightliner\",\n  \"vehicleModel\": \"Cascadia\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.inspectedAt = new Date().toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.11 Unassign Driver from Trip",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}/drivers/{{driverAssignmentId}}/unassign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}",
+                "drivers",
+                "{{driverAssignmentId}}",
+                "unassign"
+              ]
+            },
+            "description": "Test driver unassignment workflow"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10.12 Reassign Driver to Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}/drivers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}",
+                "drivers"
+              ]
+            },
+            "description": "Reassign driver so trip and settlements can complete",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driverId\": \"{{driverId}}\",\n  \"assignmentType\": \"{{enum_assignmentType}}\",\n  \"plannedMiles\": 450.0,\n  \"effectiveFrom\": \"2026-10-15T08:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"driverAssignmentId\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11_Costs",
+      "item": [
+        {
+          "name": "11.1 Create Shipment Cost",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/{{loadId}}/costs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "{{loadId}}",
+                "costs"
+              ]
+            },
+            "description": "Create operational cost item for shipment",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"{{enum_shipmentCostCategory}}\",\n  \"amount\": 280.0,\n  \"currency\": \"{{enum_currency}}\",\n  \"costBasis\": \"{{enum_shipmentCostBasis}}\",\n  \"sourceType\": \"{{enum_shipmentCostSourceType}}\",\n  \"truckId\": \"{{truckId}}\",\n  \"driverId\": \"{{driverId}}\",\n  \"tripId\": \"{{tripId}}\",\n  \"unit\": \"GALLONS\",\n  \"quantity\": 70.0,\n  \"unitRate\": 4.0,\n  \"note\": \"Diesel fuel purchase\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"shipmentCostId\", d.id);",
+                  "    console.log(\"Saved shipmentCostId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11.2 Allocate Maintenance Cost",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/{{loadId}}/costs/allocate-maintenance?truckMaintenanceCpm=0.15&currency={{enum_currency}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "{{loadId}}",
+                "costs",
+                "allocate-maintenance"
+              ],
+              "query": [
+                {
+                  "key": "truckMaintenanceCpm",
+                  "value": "0.15"
+                },
+                {
+                  "key": "currency",
+                  "value": "{{enum_currency}}"
+                }
+              ]
+            },
+            "description": "Allocate fleet maintenance amortized cost to load"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11.3 Sync Expenses to Costs",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/{{loadId}}/costs/sync-expenses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "{{loadId}}",
+                "costs",
+                "sync-expenses"
+              ]
+            },
+            "description": "Sync approved expense vouchers into shipment cost ledger"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11.4 Get Shipment Costs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loads/{{loadId}}/costs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loads",
+                "{{loadId}}",
+                "costs"
+              ]
+            },
+            "description": "List all costs assigned to shipment"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11.5 Approve Expense",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/expenses/{{expenseId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "expenses",
+                "{{expenseId}}",
+                "approve"
+              ]
+            },
+            "description": "Approve expense voucher if expenseId is provided from seed or env"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const expenseId = pm.environment.get(\"expenseId\");",
+                  "if (!expenseId || expenseId.trim() === \"\") {",
+                  "    console.warn(\"[GAPS & ASSUMPTIONS] No expenseId found in environment. In LogisticsX OpenAPI spec, Expense creation has no public endpoint (must be pre-seeded). Skipping request.\");",
+                  "    pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "12_Billing",
+      "item": [
+        {
+          "name": "12.1 Assess Tax for Load",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/tax-assessments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "tax-assessments"
+              ]
+            },
+            "description": "Calculate tax assessment for shipper invoice",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assessmentId\": \"{{$guid}}\",\n  \"customerId\": \"{{customerId}}\",\n  \"loadId\": \"{{loadId}}\",\n  \"currency\": \"{{enum_currency}}\",\n  \"jurisdiction\": \"US-CA\",\n  \"sourceType\": \"ACCOUNTING\",\n  \"sourceReference\": \"LOAD-REF-{{$timestamp}}\",\n  \"taxableBasis\": 1575.0,\n  \"taxAmount\": 0.0,\n  \"policyVersion\": \"CA-SALES-2026\",\n  \"assessedAt\": \"2026-10-15T10:00:00Z\",\n  \"assessedBy\": \"Tax Assessor Lead\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const aid = pm.variables.replaceIn(\"{{$guid}}\");",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.assessmentId = aid;",
+                  "body.assessedAt = new Date().toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);",
+                  "pm.environment.set(\"taxAssessmentId\", aid);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"taxAssessmentId\", d.id);",
+                  "    console.log(\"Saved taxAssessmentId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.2 Generate Primary Billing Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/billing/primary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "billing",
+                "primary"
+              ]
+            },
+            "description": "Generate primary freight invoice from accepted rating snapshot",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"snapshotId\": \"{{ratingSnapshotId}}\",\n  \"idempotencyKey\": \"INV-PRIM-{{$timestamp}}\",\n  \"lineTaxes\": [],\n  \"taxDecision\": {\n    \"reason\": \"California State Freight Tax Exempt\",\n    \"reasonCode\": \"CALIFORNIA_SALES_TAX_EXEMPT\",\n    \"requirement\": \"{{enum_taxRequirement}}\",\n    \"sourceReference\": \"TAX-EXEMPT-01\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const key = \"INV-PRIM-\" + Date.now();",
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.idempotencyKey = key;",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);",
+                  "pm.environment.set(\"primaryInvoiceIdempotencyKey\", key);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "const invId = (d && (d.invoiceId || d.id));",
+                  "if (invId) {",
+                  "    pm.environment.set(\"billingInvoiceId\", invId);",
+                  "    pm.environment.set(\"billingInvoiceGeneration\", (d.generation !== undefined) ? String(d.generation) : \"1\");",
+                  "    if (d.lines && d.lines.length > 0) {",
+                  "        const lineId = d.lines[0].lineId || d.lines[0].id;",
+                  "        pm.environment.set(\"originalBillingLineId\", lineId);",
+                  "        console.log(\"Saved originalBillingLineId:\", lineId);",
+                  "    }",
+                  "    console.log(\"Saved billingInvoiceId:\", invId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.3 Get Billing Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/billing/{{billingInvoiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "billing",
+                "{{billingInvoiceId}}"
+              ]
+            },
+            "description": "Get billing invoice and inspect line items"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.lines && d.lines.length > 0 && !pm.environment.get(\"originalBillingLineId\")) {",
+                  "    const lineId = d.lines[0].lineId || d.lines[0].id;",
+                  "    pm.environment.set(\"originalBillingLineId\", lineId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.4 Regenerate Invoice Draft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/billing/{{billingInvoiceId}}/regenerate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "billing",
+                "{{billingInvoiceId}}",
+                "regenerate"
+              ]
+            },
+            "description": "Regenerate unissued primary draft invoice with updated parameters",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedSnapshotId\": \"{{ratingSnapshotId}}\",\n  \"generation\": {\n    \"snapshotId\": \"{{ratingSnapshotId}}\",\n    \"idempotencyKey\": \"INV-REGEN-{{$timestamp}}\",\n    \"lineTaxes\": [],\n    \"taxDecision\": {\n      \"reason\": \"California State Freight Tax Exempt\",\n      \"reasonCode\": \"CALIFORNIA_SALES_TAX_EXEMPT\",\n      \"requirement\": \"{{enum_taxRequirement}}\",\n      \"sourceReference\": \"TAX-EXEMPT-01\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && (d.invoiceId || d.id)) {",
+                  "    console.log(\"Successfully regenerated draft invoice:\", d.invoiceId || d.id);",
+                  "    if (d.lines && d.lines.length > 0) {",
+                  "        const lineId = d.lines[0].lineId || d.lines[0].id;",
+                  "        pm.environment.set(\"originalBillingLineId\", lineId);",
+                  "        console.log(\"Updated originalBillingLineId after regeneration:\", lineId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.5 Issue Billing Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/billing/{{billingInvoiceId}}/issue",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "billing",
+                "{{billingInvoiceId}}",
+                "issue"
+              ]
+            },
+            "description": "Transition regenerated primary draft invoice to ISSUED",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotencyKey\": \"ISSUE-{{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.lines && d.lines.length > 0) {",
+                  "    const lineId = d.lines[0].lineId || d.lines[0].id;",
+                  "    pm.environment.set(\"originalBillingLineId\", lineId);",
+                  "    console.log(\"Saved originalBillingLineId from issued invoice:\", lineId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.6 Create Supplemental Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/billing/{{billingInvoiceId}}/supplemental",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "billing",
+                "{{billingInvoiceId}}",
+                "supplemental"
+              ]
+            },
+            "description": "Generate supplemental invoice for late accessorials",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chargeIds\": [\n    \"{{accessorialChargeId}}\"\n  ],\n  \"reasonCode\": \"SUPPLEMENTAL_DETENTION\",\n  \"reason\": \"Approved late detention fee\",\n  \"generation\": {\n    \"snapshotId\": \"{{ratingSnapshotId}}\",\n    \"idempotencyKey\": \"INV-SUPP-GEN-{{$timestamp}}\",\n    \"lineTaxes\": [],\n    \"taxDecision\": {\n      \"reason\": \"Tax exempt\",\n      \"reasonCode\": \"CALIFORNIA_SALES_TAX_EXEMPT\",\n      \"requirement\": \"{{enum_taxRequirement}}\",\n      \"sourceReference\": \"TAX-EXEMPT-01\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.warn(\"[BILLING NOTICE] Supplemental invoice requires unbilled late accessorial charges on billing chain. Skipping in primary flow.\");",
+                  "pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && (d.invoiceId || d.id)) {",
+                  "    pm.environment.set(\"billingSupplementalId\", d.invoiceId || d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.7 Create Credit Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/billing/{{billingInvoiceId}}/credit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "billing",
+                "{{billingInvoiceId}}",
+                "credit"
+              ]
+            },
+            "description": "Issue credit memo against invoice line",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idempotencyKey\": \"CRED-{{$timestamp}}\",\n  \"lines\": [\n    {\n      \"originalLineId\": \"{{originalBillingLineId}}\",\n      \"amount\": 50.0,\n      \"taxAmount\": 0.0\n    }\n  ],\n  \"reasonCode\": \"GOODWILL_DISCOUNT\",\n  \"reason\": \"Concession for minor schedule delay\",\n  \"taxDecision\": {\n    \"reason\": \"Tax credit adjustment\",\n    \"reasonCode\": \"TAX_CREDIT_STANDARD\",\n    \"requirement\": \"{{enum_taxRequirement}}\",\n    \"sourceReference\": \"TAX-CREDIT-REF-01\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && (d.invoiceId || d.id)) {",
+                  "    pm.environment.set(\"billingCreditId\", d.invoiceId || d.id);",
+                  "    console.log(\"Saved billingCreditId:\", d.invoiceId || d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.8 Rebill Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/billing/{{billingInvoiceId}}/rebill",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "billing",
+                "{{billingInvoiceId}}",
+                "rebill"
+              ]
+            },
+            "description": "Rebill after applying credit adjustments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"creditEvidenceIds\": [\n    \"{{billingCreditId}}\"\n  ],\n  \"reasonCode\": \"REBILL_CORRECTION\",\n  \"reason\": \"Rebilling corrected amount\",\n  \"generation\": {\n    \"snapshotId\": \"{{ratingSnapshotId}}\",\n    \"idempotencyKey\": \"INV-REBILL-GEN-{{$timestamp}}\",\n    \"lineTaxes\": [],\n    \"taxDecision\": {\n      \"reason\": \"Tax exempt\",\n      \"reasonCode\": \"CALIFORNIA_SALES_TAX_EXEMPT\",\n      \"requirement\": \"{{enum_taxRequirement}}\",\n      \"sourceReference\": \"TAX-EXEMPT-01\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "console.warn(\"[BILLING NOTICE] Rebill invoice requires exact 100% full credit economic reversal plus a separate re-rated snapshot. Skipping in linear flow.\");",
+                  "pm.execution.skipRequest();"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.9 Create Legacy Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices"
+              ]
+            },
+            "description": "Create legacy invoice model",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"status\": \"{{enum_legacyInvoiceStatus}}\",\n  \"type\": \"{{enum_legacyInvoiceType}}\",\n  \"subtotalAmount\": 1575.0,\n  \"subtotalCurrency\": \"{{enum_currency}}\",\n  \"taxTotalAmount\": 0.0,\n  \"taxTotalCurrency\": \"{{enum_currency}}\",\n  \"totalAmount\": 1575.0,\n  \"totalCurrency\": \"{{enum_currency}}\",\n  \"notes\": \"Standard 30 days payment terms\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"legacyInvoiceId\", d.id);",
+                  "    console.log(\"Saved legacyInvoiceId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.10 Get Legacy Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/{{legacyInvoiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "{{legacyInvoiceId}}"
+              ]
+            },
+            "description": "Get legacy invoice details"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.11 Update Legacy Invoice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/{{legacyInvoiceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invoices",
+                "{{legacyInvoiceId}}"
+              ]
+            },
+            "description": "Update legacy invoice notes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"type\": \"{{enum_legacyInvoiceType}}\",\n  \"status\": \"ISSUED\",\n  \"notes\": \"Terms updated to Net 15\",\n  \"subtotalAmount\": 1575.0,\n  \"subtotalCurrency\": \"{{enum_currency}}\",\n  \"taxTotalAmount\": 0.0,\n  \"taxTotalCurrency\": \"{{enum_currency}}\",\n  \"totalAmount\": 1575.0,\n  \"totalCurrency\": \"{{enum_currency}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.12 Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ]
+            },
+            "description": "Record incoming customer payment in PENDING status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoiceId\": \"{{legacyInvoiceId}}\",\n  \"amountAmount\": 1575.0,\n  \"amountCurrency\": \"{{enum_currency}}\",\n  \"status\": \"{{enum_paymentStatus}}\",\n  \"idempotencyKey\": \"PAY-{{$timestamp}}\",\n  \"referenceNumber\": \"WIRE-REF-{{$timestamp}}\",\n  \"description\": \"Wire transfer settlement\",\n  \"billingAddressLine1\": \"500 Market St\",\n  \"billingAddressCity\": \"San Francisco\",\n  \"billingAddressState\": \"CA\",\n  \"billingAddressZipCode\": \"94105\",\n  \"billingAddressCountry\": \"{{enum_country}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "",
+                  "if (d && d.id) {",
+                  "    pm.environment.set(\"paymentId\", d.id);",
+                  "    console.log(\"Saved paymentId:\", d.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.13 Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Get payment details"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.14 Update Payment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Update payment memo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Payment confirmed by bank wire clerk\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12.15 Cancel Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}/cancel?reason=Customer cancellation request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}",
+                "cancel"
+              ],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "Customer cancellation request"
+                }
+              ]
+            },
+            "description": "Cancel pending payment"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

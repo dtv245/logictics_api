@@ -51,7 +51,6 @@ public class SecurityConfig {
                         // General authenticated user endpoints
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/me").authenticated()
                         .requestMatchers("/api/driver/me/payslips", "/api/payslips/**").authenticated()
-                        .requestMatchers("/api/messages/**").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()
 
                         // Admin-only management
