@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
+import com.company.logicstic.config.DatabaseUrlUtils;
+import org.springframework.util.StringUtils;
+
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "app.tenancy", name = "enabled", havingValue = "true")
@@ -47,12 +50,21 @@ public class TenantDataSourceService {
     }
 
     private HikariDataSource buildDataSource(TenantRegistryRecord tenant) {
+        if (!StringUtils.hasText(tenant.dbUrl())) {
+            throw new IllegalArgumentException(
+                "Tenant database URL is required but missing in registry for tenant: " + tenant.tenantId());
+        }
+
+        String decryptedPassword = credentialCipher.decrypt(tenant.encryptedDbPassword());
+        DatabaseUrlUtils.NormalizedJdbcUrl normalized = DatabaseUrlUtils.normalize(
+                tenant.dbUrl(), tenant.dbUsername(), decryptedPassword);
+
         TenancyProperties.Pool pool = properties.getPool();
         HikariConfig config = new HikariConfig();
         config.setPoolName("tenant-" + tenant.tenantId());
-        config.setJdbcUrl(tenant.dbUrl());
-        config.setUsername(tenant.dbUsername());
-        config.setPassword(credentialCipher.decrypt(tenant.encryptedDbPassword()));
+        config.setJdbcUrl(normalized.jdbcUrl());
+        config.setUsername(normalized.username());
+        config.setPassword(normalized.password());
         config.setMaximumPoolSize(pool.getMaximumPoolSize());
         config.setMinimumIdle(pool.getMinimumIdle());
         config.setConnectionTimeout(pool.getConnectionTimeoutMs());

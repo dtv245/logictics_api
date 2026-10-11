@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
 
+import org.springframework.util.StringUtils;
+
 @Configuration
 @EnableAsync
 @EnableConfigurationProperties(TenancyProperties.class)
@@ -28,12 +30,22 @@ public class TenantDataSourceConfiguration {
     @Bean
     public DataSource tenantRegistryDataSource(TenancyProperties properties) {
         TenancyProperties.Registry registry = properties.getRegistry();
+        String rawUrl = registry.getUrl();
+        if (!StringUtils.hasText(rawUrl)) {
+            throw new IllegalStateException(
+                "Missing required configuration: 'app.tenancy.registry.url' (environment variable: TENANT_REGISTRY_DB_URL). "
+                + "When TENANCY_ENABLED=true, a valid PostgreSQL JDBC URL is required for the tenant registry database.");
+        }
+
+        DatabaseUrlUtils.NormalizedJdbcUrl normalized = DatabaseUrlUtils.normalize(
+                rawUrl, registry.getUsername(), registry.getPassword());
+
         HikariConfig config = new HikariConfig();
         config.setPoolName("tenant-registry");
         config.setDriverClassName(registry.getDriverClassName());
-        config.setJdbcUrl(registry.getUrl());
-        config.setUsername(registry.getUsername());
-        config.setPassword(registry.getPassword());
+        config.setJdbcUrl(normalized.jdbcUrl());
+        config.setUsername(normalized.username());
+        config.setPassword(normalized.password());
         config.setMaximumPoolSize(5);
         config.setMinimumIdle(1);
         return new HikariDataSource(config);

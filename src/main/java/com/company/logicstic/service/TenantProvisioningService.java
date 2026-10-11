@@ -66,11 +66,14 @@ public class TenantProvisioningService {
     }
 
     private HikariDataSource buildAdminDataSource(TenancyProperties.Provisioning provisioning) {
+        com.company.logicstic.config.DatabaseUrlUtils.NormalizedJdbcUrl normalized =
+                com.company.logicstic.config.DatabaseUrlUtils.normalize(
+                        provisioning.getAdminUrl(), provisioning.getAdminUsername(), provisioning.getAdminPassword());
         HikariConfig config = new HikariConfig();
         config.setPoolName("tenant-provisioning-admin");
-        config.setJdbcUrl(provisioning.getAdminUrl());
-        config.setUsername(provisioning.getAdminUsername());
-        config.setPassword(provisioning.getAdminPassword());
+        config.setJdbcUrl(normalized.jdbcUrl());
+        config.setUsername(normalized.username());
+        config.setPassword(normalized.password());
         config.setMaximumPoolSize(2);
         config.setMinimumIdle(0);
         return new HikariDataSource(config);

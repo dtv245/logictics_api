@@ -74,11 +74,15 @@ public class TenantCredentialCipher {
     private SecretKeySpec secretKey() {
         String configuredKey = properties.getRegistry().getEncryptionKey();
         if (!StringUtils.hasText(configuredKey)) {
-            throw new IllegalStateException("app.tenancy.registry.encryption-key is required");
+            throw new IllegalStateException(
+                "Missing required configuration: 'app.tenancy.registry.encryption-key' "
+                + "(environment variable: TENANT_REGISTRY_ENCRYPTION_KEY). "
+                + "A Base64-encoded 16, 24, or 32-byte AES key is required for tenant database credential encryption.");
         }
         byte[] keyBytes = Base64.getDecoder().decode(configuredKey);
         if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
-            throw new IllegalStateException("Tenant registry encryption key must decode to 16, 24, or 32 bytes");
+            throw new IllegalStateException(
+                "Tenant registry encryption key must decode to 16, 24, or 32 bytes (got " + keyBytes.length + " bytes)");
         }
         return new SecretKeySpec(keyBytes, ALGORITHM);
     }
