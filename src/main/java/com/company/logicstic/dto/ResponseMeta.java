@@ -9,7 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
  *
  * @param timestamp The server time when the response was generated
  * @param path      The request URI that generated this response
- * @param requestId Optional correlation ID from the X-Request-Id header
+ * @param requestId Validated correlation ID, generated when the caller does not supply one
  */
 public record ResponseMeta(
         Instant timestamp,
@@ -20,7 +20,7 @@ public record ResponseMeta(
         return new ResponseMeta(
                 Instant.now(),
                 request.getRequestURI(),
-                request.getHeader("X-Request-Id")
+                com.company.logicstic.config.RequestIds.getOrCreate(request)
         );
     }
 }

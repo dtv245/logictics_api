@@ -25,14 +25,21 @@ public class LarkBaseTokenProvider {
 
   private final LarkProperties properties;
   private final RestTemplate restTemplate;
+  private final com.company.logicstic.integration.lark.LarkFailurePolicy failures;
 
   private final Object lock = new Object();
   private volatile String cachedToken;
   private volatile long expiresAtEpochMs;
 
   public LarkBaseTokenProvider(LarkProperties properties, RestTemplate restTemplate) {
+    this(properties, restTemplate, new com.company.logicstic.integration.lark.LarkFailurePolicy(30));
+  }
+
+  @org.springframework.beans.factory.annotation.Autowired
+  public LarkBaseTokenProvider(LarkProperties properties, RestTemplate restTemplate, com.company.logicstic.integration.lark.LarkFailurePolicy failures) {
     this.properties = properties;
     this.restTemplate = restTemplate;
+    this.failures = failures;
   }
 
   public String getTenantAccessToken() {
@@ -81,12 +88,8 @@ public class LarkBaseTokenProvider {
       LarkTenantTokenResponse body = response.getBody();
 
       if (body == null || body.code() != 0 || !StringUtils.hasText(body.tenantAccessToken())) {
-        String msg = body != null ? body.msg() : "empty response";
-        log.error("Failed to obtain Lark tenant_access_token: code={}, msg={}", body != null ? body.code() : -1, msg);
-        throw new ApiException(
-            HttpStatus.INTERNAL_SERVER_ERROR,
-            "LARK_AUTH_FAILED",
-            "Failed to obtain Lark tenant_access_token: " + msg);
+        log.error("Lark tenant authentication response rejected providerCode={}", body == null ? null : body.code());
+        throw failures.body(body == null ? null : body.code(), com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.APP, response.getHeaders());
       }
 
       this.cachedToken = body.tenantAccessToken();
@@ -95,11 +98,10 @@ public class LarkBaseTokenProvider {
 
       log.info("Lark tenant_access_token refreshed successfully, expires in {}s", expireSeconds);
     } catch (RestClientException ex) {
-      log.error("Network error while requesting Lark tenant_access_token: {}", ex.getMessage());
-      throw new ApiException(
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          "LARK_COMMUNICATION_ERROR",
-          "Failed to communicate with Lark token endpoint: " + ex.getMessage());
+      var failure = failures.transport(ex, com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.APP);
+      if (failure.getStatus().is5xxServerError()) log.error("Lark tenant authentication transport failed", com.company.logicstic.exception.ErrorLog.sanitized(ex));
+      else log.info("Lark request rejected code={}", failure.getCode());
+      throw failure;
     }
   }
 

@@ -42,8 +42,8 @@ public class InvoiceService {
         if (employeeId != null) {
             throw new BadRequestException("INVOICE_LEGACY_PAYROLL_FIELD", "Filtering invoices by deprecated employee payroll field is no longer supported");
         }
-        Sort sort = descending ? Sort.by(orderBy).descending() : Sort.by(orderBy).ascending();
-        var pageable = PageRequest.of(page - 1, pageSize, sort);
+        Sort sort = com.company.logicstic.common.QuerySortPolicy.sort("invoices", orderBy, descending);
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, sort);
         return PagedResponse.from(invoiceRepository.search(status, type, customerId, pageable)
                 .map(invoiceMapper::toView));
     }

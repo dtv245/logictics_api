@@ -32,8 +32,8 @@ public class TruckService {
 
     public PagedResponse<TruckView> search(String search, String status, String type,
                                             int page, int pageSize, String orderBy, boolean descending) {
-        Sort sort = descending ? Sort.by(orderBy).descending() : Sort.by(orderBy).ascending();
-        var pageable = PageRequest.of(page - 1, pageSize, sort);
+        Sort sort = com.company.logicstic.common.QuerySortPolicy.sort("trucks", orderBy, descending);
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, sort);
         return PagedResponse.from(truckRepository.search(search, status, type, pageable).map(TruckView::from));
     }
 
@@ -46,7 +46,7 @@ public class TruckService {
     @Transactional
     public TruckView create(CreateTruckRequest request) {
         if (truckRepository.existsByNumber(request.number())) {
-            throw new ConflictException("Truck with number '" + request.number() + "' already exists");
+            throw ConflictException.forUniqueField("number", "Truck with number '" + request.number() + "' already exists");
         }
         Truck truck = new Truck();
         applyFields(truck, request);
@@ -60,7 +60,7 @@ public class TruckService {
         ExpectedVersionGuard.require(command == null ? null : command.expectedVersion(), truck.getVersion());
         CreateTruckRequest request = command.toCreateRequest();
         if (!truck.getNumber().equals(request.number()) && truckRepository.existsByNumber(request.number())) {
-            throw new ConflictException("Truck with number '" + request.number() + "' already exists");
+            throw ConflictException.forUniqueField("number", "Truck with number '" + request.number() + "' already exists");
         }
         applyFields(truck, request);
         return TruckView.from(truckRepository.saveAndFlush(truck));

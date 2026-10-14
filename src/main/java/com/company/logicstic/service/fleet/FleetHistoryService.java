@@ -54,6 +54,7 @@ public class FleetHistoryService {
         var p=new Policy(UUID.randomUUID(),r.code(),r.version(),r.membershipStates(),r.capacityStates(),r.activityStates(),normalized.sources(),r.approvalReference(),actor,now());history.insert(p);return p;
     }
     public Policy policy(UUID id){return history.policy(id).orElseThrow(()->new ResourceNotFoundException("Fleet policy not found in tenant"));}
+    public List<Policy> policies(){return history.policies();}
     @Transactional public Event capture(Capture r,UUID actor) {
         actor(actor);if(r==null || r.truckId()==null || r.kind()==null || blank(r.status()) || r.occurredAt()==null || r.validUntil()==null
             || !r.occurredAt().isBefore(r.validUntil()) || !micro(r.occurredAt()) || !micro(r.validUntil()) || blank(r.sourceEventId()) || blank(r.reasonCode()) || blank(r.reason()))throw invalid("Explicit bounded interval/source/status/reason required");
@@ -95,7 +96,11 @@ public class FleetHistoryService {
         long started=System.nanoTime();var p=policy(policyId);
         if(truckIds==null || truckIds.isEmpty() || truckIds.size()>200 || truckIds.stream().anyMatch(Objects::isNull) || new HashSet<>(truckIds).size()!=truckIds.size())throw invalid("Explicit distinct truck scope required (maximum 200); no implicit current fleet");
         var scope=truckIds.stream().sorted().toList();if(!history.trucksExist(scope))throw new ResourceNotFoundException("Fleet truck scope not found in tenant");
-        var period=calculator.period(from,to,first,exclusiveLast,zone);Instant calculated=now();if(period.to().isAfter(calculated))throw invalid("Historical fleet report cannot claim future actual utilization");
+        var period=calculator.period(from,to,first,exclusiveLast,zone);Instant calculated=now();
+        if(first!=null && exclusiveLast!=null && zone!=null && !zone.isBlank()) {
+            LocalDate todayInZone=LocalDate.ofInstant(calculated,ZoneId.of(zone));
+            if(exclusiveLast.isAfter(todayInZone.plusDays(1)))throw invalid("Historical fleet report cannot claim future actual utilization");
+        } else if(period.to().isAfter(calculated))throw invalid("Historical fleet report cannot claim future actual utilization");
         var coverage=history.durations(p.id(),scope,period);var utilization=calculator.utilization(coverage);var miles=history.mileageTotals(p.id(),scope,period);
         String unavailable=miles.missing()>0?"FLEET_MILEAGE_ATTRIBUTION_REQUIRED":miles.count()==0?"ACTUAL_MILEAGE_HISTORY_UNAVAILABLE":null;
         MetricDto loaded=unavailable==null?calculator.ratio("LOADED_MILES_PERCENT",miles.loaded(),miles.loaded().add(miles.empty()),"ACTUAL_LOADED_PLUS_EMPTY_MILES"):

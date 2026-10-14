@@ -27,14 +27,21 @@ public class LarkBaseClient {
   private final LarkProperties properties;
   private final LarkBaseTokenProvider tokenProvider;
   private final RestTemplate restTemplate;
+  private final com.company.logicstic.integration.lark.LarkFailurePolicy failures;
 
   public LarkBaseClient(
       LarkProperties properties,
       LarkBaseTokenProvider tokenProvider,
       RestTemplate restTemplate) {
+    this(properties, tokenProvider, restTemplate, new com.company.logicstic.integration.lark.LarkFailurePolicy(30));
+  }
+
+  @org.springframework.beans.factory.annotation.Autowired
+  public LarkBaseClient(LarkProperties properties, LarkBaseTokenProvider tokenProvider, RestTemplate restTemplate, com.company.logicstic.integration.lark.LarkFailurePolicy failures) {
     this.properties = properties;
     this.tokenProvider = tokenProvider;
     this.restTemplate = restTemplate;
+    this.failures = failures;
   }
 
   public LarkBaseRecord createRecord(String appToken, String tableId, LarkBaseRecord record) {
@@ -51,18 +58,17 @@ public class LarkBaseClient {
           restTemplate.exchange(url, HttpMethod.POST, entity, LarkRecordResponse.class);
       LarkRecordResponse body = response.getBody();
 
-      if (body == null || body.code() != 0 || body.data() == null) {
-        String msg = body != null ? body.msg() : "empty response";
-        log.error("Failed to create Lark Bitable record: code={}, msg={}", body != null ? body.code() : -1, msg);
-        throw new ApiException(
-            HttpStatus.BAD_GATEWAY, "LARK_BASE_ERROR", "Failed to create record in Lark Base: " + msg);
+      if (body == null || body.code() != 0 || body.data() == null || body.data().record() == null) {
+        log.error("Lark Base response rejected providerCode={}", body == null ? null : body.code());
+        throw failures.body(body == null ? null : body.code(), com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.BASE, response.getHeaders());
       }
 
       return body.data().record();
     } catch (RestClientException ex) {
-      log.error("Error creating record in Lark Base: {}", ex.getMessage());
-      throw new ApiException(
-          HttpStatus.BAD_GATEWAY, "LARK_BASE_ERROR", "Network error when creating Lark Base record: " + ex.getMessage());
+      var failure = failures.transport(ex, com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.BASE);
+      if (failure.getStatus().is5xxServerError()) log.error("Lark Base transport failed", com.company.logicstic.exception.ErrorLog.sanitized(ex));
+      else log.info("Lark request rejected code={}", failure.getCode());
+      throw failure;
     }
   }
 
@@ -84,18 +90,17 @@ public class LarkBaseClient {
           restTemplate.exchange(url, HttpMethod.PUT, entity, LarkRecordResponse.class);
       LarkRecordResponse body = response.getBody();
 
-      if (body == null || body.code() != 0 || body.data() == null) {
-        String msg = body != null ? body.msg() : "empty response";
-        log.error("Failed to update Lark Bitable record {}: code={}, msg={}", recordId, body != null ? body.code() : -1, msg);
-        throw new ApiException(
-            HttpStatus.BAD_GATEWAY, "LARK_BASE_ERROR", "Failed to update record in Lark Base: " + msg);
+      if (body == null || body.code() != 0 || body.data() == null || body.data().record() == null) {
+        log.error("Lark Base response rejected providerCode={}", body == null ? null : body.code());
+        throw failures.body(body == null ? null : body.code(), com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.BASE, response.getHeaders());
       }
 
       return body.data().record();
     } catch (RestClientException ex) {
-      log.error("Error updating record in Lark Base {}: {}", recordId, ex.getMessage());
-      throw new ApiException(
-          HttpStatus.BAD_GATEWAY, "LARK_BASE_ERROR", "Network error when updating Lark Base record: " + ex.getMessage());
+      var failure = failures.transport(ex, com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.BASE);
+      if (failure.getStatus().is5xxServerError()) log.error("Lark Base transport failed", com.company.logicstic.exception.ErrorLog.sanitized(ex));
+      else log.info("Lark request rejected code={}", failure.getCode());
+      throw failure;
     }
   }
 
@@ -115,11 +120,13 @@ public class LarkBaseClient {
       ResponseEntity<LarkDeleteResponse> response =
           restTemplate.exchange(url, HttpMethod.DELETE, entity, LarkDeleteResponse.class);
       LarkDeleteResponse body = response.getBody();
-      return body != null && body.code() == 0;
+      if (body == null || body.code() != 0) throw failures.body(body == null ? null : body.code(), com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.BASE, response.getHeaders());
+      return true;
     } catch (RestClientException ex) {
-      log.error("Error deleting record in Lark Base {}: {}", recordId, ex.getMessage());
-      throw new ApiException(
-          HttpStatus.BAD_GATEWAY, "LARK_BASE_ERROR", "Network error when deleting Lark Base record: " + ex.getMessage());
+      var failure = failures.transport(ex, com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.BASE);
+      if (failure.getStatus().is5xxServerError()) log.error("Lark Base transport failed", com.company.logicstic.exception.ErrorLog.sanitized(ex));
+      else log.info("Lark request rejected code={}", failure.getCode());
+      throw failure;
     }
   }
 
@@ -151,11 +158,12 @@ public class LarkBaseClient {
       if (body != null && body.code() == 0 && body.data() != null && body.data().items() != null) {
         return body.data().items();
       }
-      return List.of();
+      throw failures.body(body == null ? null : body.code(), com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.BASE, response.getHeaders());
     } catch (RestClientException ex) {
-      log.error("Error listing records from Lark Base: {}", ex.getMessage());
-      throw new ApiException(
-          HttpStatus.BAD_GATEWAY, "LARK_BASE_ERROR", "Network error when listing Lark Base records: " + ex.getMessage());
+      var failure = failures.transport(ex, com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.BASE);
+      if (failure.getStatus().is5xxServerError()) log.error("Lark Base transport failed", com.company.logicstic.exception.ErrorLog.sanitized(ex));
+      else log.info("Lark request rejected code={}", failure.getCode());
+      throw failure;
     }
   }
 

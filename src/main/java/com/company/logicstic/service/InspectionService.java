@@ -34,8 +34,8 @@ public class InspectionService {
 
     public PagedResponse<InspectionView> search(UUID loadId, String type,
                                                  int page, int pageSize, String orderBy, boolean descending) {
-        Sort sort = descending ? Sort.by(orderBy).descending() : Sort.by(orderBy).ascending();
-        var pageable = PageRequest.of(page - 1, pageSize, sort);
+        Sort sort = com.company.logicstic.common.QuerySortPolicy.sort("inspections", orderBy, descending);
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, sort);
         return PagedResponse.from(reportRepository.search(loadId, type, pageable).map(InspectionView::from));
     }
 

@@ -17,6 +17,7 @@ public class FleetHistoryRepository {
     public boolean trucksExist(List<UUID> ids){return jdbc.queryForObject("select count(*) from trucks where id in (select value::uuid from jsonb_array_elements_text(?::jsonb))",Long.class,json.writeValueAsString(ids))==ids.size();}
     public Optional<Policy> policy(UUID id){return policies("id=?",id).stream().findFirst();}
     public Optional<Policy> policy(String code,int version){return policies("policy_code=? and policy_version=?",code,version).stream().findFirst();}
+    public List<Policy> policies(){return policies("true order by policy_code asc, policy_version desc");}
     private List<Policy> policies(String where,Object...args) {
         return jdbc.query("select * from fleet_policy_versions where "+where,(r,n)->{
             var m=json.readTree(r.getString("mappings"));

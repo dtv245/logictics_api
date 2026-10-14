@@ -24,6 +24,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @ConditionalOnProperty(prefix = "app.tenancy", name = "enabled", havingValue = "true")
 public class TenantJwtClaimFilter extends OncePerRequestFilter {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TenantJwtClaimFilter.class);
+
     private static final String TENANT_CLAIM = "tenant";
 
     private final TenantDataSourceService tenantDataSourceService;
@@ -49,9 +51,11 @@ public class TenantJwtClaimFilter extends OncePerRequestFilter {
                 try {
                     tenantDataSourceService.ensureTenantDataSource(tenantId);
                 } catch (IllegalArgumentException inactiveTenant) {
+                    com.company.logicstic.exception.ErrorLog.write(log, 403, "INVALID_TENANT_CONTEXT", inactiveTenant, request);
                     SecurityResponses.write(request, response, 403, "INVALID_TENANT_CONTEXT", "Authenticated tenant is not available");
                     return;
                 } catch (IllegalStateException | org.springframework.dao.DataAccessException unavailable) {
+                    com.company.logicstic.exception.ErrorLog.write(log, 503, "TENANT_UNAVAILABLE", unavailable, request);
                     SecurityResponses.write(request, response, 503, "TENANT_UNAVAILABLE", "Tenant persistence is unavailable");
                     return;
                 }

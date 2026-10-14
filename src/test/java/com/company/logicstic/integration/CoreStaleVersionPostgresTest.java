@@ -72,7 +72,11 @@ class CoreStaleVersionPostgresTest {
         for(String resource:List.of("loads","trips","trucks")){
             var f=fixture(resource);long version=f.body().get("expectedVersion").asLong();var winner=f.body().deepCopy().put(f.field(),"Winner");
             update(f,winner).andExpect(status().isOk()).andExpect(jsonPath("$.data.version").value(version+1));
-            update(f,f.body().deepCopy().put(f.field(),"Stale")).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("CONCURRENT_MODIFICATION_CONFLICT"));
+            update(f,f.body().deepCopy().put(f.field(),"Stale")).andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.code").value("VERSION_CONFLICT"))
+                    .andExpect(jsonPath("$.errors").isArray()).andExpect(jsonPath("$.errors").isEmpty())
+                    .andExpect(jsonPath("$.params.conflictType").value("VERSION"))
+                    .andExpect(jsonPath("$.params.legacyCode").value("CONCURRENT_MODIFICATION_CONFLICT"));
             String column=resource.equals("loads")?"notes":f.field();
             assertEquals("Winner",db().queryForObject("select "+column+" from "+f.table()+" where id=?",String.class,f.id()));
             assertEquals(version+1,db().queryForObject("select version from "+f.table()+" where id=?",Long.class,f.id()));
@@ -116,7 +120,11 @@ class CoreStaleVersionPostgresTest {
                 assertTrue(loaded.await(20,TimeUnit.SECONDS));update(f,f.body().deepCopy().put("name","Winner")).andExpect(status().isOk());
             }finally{release.countDown();}
             var response=pending.get(30,TimeUnit.SECONDS);assertEquals(409,response.getStatus(),response.getContentAsString());
-            assertEquals("CONCURRENT_MODIFICATION_CONFLICT",json.readTree(response.getContentAsString()).get("code").asText());
+            var body=json.readTree(response.getContentAsString());
+            assertEquals("VERSION_CONFLICT",body.get("code").asText());
+            assertTrue(body.get("errors").isArray());assertEquals(0,body.get("errors").size());
+            assertEquals("VERSION",body.get("params").get("conflictType").asText());
+            assertEquals("CONCURRENT_MODIFICATION_CONFLICT",body.get("params").get("legacyCode").asText());
         }
         assertEquals("Winner",db().queryForObject("select name from trips where id=?",String.class,f.id()));
     }

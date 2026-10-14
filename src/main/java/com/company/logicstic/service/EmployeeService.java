@@ -30,8 +30,8 @@ public class EmployeeService {
 
     public PagedResponse<EmployeeView> search(String search, String status, UUID roleId,
                                                int page, int pageSize, String orderBy, boolean descending) {
-        Sort sort = descending ? Sort.by(orderBy).descending() : Sort.by(orderBy).ascending();
-        var pageable = PageRequest.of(page - 1, pageSize, sort);
+        Sort sort = com.company.logicstic.common.QuerySortPolicy.sort("employees", orderBy, descending);
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, sort);
         return PagedResponse.from(employeeRepository.search(search, status, roleId, pageable).map(EmployeeView::from));
     }
 
@@ -46,8 +46,8 @@ public class EmployeeService {
                                                       int page, int pageSize, String orderBy, boolean descending) {
         // We reuse the same search but filter by roleId being the 'DRIVER' role; 
         // alternatively just rely on status filter on driver-specific roles
-        Sort sort = descending ? Sort.by(orderBy).descending() : Sort.by(orderBy).ascending();
-        var pageable = PageRequest.of(page - 1, pageSize, sort);
+        Sort sort = com.company.logicstic.common.QuerySortPolicy.sort("employees", orderBy, descending);
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, sort);
         // Pass roleId=null and let the caller filter; for now delegate to general search
         return PagedResponse.from(employeeRepository.search(search, status, null, pageable).map(EmployeeView::from));
     }
@@ -55,7 +55,7 @@ public class EmployeeService {
     @Transactional
     public EmployeeView create(CreateEmployeeRequest request) {
         if (employeeRepository.existsByEmail(request.email())) {
-            throw new ConflictException("Employee with email '" + request.email() + "' already exists");
+            throw ConflictException.forUniqueField("email", "Employee with email '" + request.email() + "' already exists");
         }
 
         Employee employee = new Employee();
@@ -68,7 +68,7 @@ public class EmployeeService {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
         if (!employee.getEmail().equals(request.email()) && employeeRepository.existsByEmail(request.email())) {
-            throw new ConflictException("Email '" + request.email() + "' is already in use");
+            throw ConflictException.forUniqueField("email", "Email '" + request.email() + "' is already in use");
         }
         applyFields(employee, request);
         return EmployeeView.from(employeeRepository.save(employee));

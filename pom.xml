@@ -74,7 +74,7 @@
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
+			<!-- Compile access is required for structured SQLSTATE/constraint metadata. -->
 		</dependency>
 
 		<!-- ===== Security ===== -->

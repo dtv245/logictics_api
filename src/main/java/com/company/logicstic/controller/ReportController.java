@@ -83,6 +83,7 @@ public class ReportController {
             @RequestParam(required = false) String currency,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.monthly(year, month);
         String reportCurrency = currency != null ? currency : "USD";
         OffsetDateTime from = OffsetDateTime.of(year, month, 1, 0, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime to = from.plusMonths(1).minusNanos(1);

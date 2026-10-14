@@ -263,7 +263,7 @@ riêng fallback authenticated; không tự cấp thêm domain quyền dựa vào
 | 401 UNAUTHORIZED | Auth required/expired/malformed; refresh đúng provider tối đa giới hạn hiện có hoặc login lại |
 | 403 FORBIDDEN / IDENTITY_TENANT_MISMATCH / INVALID_TENANT_CONTEXT | Denied; không refresh/logout loop; mismatch phiên cần xác minh lại identity |
 | 404 | Không có object trong routed tenant; không thử selector tenant khác |
-| 409 CONCURRENT_MODIFICATION_CONFLICT | Giữ draft, reread server, cho người dùng so sánh/chọn; không overwrite tự động |
+| 409 VERSION_CONFLICT (chuyển tiếp chấp nhận cả CONCURRENT_MODIFICATION_CONFLICT) | `errors: []`, `params: {conflictType: "VERSION", legacyCode: "CONCURRENT_MODIFICATION_CONFLICT"}`; giữ draft, reread server, cho người dùng so sánh/chọn; không overwrite tự động |
 | 409 PAYMENT_IDEMPOTENCY_CONFLICT | Key đã dùng cho ý định khác; không tự đổi key để né conflict |
 | 409 PAYMENT_*_STATE_CONFLICT / PAYMENT_INVOICE_NOT_COLLECTIBLE | Reread state; hiển thị vì sao action không hợp lệ |
 | 409 PAYMENT_DELETE_FORBIDDEN / PAYMENT_FINANCIAL_FIELDS_IMMUTABLE | Luồng/UI sai contract; chuyển sang metadata/cancel phù hợp |
@@ -273,8 +273,11 @@ riêng fallback authenticated; không tự cấp thêm domain quyền dựa vào
 
 Không phải mọi 422 đều là field validation và không phải mọi 409 đều là version
 conflict. Đọc cả HTTP status và `code`. `errors[].code` có thể là constraint
-validation, không phải top-level domain code. `meta.requestId` có thể null nếu
-caller không gửi header; không invent top-level `fieldErrors` hay request ID.
+validation, không phải top-level domain code. Sau đợt exception remediation,
+backend luôn xác thực hoặc tạo `meta.requestId` và trả cùng `X-Request-Id`; response
+lỗi có `params` cho i18n. Frontend vẫn đọc được envelope cũ không có params hoặc
+request ID. Xem `docs/http-error-contract.md` trong repository backend để đối chiếu
+status, phân trang, Lark và SQLSTATE; không invent top-level `fieldErrors`.
 
 Client hiện đã có phân biệt 401/403, single refresh coordination và error adapter.
 Giữ semantics đó. Retry financial POST sau timeout/401 phải giữ nguyên frozen

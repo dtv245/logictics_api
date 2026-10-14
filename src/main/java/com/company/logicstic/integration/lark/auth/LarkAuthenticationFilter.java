@@ -51,17 +51,18 @@ public class LarkAuthenticationFilter extends OncePerRequestFilter {
             throw new IllegalArgumentException("Authenticated identity claims are incomplete");
           }
           if (TenantContext.getTenantId().filter(bound -> !bound.equals(tenant)).isPresent()) {
+            // A disconnected client may make response writing fail; clear first.
+            TenantContext.clear();
             com.company.logicstic.config.SecurityResponses.write(request, response, 403,
                 "IDENTITY_TENANT_MISMATCH", "Authenticated tenant boundary does not match");
-            TenantContext.clear();
             return;
           }
 
-          @SuppressWarnings("unchecked")
-          List<String> roles = claims.get("roles", List.class);
-          if (roles == null) {
-            roles = Collections.emptyList();
+          List<?> rawRoles = claims.get("roles", List.class);
+          if (rawRoles != null && rawRoles.stream().anyMatch(role -> !(role instanceof String))) {
+            throw new IllegalArgumentException("Identity roles are invalid");
           }
+          List<String> roles = rawRoles == null ? Collections.emptyList() : rawRoles.stream().map(String.class::cast).toList();
 
           List<SimpleGrantedAuthority> authorities =
               roles.stream()
@@ -85,9 +86,24 @@ public class LarkAuthenticationFilter extends OncePerRequestFilter {
           if (StringUtils.hasText(tenant)) {
             TenantContext.setTenantId(tenant);
           }
-        } catch (Exception ex) {
-          // Token is not an internal Lark token or expired; ignore and continue filter chain
-          log.trace("Bearer authentication rejected");
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException ex) {
+          SecurityContextHolder.clearContext();
+          TenantContext.clear();
+          com.company.logicstic.exception.ErrorLog.write(log, 401, "UNAUTHORIZED", ex, request);
+          com.company.logicstic.config.SecurityResponses.write(request, response, 401, "UNAUTHORIZED", "Authentication token is invalid or expired");
+          return;
+        } catch (com.company.logicstic.exception.ApiException ex) {
+          SecurityContextHolder.clearContext();
+          TenantContext.clear();
+          com.company.logicstic.exception.ErrorLog.write(log, ex.getStatus().value(), ex.getCode(), ex, request);
+          com.company.logicstic.config.SecurityResponses.write(request, response, ex.getStatus().value(), ex.getCode(), ex.getMessage());
+          return;
+        } catch (RuntimeException ex) {
+          SecurityContextHolder.clearContext();
+          TenantContext.clear();
+          com.company.logicstic.exception.ErrorLog.write(log, 500, "INTERNAL_ERROR", ex, request);
+          com.company.logicstic.config.SecurityResponses.write(request, response, 500, "INTERNAL_ERROR", "An unexpected error occurred");
+          return;
         }
       }
     }

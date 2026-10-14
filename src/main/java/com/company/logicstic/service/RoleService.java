@@ -26,7 +26,7 @@ public class RoleService {
     }
 
     public PagedResponse<RoleView> list(int page, int pageSize) {
-        var pageable = PageRequest.of(page - 1, pageSize, Sort.by("name").ascending());
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, Sort.by("name").ascending());
         return PagedResponse.from(roleRepository.findAll(pageable).map(RoleView::from));
     }
 
@@ -40,7 +40,7 @@ public class RoleService {
     public RoleView create(CreateRoleRequest request) {
         String normalizedName = request.name().toUpperCase();
         if (roleRepository.existsByNormalizedName(normalizedName)) {
-            throw new ConflictException("Role with name '" + request.name() + "' already exists");
+            throw ConflictException.forUniqueField("name", "Role with name '" + request.name() + "' already exists");
         }
 
         TenantRole role = new TenantRole();
@@ -68,7 +68,7 @@ public class RoleService {
 
         String normalizedName = request.name().toUpperCase();
         if (!role.getNormalizedName().equals(normalizedName) && roleRepository.existsByNormalizedName(normalizedName)) {
-            throw new ConflictException("Role with name '" + request.name() + "' already exists");
+            throw ConflictException.forUniqueField("name", "Role with name '" + request.name() + "' already exists");
         }
 
         role.setName(request.name());

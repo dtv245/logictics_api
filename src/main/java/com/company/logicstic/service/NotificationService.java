@@ -23,7 +23,7 @@ public class NotificationService {
     }
 
     public PagedResponse<NotificationView> list(int page, int pageSize) {
-        var pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdDate").descending());
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, Sort.by("createdDate").descending());
         return PagedResponse.from(notificationRepository.findAll(pageable).map(NotificationView::from));
     }
 

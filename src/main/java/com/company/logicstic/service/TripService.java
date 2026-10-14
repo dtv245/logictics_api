@@ -33,8 +33,8 @@ public class TripService {
 
     public PagedResponse<TripView> search(String search, String status, UUID truckId,
                                            int page, int pageSize, String orderBy, boolean descending) {
-        Sort sort = descending ? Sort.by(orderBy).descending() : Sort.by(orderBy).ascending();
-        var pageable = PageRequest.of(page - 1, pageSize, sort);
+        Sort sort = com.company.logicstic.common.QuerySortPolicy.sort("trips", orderBy, descending);
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, sort);
         return PagedResponse.from(tripRepository.search(search, status, truckId, pageable).map(tripMapper::toView));
     }
 

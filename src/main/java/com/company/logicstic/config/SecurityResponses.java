@@ -14,6 +14,7 @@ public final class SecurityResponses {
                              int status, String code, String message) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
+        response.setHeader(RequestIds.HEADER, RequestIds.getOrCreate(request));
         response.setHeader("Cache-Control", "no-store");
         JSON.writeValue(response.getOutputStream(), ApiResponse.failure(code, message, List.of(), request));
     }

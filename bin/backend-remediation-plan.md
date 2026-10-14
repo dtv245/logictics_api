@@ -418,7 +418,7 @@ Thiếu sót trong quá trình chuyển dịch mô hình dữ liệu từ schema
    * `Payment`: (Đã được lên kế hoạch trong Phase 3).
 2. Tạo Flyway migration bổ sung cột `version bigint not null default 0` cho các bảng tương ứng.
 3. Thêm annotation `@Version private Long version;` vào các entity class.
-4. Đảm bảo `GlobalExceptionHandler` bắt ngoại lệ `OptimisticLockException` / `ObjectOptimisticLockingFailureException` và chuyển đổi thành HTTP `409 Conflict` với mã lỗi chuẩn `CONCURRENT_MODIFICATION_CONFLICT`.
+4. Đảm bảo `GlobalExceptionHandler` bắt ngoại lệ `OptimisticLockException` / `ObjectOptimisticLockingFailureException` và cùng `ExpectedVersionGuard` chuyển đổi thành HTTP `409 Conflict` với mã lỗi chuẩn `VERSION_CONFLICT`, `errors: []`, `params: {conflictType: "VERSION", legacyCode: "CONCURRENT_MODIFICATION_CONFLICT"}`. Trong giai đoạn chuyển tiếp, frontend chấp nhận cả mã cũ và mã mới.
 
 ### Out of scope
 Áp dụng máy móc `@Version` cho các bảng nhật ký/bất biến (ví dụ `load_events`, `payroll_payment_events`, `calculation_snapshots`).

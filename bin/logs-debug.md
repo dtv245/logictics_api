@@ -766,7 +766,7 @@ Các thực thể nghiệp vụ có thể bị sửa đổi đồng thời phả
 - Fix:
   - Migration: `src/main/resources/db/migration/tenant/V37__add_optimistic_locking_to_core_entities.sql` bổ sung cột `version bigint not null default 0` cho các bảng `loads`, `trips`, và `trucks`.
   - Entity: Thêm trường `@Version private Long version;` vào `Load.java`, `Trip.java`, `Truck.java`.
-  - Exception Handling: `GlobalExceptionHandler.java` bổ sung handler cho `OptimisticLockException` và `ObjectOptimisticLockingFailureException` trả về HTTP 409 Conflict với error code `CONCURRENT_MODIFICATION_CONFLICT`.
+  - Exception Handling: `GlobalExceptionHandler.java` bổ sung handler cho `OptimisticLockException` và `ObjectOptimisticLockingFailureException`; hợp đồng hiện tại của handler và `ExpectedVersionGuard` trả về HTTP 409 Conflict với error code `VERSION_CONFLICT`, `errors: []`, `params: {conflictType: "VERSION", legacyCode: "CONCURRENT_MODIFICATION_CONFLICT"}`.
 - Regression Test: `src/test/java/com/company/logicstic/entity/OptimisticLockingConcurrencyTest.java` (2/2 tests passing: detects stale version collision, exception handler produces 409 envelope).
 
 ### Root cause

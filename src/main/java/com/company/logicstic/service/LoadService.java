@@ -44,8 +44,8 @@ public class LoadService {
     public PagedResponse<LoadView> search(String search, String status, UUID customerId,
                                            UUID truckId, UUID dispatcherId,
                                            int page, int pageSize, String orderBy, boolean descending) {
-        Sort sort = descending ? Sort.by(orderBy).descending() : Sort.by(orderBy).ascending();
-        var pageable = PageRequest.of(page - 1, pageSize, sort);
+        Sort sort = com.company.logicstic.common.QuerySortPolicy.sort("loads", orderBy, descending);
+        var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, sort);
         return PagedResponse.from(
                 loadRepository.search(search, status, customerId, truckId, dispatcherId, pageable)
                         .map(loadMapper::toView)

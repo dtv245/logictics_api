@@ -35,9 +35,13 @@ public final class PaginationValidator {
      * @return validated page size (bounded by min 1 and max {@link Constants#MAX_PAGE_SIZE})
      */
     public static int validatePageSize(Integer pageSize) {
-        if (pageSize == null || pageSize < 1) {
+        if (pageSize == null) {
             return Constants.DEFAULT_PAGE_SIZE;
         }
-        return Math.min(pageSize, Constants.MAX_PAGE_SIZE);
+        return Math.clamp(pageSize, 1, Constants.MAX_PAGE_SIZE);
+    }
+
+    public static org.springframework.data.domain.PageRequest pageRequest(int page, int size, org.springframework.data.domain.Sort sort) {
+        return org.springframework.data.domain.PageRequest.of(validatePage(page) - 1, validatePageSize(size), sort);
     }
 }

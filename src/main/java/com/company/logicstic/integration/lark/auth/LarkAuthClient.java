@@ -27,10 +27,17 @@ public class LarkAuthClient {
 
   private final LarkProperties properties;
   private final RestTemplate restTemplate;
+  private final com.company.logicstic.integration.lark.LarkFailurePolicy failures;
 
   public LarkAuthClient(LarkProperties properties, RestTemplate restTemplate) {
+    this(properties, restTemplate, new com.company.logicstic.integration.lark.LarkFailurePolicy(30));
+  }
+
+  @org.springframework.beans.factory.annotation.Autowired
+  public LarkAuthClient(LarkProperties properties, RestTemplate restTemplate, com.company.logicstic.integration.lark.LarkFailurePolicy failures) {
     this.properties = properties;
     this.restTemplate = restTemplate;
+    this.failures = failures;
   }
 
   private final Object tokenLock = new Object();
@@ -101,12 +108,8 @@ public class LarkAuthClient {
       LarkAppTokenResponse body = response.getBody();
 
       if (body == null || body.code() != 0 || !StringUtils.hasText(body.appAccessToken())) {
-        String msg = body != null ? body.msg() : "empty response";
-        log.error("Failed to obtain Lark app_access_token: code={}, msg={}", body != null ? body.code() : -1, msg);
-        throw new ApiException(
-            HttpStatus.UNAUTHORIZED,
-            "UNAUTHORIZED",
-            "Failed to obtain Lark app_access_token: " + msg);
+        log.error("Lark app authentication response rejected providerCode={}", body == null ? null : body.code());
+        throw failures.body(body == null ? null : body.code(), com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.APP, response.getHeaders());
       }
 
       this.cachedAppAccessToken = body.appAccessToken();
@@ -115,11 +118,10 @@ public class LarkAuthClient {
 
       log.info("Lark app_access_token refreshed successfully, expires in {}s", expireSeconds);
     } catch (RestClientException ex) {
-      log.error("Network error while requesting Lark app_access_token: {}", ex.getMessage());
-      throw new ApiException(
-          HttpStatus.UNAUTHORIZED,
-          "UNAUTHORIZED",
-          "Failed to communicate with Lark app token endpoint: " + ex.getMessage());
+      var failure = failures.transport(ex, com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.APP);
+      if (failure.getStatus().is5xxServerError()) log.error("Lark app authentication transport failed", com.company.logicstic.exception.ErrorLog.sanitized(ex));
+      else log.info("Lark request rejected code={}", failure.getCode());
+      throw failure;
     }
   }
 
@@ -154,7 +156,7 @@ public class LarkAuthClient {
       LarkTokenResponse tokenResponse = response.getBody();
 
       if (tokenResponse == null) {
-        throw new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Empty response from Lark token endpoint");
+        throw failures.invalidResponse();
       }
 
       // Lark code 20014: App access token verification failed. Invalidate cache and retry once.
@@ -165,22 +167,22 @@ public class LarkAuthClient {
       }
 
       if (tokenResponse.code() != 0) {
-        log.warn("Lark token endpoint returned code {}: {}", tokenResponse.code(), tokenResponse.msg());
-        throw new ApiException(
-            HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Lark authentication failed: " + tokenResponse.msg());
+        log.warn("Lark authorization response rejected providerCode={}", tokenResponse.code());
+        throw failures.body(tokenResponse.code(), com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.CODE_EXCHANGE, response.getHeaders());
       }
 
       return tokenResponse;
     } catch (RestClientException ex) {
-      log.error("Failed to communicate with Lark token endpoint: {}", ex.getMessage());
-      throw new ApiException(
-          HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Failed to communicate with Lark server: " + ex.getMessage());
+      var failure = failures.transport(ex, com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.CODE_EXCHANGE);
+      if (failure.getStatus().is5xxServerError()) log.error("Lark authorization transport failed", com.company.logicstic.exception.ErrorLog.sanitized(ex));
+      else log.info("Lark request rejected code={}", failure.getCode());
+      throw failure;
     }
   }
 
   public LarkUserResponse extractUser(LarkTokenResponse tokenResponse) {
     if (tokenResponse == null || tokenResponse.data() == null) {
-      throw new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Token response does not contain user data");
+      throw failures.invalidResponse();
     }
 
     LarkTokenResponse.LarkTokenData data = tokenResponse.data();
@@ -231,10 +233,13 @@ public class LarkAuthClient {
             StringUtils.hasText(info.avatarUrl()) ? info.avatarUrl() : fallback.avatarUrl(),
             StringUtils.hasText(info.mobile()) ? info.mobile() : fallback.mobile());
       }
+      throw failures.body(body == null ? null : body.code(), com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.USER_TOKEN, response.getHeaders());
     } catch (RestClientException ex) {
-      log.debug("Lark user_info fetch non-fatal failure: {}", ex.getMessage());
+      var failure = failures.transport(ex, com.company.logicstic.integration.lark.LarkFailurePolicy.Credential.USER_TOKEN);
+      if (failure.getStatus().is5xxServerError()) log.error("Lark user information transport failed", com.company.logicstic.exception.ErrorLog.sanitized(ex));
+      else log.info("Lark request rejected code={}", failure.getCode());
+      throw failure;
     }
-    return null;
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)

@@ -64,7 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/fleet/status-events", "/api/fleet/mileage-attributions")
                         .hasAnyRole("ADMIN", "DISPATCHER")
                         .requestMatchers("/api/fleet/**")
-                        .hasAnyRole("ADMIN", "ACCOUNTANT", "DISPATCHER")
+                        .hasAnyRole("ADMIN", "ACCOUNTANT", "DISPATCHER", "PAYROLL", "PAYROLL_MANAGER")
 
                         // Optimization
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/optimization/qualified-inputs/forecasts")
@@ -136,6 +136,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(allowed);
         configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "X-Request-Id"));
+        configuration.setExposedHeaders(java.util.List.of("X-Request-Id", "Retry-After"));
         configuration.setAllowCredentials(false);
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

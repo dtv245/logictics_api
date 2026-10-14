@@ -13,9 +13,11 @@ public class NoDbComponentFilter implements TypeFilter, EnvironmentAware {
     private static final Set<String> AVAILABLE_COMPONENTS = Set.of(
             "com.company.logicstic.LogisticApplication",
             "com.company.logicstic.config.SecurityConfig",
+            "com.company.logicstic.config.RequestIdFilter",
             "com.company.logicstic.controller.HealthController",
             "com.company.logicstic.exception.GlobalExceptionHandler",
             "com.company.logicstic.integration.lark.config.LarkConfiguration",
+            "com.company.logicstic.integration.lark.LarkFailurePolicy",
             "com.company.logicstic.integration.lark.auth.LarkAuthClient",
             "com.company.logicstic.integration.lark.auth.LarkAuthController",
             "com.company.logicstic.integration.lark.auth.LarkAuthService",
