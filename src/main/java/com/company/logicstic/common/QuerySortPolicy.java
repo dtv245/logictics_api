@@ -17,7 +17,8 @@ public final class QuerySortPolicy {
             Map.entry("invoices", fields("id","number","type","status","dueDate")),
             Map.entry("payments", fields("id","recordedAt","status","referenceNumber")),
             Map.entry("documents", fields("id","fileName","type","status")),
-            Map.entry("inspections", fields("id","inspectedAt","type")));
+            Map.entry("inspections", fields("id","inspectedAt","type")),
+            Map.entry("terminals", fields("id","name","code","countryCode","type","addressCity")));
     private QuerySortPolicy() {}
     private static Map<String,String> fields(String... names) {
         Map<String,String> map=new LinkedHashMap<>(); for(String name:names)map.put(name,name); return Map.copyOf(map);

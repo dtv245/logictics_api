@@ -118,6 +118,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/loads/**").hasAnyRole("ADMIN", "ACCOUNTANT", "DISPATCHER")
                         .requestMatchers("/api/trips/**", "/api/trip-stops/**").hasAnyRole("ADMIN", "DISPATCHER")
                         .requestMatchers("/api/documents/**").hasAnyRole("ADMIN", "ACCOUNTANT", "DISPATCHER")
+                        .requestMatchers("/api/terminals/**").hasAnyRole("ADMIN", "ACCOUNTANT", "DISPATCHER")
                         .requestMatchers("/api/inspections/**").hasAnyRole("ADMIN", "DISPATCHER")
 
                         // Fallback: All other requests require authentication
