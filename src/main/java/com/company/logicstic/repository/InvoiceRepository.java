@@ -34,8 +34,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 
     @Query("""
             SELECT i FROM Invoice i
-            WHERE (:from IS NULL OR i.createdAt >= :from)
-              AND (:to IS NULL OR i.createdAt <= :to)
+            WHERE (CAST(:from AS string) IS NULL OR i.createdAt >= :from)
+              AND (CAST(:to AS string) IS NULL OR i.createdAt < :to)
             """)
     java.util.List<Invoice> findByPeriod(
             @Param("from") java.time.OffsetDateTime from,

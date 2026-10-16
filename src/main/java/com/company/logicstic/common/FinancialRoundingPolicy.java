@@ -46,4 +46,11 @@ public class FinancialRoundingPolicy {
     public BigDecimal divide(BigDecimal numerator, BigDecimal denominator, int scale, Boundary boundary) {
         return numerator.divide(denominator, scale, mode(boundary));
     }
+
+    public BigDecimal safeDivide(BigDecimal numerator, BigDecimal denominator, int scale, Boundary boundary) {
+        if (numerator == null || denominator == null || denominator.compareTo(BigDecimal.ZERO) == 0) {
+            return null;
+        }
+        return numerator.divide(denominator, scale, mode(boundary));
+    }
 }

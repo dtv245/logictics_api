@@ -31,10 +31,10 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
 
     @Query("""
             SELECT e FROM Expense e
-            WHERE (:status IS NULL OR LOWER(e.status) = LOWER(:status))
-              AND (:truckId IS NULL OR e.truck.id = :truckId)
-              AND (:from IS NULL OR e.expenseDate >= :from)
-              AND (:to IS NULL OR e.expenseDate <= :to)
+            WHERE (CAST(:status AS string) IS NULL OR LOWER(e.status) = LOWER(CAST(:status AS string)))
+              AND (CAST(:truckId AS string) IS NULL OR e.truck.id = :truckId)
+              AND (CAST(:from AS string) IS NULL OR e.expenseDate >= :from)
+              AND (CAST(:to AS string) IS NULL OR e.expenseDate < :to)
             """)
     List<Expense> findByFilters(
             @Param("status") String status,
@@ -46,9 +46,9 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
     @Query("""
             SELECT e FROM Expense e
             WHERE LOWER(e.status) = 'approved'
-              AND (:category IS NULL OR LOWER(e.category) = LOWER(:category))
-              AND (:from IS NULL OR e.expenseDate >= :from)
-              AND (:to IS NULL OR e.expenseDate <= :to)
+              AND (CAST(:category AS string) IS NULL OR LOWER(e.category) = LOWER(CAST(:category AS string)))
+              AND (CAST(:from AS string) IS NULL OR e.expenseDate >= :from)
+              AND (CAST(:to AS string) IS NULL OR e.expenseDate < :to)
             """)
     List<Expense> findApprovedExpenses(
             @Param("category") String category,

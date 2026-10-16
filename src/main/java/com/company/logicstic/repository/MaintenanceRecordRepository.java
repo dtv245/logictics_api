@@ -13,9 +13,9 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
 
     @Query("""
             SELECT m FROM MaintenanceRecord m
-            WHERE (:truckId IS NULL OR m.truck.id = :truckId)
-              AND (:from IS NULL OR m.serviceDate >= :from)
-              AND (:to IS NULL OR m.serviceDate <= :to)
+            WHERE (CAST(:truckId AS string) IS NULL OR m.truck.id = :truckId)
+              AND (CAST(:from AS string) IS NULL OR m.serviceDate >= :from)
+              AND (CAST(:to AS string) IS NULL OR m.serviceDate < :to)
             """)
     List<MaintenanceRecord> findByFilters(
             @Param("truckId") UUID truckId,

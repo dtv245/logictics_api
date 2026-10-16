@@ -15,8 +15,8 @@ public interface LoadExceptionRepository extends JpaRepository<LoadException, UU
 
     @Query("""
             SELECT e FROM LoadException e
-            WHERE (:from IS NULL OR e.occurredAt >= :from)
-              AND (:to IS NULL OR e.occurredAt <= :to)
+            WHERE (CAST(:from AS string) IS NULL OR e.occurredAt >= :from)
+              AND (CAST(:to AS string) IS NULL OR e.occurredAt < :to)
             """)
     List<LoadException> findByPeriod(
             @Param("from") OffsetDateTime from,
