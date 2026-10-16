@@ -22,6 +22,7 @@ import com.company.logicstic.service.calculation.RevenueCalculator;
 import com.company.logicstic.service.calculation.TransitTimeCalculator;
 import com.company.logicstic.service.profitability.ProfitabilityService;
 import com.company.logicstic.dto.report.LoadProfitabilityReport;
+import com.company.logicstic.dto.report.DriverRankingReport;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -43,6 +44,7 @@ public class ReportController {
     private final OperatingCostCalculator operatingCostCalculator;
     private final ProfitabilityService profitabilityService;
     private final com.company.logicstic.service.fleet.FleetHistoryService fleetHistory;
+    private final com.company.logicstic.service.calculation.DriverRankingService driverRankingService;
 
     @GetMapping({"/reports/fleet/utilization-history", "/reports/fleet/health"})
     public ResponseEntity<ApiResponse<com.company.logicstic.service.fleet.FleetHistory.Report>> getFleetHistory(
@@ -86,7 +88,7 @@ public class ReportController {
         com.company.logicstic.common.ReportPeriodValidation.monthly(year, month);
         String reportCurrency = currency != null ? currency : "USD";
         OffsetDateTime from = OffsetDateTime.of(year, month, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-        OffsetDateTime to = from.plusMonths(1).minusNanos(1);
+        OffsetDateTime to = from.plusMonths(1);
 
         var rev = revenueCalculator.calculateRevenueForPeriod(from, to, reportCurrency);
         var exp = operatingCostCalculator.calculateApprovedExpenses(from, to, reportCurrency);
@@ -118,39 +120,43 @@ public class ReportController {
 
     @GetMapping("/reports/operations/on-time-delivery")
     public ResponseEntity<ApiResponse<OtdReport>> getOtdReport(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
         OtdReport report = operationsMetricsService.calculateOtd(from, to);
         return ResponseEntity.ok(ApiResponse.success(report, request));
     }
 
     @GetMapping("/reports/operations/delays")
     public ResponseEntity<ApiResponse<DeliveryDelayReport>> getDelayReport(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
         DeliveryDelayReport report = operationsMetricsService.calculateDelays(from, to);
         return ResponseEntity.ok(ApiResponse.success(report, request));
     }
 
     @GetMapping("/reports/operations/transit-time")
     public ResponseEntity<ApiResponse<TransitTimeReport>> getTransitTimeReport(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
         return ResponseEntity.ok(ApiResponse.success(transitTimeCalculator.calculate(from, to), request));
     }
 
     @GetMapping("/reports/operations/exceptions-summary")
     public ResponseEntity<ApiResponse<ExceptionSummaryReport>> getExceptionsSummary(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
         ExceptionSummaryReport report = operationsMetricsService.calculateExceptions(from, to);
         return ResponseEntity.ok(ApiResponse.success(report, request));
     }
@@ -159,45 +165,49 @@ public class ReportController {
 
     @GetMapping("/reports/expenses")
     public ResponseEntity<ApiResponse<ExpenseSummaryReport>> getExpensesReport(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             @RequestParam(required = false) String currency,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
         ExpenseSummaryReport report = operatingCostCalculator.calculateApprovedExpenses(from, to, currency);
         return ResponseEntity.ok(ApiResponse.success(report, request));
     }
 
     @GetMapping("/reports/fleet/fuel")
     public ResponseEntity<ApiResponse<FuelReport>> getFuelReport(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             @RequestParam(required = false) String currency,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
         FuelReport report = operatingCostCalculator.calculateFuelMetrics(from, to, currency);
         return ResponseEntity.ok(ApiResponse.success(report, request));
     }
 
     @GetMapping("/reports/fleet/maintenance")
     public ResponseEntity<ApiResponse<MaintenanceSummaryReport>> getMaintenanceReport(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             @RequestParam(required = false) UUID truckId,
             @RequestParam(required = false) String currency,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
         MaintenanceSummaryReport report = operatingCostCalculator.calculateMaintenance(from, to, truckId, currency);
         return ResponseEntity.ok(ApiResponse.success(report, request));
     }
 
     @GetMapping("/reports/costs/known-operating-cpm")
     public ResponseEntity<ApiResponse<KnownOperatingCpmReport>> getKnownOperatingCpm(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
             @RequestParam(required = false) String currency,
             HttpServletRequest request
     ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
         KnownOperatingCpmReport report = operatingCostCalculator.calculateKnownOperatingCpm(from, to, currency);
         return ResponseEntity.ok(ApiResponse.success(report, request));
     }
@@ -223,5 +233,20 @@ public class ReportController {
     @GetMapping("/reports/profitability/by-truck")
     public ResponseEntity<ApiResponse<java.util.List<com.company.logicstic.dto.profitability.TruckProfitabilityReport>>> profitabilityByTruck(HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(profitabilityService.getTruckProfitabilityReports(), request));
+    }
+
+    @GetMapping("/reports/drivers/ranking")
+    public ResponseEntity<ApiResponse<DriverRankingReport>> getDriverRanking(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
+            @RequestParam(required = false) String currency,
+            @RequestParam(required = false, defaultValue = "score") String sortBy,
+            @RequestParam(required = false, defaultValue = "10") Integer limit,
+            HttpServletRequest request
+    ) {
+        com.company.logicstic.common.ReportPeriodValidation.validateDateRange(from, to);
+        int clampedLimit = limit != null ? Math.min(50, Math.max(1, limit)) : 10;
+        DriverRankingReport report = driverRankingService.getRanking(from, to, currency, sortBy, clampedLimit);
+        return ResponseEntity.ok(ApiResponse.success(report, request));
     }
 }

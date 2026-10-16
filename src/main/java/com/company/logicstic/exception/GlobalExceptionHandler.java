@@ -99,6 +99,19 @@ public class GlobalExceptionHandler {
         }
         return result;
     }
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
+        String name = exception.getName();
+        Object value = exception.getValue();
+        String expectedType = exception.getRequiredType() != null ? exception.getRequiredType().getSimpleName() : "unknown";
+        String message = String.format("Request parameter '%s' with value '%s' is invalid; expected type '%s'", name, value, expectedType);
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("parameter", name);
+        params.put("value", value != null ? value.toString() : null);
+        params.put("expectedType", expectedType);
+        ApiError error = new ApiError(name, "TYPE_MISMATCH", message, params);
+        return failure(400, "MALFORMED_REQUEST", message, List.of(error), Map.of(), new HttpHeaders(), exception, request);
+    }
     @ExceptionHandler(TypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(TypeMismatchException exception, HttpServletRequest request) {
         if (exception instanceof org.springframework.beans.ConversionNotSupportedException) return internal(exception, request);
@@ -148,6 +161,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpectedException(Exception exception, HttpServletRequest request) {
+        log.error("Unhandled exception for {} {}: {}", request.getMethod(), request.getRequestURI(), exception.getMessage(), exception);
         if (exception instanceof org.springframework.dao.DataAccessException || DatabaseFailures.hasSqlCause(exception))
             return handleDatabaseFailure(exception, request);
         // ErrorResponse carries the actual HTTP status and protocol headers for built-in Spring faults.

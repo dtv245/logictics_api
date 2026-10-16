@@ -41,6 +41,6 @@ public class OnTimeCalculator {
     }
 
     static boolean within(OffsetDateTime value, OffsetDateTime from, OffsetDateTime to) {
-        return (from == null || !value.isBefore(from)) && (to == null || !value.isAfter(to));
+        return (from == null || !value.isBefore(from)) && (to == null || value.isBefore(to));
     }
 }

@@ -2,7 +2,10 @@ package com.company.logicstic.service.calculation;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +26,11 @@ import com.company.logicstic.entity.Trip;
 import com.company.logicstic.repository.ExpenseRepository;
 import com.company.logicstic.repository.MaintenanceRecordRepository;
 import com.company.logicstic.repository.TripRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 public class OperatingCostCalculator {
 
     private final ExpenseRepository expenseRepository;
@@ -36,6 +38,32 @@ public class OperatingCostCalculator {
     private final ExpenseReportService expenseReportService;
     private final MaintenanceReportService maintenanceReportService;
     private final FinancialRoundingPolicy rounding;
+    private final ZoneId appZoneId;
+
+    @Autowired
+    public OperatingCostCalculator(ExpenseRepository expenseRepository, TripRepository tripRepository,
+                                  ExpenseReportService expenseReportService, MaintenanceReportService maintenanceReportService,
+                                  FinancialRoundingPolicy rounding, ZoneId appZoneId) {
+        this.expenseRepository = expenseRepository;
+        this.tripRepository = tripRepository;
+        this.expenseReportService = expenseReportService;
+        this.maintenanceReportService = maintenanceReportService;
+        this.rounding = rounding;
+        this.appZoneId = appZoneId != null ? appZoneId : ZoneOffset.UTC;
+    }
+
+    public OperatingCostCalculator(ExpenseRepository expenseRepository, TripRepository tripRepository,
+                                  ExpenseReportService expenseReportService, MaintenanceReportService maintenanceReportService,
+                                  FinancialRoundingPolicy rounding) {
+        this(expenseRepository, tripRepository, expenseReportService, maintenanceReportService, rounding, ZoneOffset.UTC);
+    }
+
+    @Transactional(readOnly = true)
+    public ExpenseSummaryReport calculateApprovedExpenses(LocalDate from, LocalDate to, String reportCurrency) {
+        OffsetDateTime start = from != null ? from.atStartOfDay(appZoneId).toOffsetDateTime() : null;
+        OffsetDateTime endExclusive = to != null ? to.plusDays(1).atStartOfDay(appZoneId).toOffsetDateTime() : null;
+        return calculateApprovedExpenses(start, endExclusive, reportCurrency);
+    }
 
     @Transactional(readOnly = true)
     public ExpenseSummaryReport calculateApprovedExpenses(OffsetDateTime from, OffsetDateTime to, String reportCurrency) {
@@ -43,7 +71,13 @@ public class OperatingCostCalculator {
     }
 
     @Transactional(readOnly = true)
-    public FuelReport calculateFuelMetrics(OffsetDateTime from, OffsetDateTime to, String reportCurrency) {
+    public FuelReport calculateFuelMetrics(LocalDate from, LocalDate to, String reportCurrency) {
+        OffsetDateTime start = from != null ? from.atStartOfDay(appZoneId).toOffsetDateTime() : null;
+        OffsetDateTime endExclusive = to != null ? to.plusDays(1).atStartOfDay(appZoneId).toOffsetDateTime() : null;
+        return calculateFuelMetrics(start, endExclusive, reportCurrency);
+    }
+
+    private FuelReport calculateFuelMetrics(OffsetDateTime from, OffsetDateTime to, String reportCurrency) {
         String currency = CurrencyGuard.normalize(reportCurrency != null ? reportCurrency : "USD");
         List<Expense> fuelExpenses = expenseRepository.findApprovedExpenses("FUEL", from, to);
 
@@ -95,12 +129,25 @@ public class OperatingCostCalculator {
     }
 
     @Transactional(readOnly = true)
+    public MaintenanceSummaryReport calculateMaintenance(LocalDate from, LocalDate to, UUID truckId, String reportCurrency) {
+        OffsetDateTime start = from != null ? from.atStartOfDay(appZoneId).toOffsetDateTime() : null;
+        OffsetDateTime endExclusive = to != null ? to.plusDays(1).atStartOfDay(appZoneId).toOffsetDateTime() : null;
+        return calculateMaintenance(start, endExclusive, truckId, reportCurrency);
+    }
+
+    @Transactional(readOnly = true)
     public MaintenanceSummaryReport calculateMaintenance(OffsetDateTime from, OffsetDateTime to, UUID truckId, String reportCurrency) {
         return maintenanceReportService.calculate(from, to, truckId, reportCurrency);
     }
 
     @Transactional(readOnly = true)
-    public KnownOperatingCpmReport calculateKnownOperatingCpm(OffsetDateTime from, OffsetDateTime to, String reportCurrency) {
+    public KnownOperatingCpmReport calculateKnownOperatingCpm(LocalDate from, LocalDate to, String reportCurrency) {
+        OffsetDateTime start = from != null ? from.atStartOfDay(appZoneId).toOffsetDateTime() : null;
+        OffsetDateTime endExclusive = to != null ? to.plusDays(1).atStartOfDay(appZoneId).toOffsetDateTime() : null;
+        return calculateKnownOperatingCpm(start, endExclusive, reportCurrency);
+    }
+
+    private KnownOperatingCpmReport calculateKnownOperatingCpm(OffsetDateTime from, OffsetDateTime to, String reportCurrency) {
         String currency = CurrencyGuard.normalize(reportCurrency != null ? reportCurrency : "USD");
 
         ExpenseSummaryReport expenses = expenseReportService.calculateOperatingCost(from, to, currency);
@@ -152,7 +199,7 @@ public class OperatingCostCalculator {
             if (from != null && trip.getDispatchedAt().isBefore(from)) {
                 continue;
             }
-            if (to != null && trip.getDispatchedAt().isAfter(to)) {
+            if (to != null && !trip.getDispatchedAt().isBefore(to)) {
                 continue;
             }
             eligibleCount++;

@@ -1,6 +1,10 @@
 spring:
   application:
     name: logicstic
+  mvc:
+    format:
+      date: iso
+      date-time: iso
   config:
     import: optional:file:.env[.properties]
   profiles:
@@ -26,6 +30,7 @@ server:
   port: ${SERVER_PORT:8080}
 
 app:
+  timezone: ${APP_TIMEZONE:UTC}
   security:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
   optimization:
