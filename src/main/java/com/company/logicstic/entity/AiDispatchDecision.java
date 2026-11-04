@@ -37,6 +37,9 @@ public class AiDispatchDecision {
     @JoinColumn(name = "session_id", nullable = false)
     private AiDispatchSession session;
 
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+
     @Column(name = "\"type\"", nullable = false, columnDefinition = "text")
     private String type;
 

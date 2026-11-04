@@ -37,6 +37,9 @@ public class AiDispatchSession extends BaseAuditableEntity {
     @Column(name = "status", nullable = false, columnDefinition = "text")
     private String status;
 
+    @Column(name = "tenant_id", length = 100)
+    private String tenantId;
+
     @Column(name = "triggered_by_user_id")
     private UUID triggeredByUserId;
 
