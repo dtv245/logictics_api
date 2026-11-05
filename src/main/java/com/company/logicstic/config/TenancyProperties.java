@@ -20,6 +20,8 @@ public class TenancyProperties {
 
     private Migration migration = new Migration();
 
+    private ControlMigration controlMigration = new ControlMigration();
+
     private Provisioning provisioning = new Provisioning();
 
     @Getter
@@ -47,6 +49,13 @@ public class TenancyProperties {
     @Setter
     public static class Migration {
         private List<String> locations = new ArrayList<>(List.of("classpath:db/migration/tenant"));
+    }
+
+    @Getter
+    @Setter
+    public static class ControlMigration {
+        /** Control migrations require an explicit operator opt-in. */
+        private boolean executionEnabled;
     }
 
     @Getter

@@ -6,16 +6,30 @@ import java.util.Optional;
 import com.company.logicstic.config.TenancyProperties;
 import com.company.logicstic.dto.TenantRegistryRecord;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "app.tenancy", name = "enabled", havingValue = "true")
+@Transactional(transactionManager = "controlTransactionManager", readOnly = true)
 public class TenantRegistryService {
+
+    private final JdbcTemplate tenantRegistryJdbcTemplate;
+    private final TenancyProperties properties;
+    private final TenantCredentialCipher credentialCipher;
+
+    public TenantRegistryService(
+            @Qualifier("tenantRegistryJdbcTemplate") JdbcTemplate tenantRegistryJdbcTemplate,
+            TenancyProperties properties,
+            TenantCredentialCipher credentialCipher) {
+        this.tenantRegistryJdbcTemplate = tenantRegistryJdbcTemplate;
+        this.properties = properties;
+        this.credentialCipher = credentialCipher;
+    }
 
     private static final RowMapper<TenantRegistryRecord> TENANT_ROW_MAPPER = (rs, rowNum) -> new TenantRegistryRecord(
             rs.getString("tenant_id"),
@@ -24,12 +38,12 @@ public class TenantRegistryService {
             rs.getString("db_password"),
             rs.getString("status"));
 
-    private final JdbcTemplate tenantRegistryJdbcTemplate;
-    private final TenancyProperties properties;
-    private final TenantCredentialCipher credentialCipher;
-
     @PostConstruct
     void initializeRegistrySchema() {
+        if (properties.getControlMigration().isExecutionEnabled() && properties.getRegistry().isAutoInitialize()) {
+            throw new IllegalStateException(
+                    "Disable app.tenancy.registry.auto-initialize when Control Flyway execution is enabled");
+        }
         if (!properties.getRegistry().isAutoInitialize()) {
             return;
         }
@@ -62,6 +76,7 @@ public class TenantRegistryService {
                 """, TENANT_ROW_MAPPER);
     }
 
+    @Transactional(transactionManager = "controlTransactionManager")
     public void registerActiveTenant(String tenantId, String dbUrl, String dbUsername, String plaintextDbPassword) {
         tenantRegistryJdbcTemplate.update("""
                 INSERT INTO tenant_registry (tenant_id, db_url, db_username, db_password, status)
