@@ -38,6 +38,9 @@ public class InvoiceController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) UUID customerId,
+            @RequestParam(required = false) String invoicePurpose,
+            @RequestParam(required = false) UUID billingChainId,
+            @RequestParam(required = false) UUID ratingSnapshotId,
             @RequestParam(required = false) UUID employeeId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int pageSize,
@@ -45,7 +48,9 @@ public class InvoiceController {
             @RequestParam(defaultValue = "true") boolean descending,
             HttpServletRequest request
     ) {
-        PagedResponse<InvoiceView> data = invoiceService.search(status, type, customerId, employeeId, page, pageSize, orderBy, descending);
+        PagedResponse<InvoiceView> data = invoiceService.search(status, type, customerId,
+                invoicePurpose, billingChainId, ratingSnapshotId, employeeId,
+                page, pageSize, orderBy, descending);
         return ResponseEntity.ok(ApiResponse.success(data, request));
     }
 

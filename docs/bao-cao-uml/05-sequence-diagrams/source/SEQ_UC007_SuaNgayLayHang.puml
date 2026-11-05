@@ -1,0 +1,36 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 3.9 — UC007 Sửa ngày nghiệp vụ — UI ĐANG BỊ TẮT
+actor "Người gọi được cấp quyền" as U
+control "LoadPickupBusinessDateController" as C
+control "LoadPickupBusinessDateService" as S
+participant "EmployeeRepository" as E
+participant "LoadRepository" as R
+database "PostgreSQL" as D
+U -> C : POST /api/loads/{id}/requested-pickup-business-date
+C -> S : remediate(id, body)
+S -> S : Kiểm tra ngày và provenance
+S -> E : findByEmail(actor)
+E -> D : Tìm nhân viên
+S -> R : findByIdForUpdate(id)
+R -> D : Khóa và tìm Load
+alt Không hợp lệ / không có quyền / không tìm thấy
+ S --> C : Lỗi
+ C --> U : Phản hồi lỗi
+else expectedChangeId không khớp
+ S --> C : LOAD_PICKUP_DATE_CONFLICT (409)
+ C --> U : Lỗi xung đột
+else Hợp lệ
+ S -> S : capture(load, date, provenance)
+ opt Ngày thay đổi
+  S -> D : JdbcTemplate cập nhật lịch sử ngày
+ end
+ S -> R : saveAndFlush(load)
+ R -> D : Lưu Load
+ S --> C : LoadView.from(...)
+ C --> U : 200 ApiResponse
+end
+note over U,C : Form có mã nhưng cờ runtimeVerified mặc định false.
+@enduml

@@ -1,0 +1,34 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 3.7 — UC005 Tra cứu danh sách Load
+actor "Người dùng" as U
+boundary "DispatchPage" as F
+control "useTmsLoads / fetchAllLoads" as A
+control "LoadController" as C
+control "LoadService" as S
+participant "LoadRepository" as R
+database "PostgreSQL" as D
+U -> F : Mở điều phối
+F -> A : useTmsWorkspace() / useTmsLoads()
+loop Mỗi trang, đến hết hoặc giới hạn
+ A -> C : GET /api/loads?page=&pageSize=100
+ C -> S : search(...)
+ S -> S : Kiểm tra sort và phân trang
+ S -> R : search(..., pageable)
+ R -> D : Truy vấn Load
+ D --> R : Trang Load
+ S --> C : PagedResponse<LoadView>
+ C --> A : ApiResponse
+end
+alt Tải thành công
+ A --> F : collection, shipments
+ U -> F : Nhập từ khóa / chọn bộ lọc
+ F -> F : selectTmsQueue(...) lọc tập đã tải
+ F --> U : Hàng đợi; cảnh báo nếu bị cắt
+else Lỗi tải
+ A --> F : Lỗi
+ F --> U : Thông báo và nút thử lại
+end
+@enduml

@@ -64,6 +64,7 @@ class TripExecutionServiceTest {
         trip.setId(tripId);
 
         driver = new Employee();
+        driver.setEmployeeType(com.company.logicstic.entity.EmployeeType.DRIVER);
         driver.setId(driverId);
         driver.setFirstName("John");
         driver.setLastName("Doe");
@@ -97,6 +98,22 @@ class TripExecutionServiceTest {
         assertEquals(BigDecimal.valueOf(450.50), view.plannedMiles());
         assertTrue(view.isActive());
         assertNull(view.effectiveTo());
+    }
+
+
+    @Test
+    @DisplayName("does not assign an office staff employee to a trip")
+    void officeStaffCannotBeAssignedAsDriver() {
+        Employee officeStaff = new Employee();
+        officeStaff.setId(driverId);
+        when(tripRepository.findById(tripId)).thenReturn(Optional.of(trip));
+        when(employeeRepository.findById(driverId)).thenReturn(Optional.of(officeStaff));
+        AssignDriverRequest request = new AssignDriverRequest(
+                driverId, "PRIMARY", OffsetDateTime.now(), BigDecimal.ONE);
+
+        assertThrows(com.company.logicstic.exception.ResourceNotFoundException.class,
+                () -> tripExecutionService.assignDriver(tripId, request));
+        org.mockito.Mockito.verify(assignmentRepository, org.mockito.Mockito.never()).save(any());
     }
 
     @Test

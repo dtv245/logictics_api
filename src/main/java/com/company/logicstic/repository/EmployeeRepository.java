@@ -1,6 +1,7 @@
 package com.company.logicstic.repository;
 
 import com.company.logicstic.entity.Employee;
+import com.company.logicstic.entity.EmployeeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,6 +27,25 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     java.util.List<Employee> findAllByEmailForLarkLogin(@Param("email") String email);
 
     boolean existsByEmail(String email);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "role")
+    @Query("""
+            SELECT e FROM Employee e
+            WHERE (:search IS NULL OR :search = ''
+                   OR LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(e.email) LIKE LOWER(CONCAT('%', :search, '%')))
+              AND (:status IS NULL OR e.status = :status)
+              AND e.employeeType = :employeeType
+            """)
+    Page<Employee> searchByEmployeeType(
+            @Param("search") String search,
+            @Param("status") String status,
+            @Param("employeeType") EmployeeType employeeType,
+            Pageable pageable
+    );
+
+    java.util.List<Employee> findAllByEmployeeType(EmployeeType employeeType);
 
     @Query("""
             SELECT e FROM Employee e

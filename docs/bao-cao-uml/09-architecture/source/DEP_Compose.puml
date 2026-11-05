@@ -1,0 +1,27 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 3.12 — Triển khai cục bộ theo Docker Compose
+node "Máy chạy Docker Compose" {
+ node "api :8080" as API {
+  artifact "logisticsx-api:local" as jar
+ }
+ node "postgres :5432" as PG {
+  database "PostgreSQL 16" as db
+ }
+ node "redis :6379" as RD {
+  database "Redis 7" as redis
+ }
+ folder "pgdata" as pv
+ folder "redisdata" as rv
+}
+API --> PG : JDBC
+API ..> RD : cấu hình host/port
+PG -- pv
+RD -- rv
+note bottom
+Compose ánh xạ cổng máy chủ 8080, 5433 và 6379.
+Không mô tả frontend hay môi trường production.
+end note
+@enduml

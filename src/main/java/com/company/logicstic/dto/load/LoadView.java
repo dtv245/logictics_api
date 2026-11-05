@@ -15,6 +15,8 @@ public record LoadView(
         String type,
         String status,
         Double distance,
+        Double weightLbs,
+        Double volumeCuft,
         Boolean isInProximity,
         OffsetDateTime dispatchedAt,
         OffsetDateTime pickedUpAt,
@@ -59,7 +61,7 @@ public record LoadView(
                 ? l.getAssignedDispatcher().getFirstName() + " " + l.getAssignedDispatcher().getLastName() : null;
         return new LoadView(
                 l.getId(), l.getVersion(), l.getNumber(), l.getName(), l.getType(), l.getStatus(),
-                l.getDistance(), l.getIsInProximity(),
+                l.getDistance(), l.getWeightLbs(), l.getVolumeCuft(), l.getIsInProximity(),
                 l.getDispatchedAt(), l.getPickedUpAt(), l.getDeliveredAt(), l.getCancelledAt(),
                 l.getCustomer() != null ? l.getCustomer().getId() : null,
                 l.getCustomer() != null ? l.getCustomer().getName() : null,

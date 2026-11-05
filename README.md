@@ -315,6 +315,7 @@ java -jar target/logicstic-1.0.0.jar
 
 | File | Nội dung |
 |---|---|
+| [`docs/nghiep-vu-logisticsx.vi.md`](docs/nghiep-vu-logisticsx.vi.md) | Giải thích nghiệp vụ bằng tiếng Việt: vận hành, cước, hóa đơn, chi phí, lương, lợi nhuận và giới hạn hiện tại |
 | [`docs/entity-relationships.md`](docs/entity-relationships.md) | Quan hệ JPA entities, LAZY fetch, schema mapping |
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records (tenant, migration) |
 | [`docs/cost-ledger-contracts.md`](docs/cost-ledger-contracts.md) | API contracts cho shipment cost ledger |

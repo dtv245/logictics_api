@@ -15,16 +15,23 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
     @Query("select i from Invoice i where i.id=:id")
     java.util.Optional<Invoice> findByIdForUpdate(@Param("id") UUID id);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"load", "customer", "employee"})
     @Query("""
             SELECT i FROM Invoice i
             WHERE (:status IS NULL OR i.status = :status)
               AND (:type IS NULL OR i.type = :type)
               AND (:customerId IS NULL OR i.customer.id = :customerId)
+              AND (:invoicePurpose IS NULL OR i.invoicePurpose = :invoicePurpose)
+              AND (:billingChainId IS NULL OR i.billingChainId = :billingChainId)
+              AND (:ratingSnapshotId IS NULL OR i.ratingSnapshotId = :ratingSnapshotId)
             """)
     Page<Invoice> search(
             @Param("status") String status,
             @Param("type") String type,
             @Param("customerId") UUID customerId,
+            @Param("invoicePurpose") String invoicePurpose,
+            @Param("billingChainId") UUID billingChainId,
+            @Param("ratingSnapshotId") UUID ratingSnapshotId,
             Pageable pageable
     );
 

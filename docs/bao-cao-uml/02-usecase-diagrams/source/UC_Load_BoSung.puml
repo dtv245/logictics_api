@@ -1,0 +1,16 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+left to right direction
+title Hình 2.6 — Bổ sung Load (UC006–UC007 cần xác minh UI)
+actor "Người dùng có quyền" as U
+rectangle "Hệ thống Logistics" {
+ usecase "UC005\nTra cứu danh sách Load" as A
+ usecase "UC006\nXóa Load\n(cần xác minh UI)" as B
+ usecase "UC007\nSửa ngày lấy hàng nghiệp vụ\n(UI đang bị tắt)" as C
+}
+U -- A
+U -- B
+U -- C
+@enduml

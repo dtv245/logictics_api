@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -47,6 +51,7 @@ public class LarkAuthService {
   private final byte[] secretKeyBytes;
   private final SecretKey jwtSecretKey;
   private final ObjectProvider<TenantDataSourceService> tenantDataSources;
+  private final ConcurrentMap<String, Long> consumedStates = new ConcurrentHashMap<>();
 
   public LarkAuthService(
       LarkProperties properties,
@@ -94,9 +99,11 @@ public class LarkAuthService {
   }
 
   public String createState(String returnTo) {
+    long now = System.currentTimeMillis();
+    discardExpiredStates(now);
     String nonce = UUID.randomUUID().toString();
-    long timestamp = System.currentTimeMillis();
-    String safeReturnTo = StringUtils.hasText(returnTo) ? returnTo.trim() : "";
+    long timestamp = now;
+    String safeReturnTo = validateReturnTo(returnTo);
     String encodedReturnTo =
         Base64.getUrlEncoder()
             .withoutPadding()
@@ -112,6 +119,10 @@ public class LarkAuthService {
   }
 
   public String validateState(String state) {
+    return validateStateAt(state, System.currentTimeMillis());
+  }
+
+  String validateStateAt(String state, long nowMillis) {
     if (!StringUtils.hasText(state)) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "Missing state parameter");
     }
@@ -137,13 +148,18 @@ public class LarkAuthService {
         throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "Invalid state signature");
       }
 
-      long elapsed = System.currentTimeMillis() - timestamp;
+      long elapsed = nowMillis - timestamp;
       if (elapsed < 0 || elapsed > properties.stateTtl().toMillis()) {
         throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "State parameter has expired");
       }
 
       byte[] decodedBytes = Base64.getUrlDecoder().decode(encodedReturnTo);
-      return new String(decodedBytes, StandardCharsets.UTF_8);
+      String validatedReturnTo = validateReturnTo(new String(decodedBytes, StandardCharsets.UTF_8));
+      discardExpiredStates(nowMillis);
+      if (consumedStates.putIfAbsent(nonce, timestamp + properties.stateTtl().toMillis()) != null) {
+        throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "State parameter has already been used");
+      }
+      return validatedReturnTo;
     } catch (ApiException ex) {
       throw ex;
     } catch (Exception ex) {
@@ -153,7 +169,7 @@ public class LarkAuthService {
   }
 
   public String getAuthorizeUrl(String returnTo) {
-    String state = createState(returnTo);
+    String state = createState(validateReturnTo(returnTo));
     return authClient.buildAuthorizeUrl(state, properties.redirectUri());
   }
 
@@ -164,13 +180,12 @@ public class LarkAuthService {
       String errorDescription,
       String requestedReturnTo) {
     requireEnabled();
+    String validatedReturnTo = validateState(state);
     if (StringUtils.hasText(error)) {
       String desc = StringUtils.hasText(errorDescription) ? ": " + errorDescription : "";
       throw new ApiException(
           HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Lark login cancelled or rejected (" + error + desc + ")");
     }
-
-    String validatedReturnTo = validateState(state);
 
     if (!StringUtils.hasText(code)) {
       throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "Authorization code is required");
@@ -203,9 +218,9 @@ public class LarkAuthService {
 
     String internalJwt = createInternalToken(subject, resolvedEmail, tenantId, List.of(roleName), displayName, employee.getId());
 
-    String finalReturnTo = StringUtils.hasText(validatedReturnTo)
-        ? validatedReturnTo
-        : (StringUtils.hasText(requestedReturnTo) ? requestedReturnTo : "/");
+    // Redirect destinations are part of the signed state. Never trust a
+    // separately supplied callback value to override that destination.
+    String finalReturnTo = StringUtils.hasText(validatedReturnTo) ? validatedReturnTo : "/";
 
     return new LarkLoginResult(
         internalJwt,
@@ -418,6 +433,35 @@ public class LarkAuthService {
       return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
     } catch (Exception ex) {
       throw new IllegalStateException("Failed to compute HMAC", ex);
+    }
+  }
+
+  private void discardExpiredStates(long nowMillis) {
+    consumedStates.entrySet().removeIf(entry -> entry.getValue() < nowMillis);
+  }
+
+  private String validateReturnTo(String returnTo) {
+    if (!StringUtils.hasText(returnTo)) return "/";
+    String candidate = returnTo.trim();
+    try {
+      if (!candidate.startsWith("/") || candidate.startsWith("//") || candidate.contains("\\")) {
+        throw new IllegalArgumentException("Not a local path");
+      }
+      URI uri = URI.create(candidate);
+      if (uri.isAbsolute() || uri.getRawAuthority() != null || uri.getRawPath() == null
+          || !uri.getRawPath().startsWith("/")) {
+        throw new IllegalArgumentException("Not a local path");
+      }
+      String decodedPath = uri.getRawPath();
+      for (int pass = 0; pass < 3; pass++) {
+        decodedPath = URLDecoder.decode(decodedPath.replace("+", "%2B"), StandardCharsets.UTF_8);
+        if (decodedPath.contains("\\") || decodedPath.startsWith("//")) {
+          throw new IllegalArgumentException("Not a local path");
+        }
+      }
+      return candidate;
+    } catch (RuntimeException ex) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "returnTo must be a local application path");
     }
   }
 

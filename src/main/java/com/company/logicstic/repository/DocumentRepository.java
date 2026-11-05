@@ -8,9 +8,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.UUID;
+import java.util.Optional;
 
 public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
+    Optional<Document> findByIdAndEmployee_Id(UUID id, UUID employeeId);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"uploadedBy", "load", "truck", "employee"})
     @Query("""
             SELECT d FROM Document d
             WHERE (:type IS NULL OR d.type = :type)

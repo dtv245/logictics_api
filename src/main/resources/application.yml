@@ -20,6 +20,7 @@ spring:
     open-in-view: false
     properties:
       hibernate:
+        default_batch_fetch_size: 32
         jdbc:
           time_zone: UTC
   flyway:
@@ -33,6 +34,29 @@ app:
   timezone: ${APP_TIMEZONE:UTC}
   security:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+  driver-profile:
+    expiry-warning-days: ${DRIVER_PROFILE_EXPIRY_WARNING_DAYS:30}
+    time-zone: ${DRIVER_PROFILE_TIME_ZONE:Asia/Ho_Chi_Minh}
+    expiry-scan:
+      enabled: ${DRIVER_PROFILE_EXPIRY_SCAN_ENABLED:true}
+    expiry-scan-cron: ${DRIVER_PROFILE_EXPIRY_SCAN_CRON:0 0 8 * * *}
+    pii:
+      active-key-id: ${DRIVER_PII_ACTIVE_KEY_ID:}
+      encryption-keys: ${DRIVER_PII_ENCRYPTION_KEYS:}
+      index-key: ${DRIVER_PII_INDEX_KEY:}
+  ai:
+    gap-enabled: ${AI_GAP_ENABLED:true}
+    dispatch-enabled: ${AI_DISPATCH_ENABLED:true}
+    dry-run: ${AI_DRY_RUN:false}
+    debounce-seconds: ${AI_DEBOUNCE_SECONDS:30}
+    cooldown-minutes: ${AI_COOLDOWN_MINUTES:5}
+    max-asks: ${AI_MAX_ASKS:3}
+    default-provider: ${AI_LLM_PROVIDER:Anthropic}
+    active-model: ${AI_LLM_MODEL:claude-haiku-4-5}
+    api-key: ${AI_LLM_API_KEY:}
+    base-url: ${AI_LLM_BASE_URL:}
+    max-tokens: ${AI_MAX_TOKENS:4096}
+    timeout-seconds: ${AI_TIMEOUT_SECONDS:15}
   optimization:
     single-tenant-scope: ${OPT_SINGLE_TENANT_SCOPE:}
     providers:
@@ -56,6 +80,8 @@ app:
       password: ${TENANT_REGISTRY_DB_PASSWORD:}
       encryption-key: ${TENANT_REGISTRY_ENCRYPTION_KEY:}
       auto-initialize: ${TENANT_REGISTRY_AUTO_INITIALIZE:true}
+    control-migration:
+      execution-enabled: ${CONTROL_FLYWAY_EXECUTION_ENABLED:false}
     pool:
       max-tenant-pools: ${TENANT_MAX_POOLS:100}
       maximum-pool-size: ${TENANT_POOL_MAX_SIZE:10}
@@ -79,8 +105,27 @@ app:
     jwt-ttl: ${LARK_JWT_TTL:8h}
     state-ttl: ${LARK_STATE_TTL:15m}
     default-tenant-id: ${LARK_DEFAULT_TENANT_ID:local-development}
+    verification-token: ${LARK_EVENT_VERIFICATION_TOKEN:}
+    encrypt-key: ${LARK_EVENT_ENCRYPT_KEY:}
+    events:
+      signature-max-age: ${LARK_EVENT_SIGNATURE_MAX_AGE:8h}
+      future-clock-skew: ${LARK_EVENT_FUTURE_CLOCK_SKEW:5m}
+      lease-duration: ${LARK_EVENT_LEASE_DURATION:2m}
+      poll-interval: ${LARK_EVENT_POLL_INTERVAL:1s}
+      initial-retry-delay: ${LARK_EVENT_INITIAL_RETRY_DELAY:5s}
+      max-retry-delay: ${LARK_EVENT_MAX_RETRY_DELAY:10m}
+      dead-retention: ${LARK_EVENT_DEAD_RETENTION:7d}
+      max-attempts: ${LARK_EVENT_MAX_ATTEMPTS:10}
+      batch-size: ${LARK_EVENT_BATCH_SIZE:16}
+      cleanup-batch-size: ${LARK_EVENT_CLEANUP_BATCH_SIZE:100}
     base:
       enabled: ${LARK_BASE_ENABLED:true}
       app-token: ${LARK_BASE_APP_TOKEN:}
       loads-table-id: ${LARK_BASE_LOADS_TABLE_ID:}
       drivers-table-id: ${LARK_BASE_DRIVERS_TABLE_ID:}
+
+# AI dispatcher execution gate. Off by default: AI suggestions stay advisory
+# until an operator explicitly enables execution for the environment.
+ai:
+  dispatch:
+    approval-enabled: ${AI_DISPATCH_APPROVAL_ENABLED:false}

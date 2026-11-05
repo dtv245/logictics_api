@@ -2,6 +2,7 @@ package com.company.logicstic.dto.customer;
 
 import com.company.logicstic.entity.Customer;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record CustomerView(
@@ -18,14 +19,18 @@ public record CustomerView(
         String addressCity,
         String addressState,
         String addressZipCode,
-        String addressCountry
+        String addressCountry,
+        Integer paymentTermsDays,
+        String defaultCurrency,
+        OffsetDateTime createdAt
 ) {
     public static CustomerView from(Customer c) {
         return new CustomerView(
                 c.getId(), c.getName(), c.getEmail(), c.getPhone(),
                 c.getStatus(), c.getNotes(), c.getTaxId(), c.getIsVatExempt(),
                 c.getAddressLine1(), c.getAddressLine2(), c.getAddressCity(),
-                c.getAddressState(), c.getAddressZipCode(), c.getAddressCountry()
+                c.getAddressState(), c.getAddressZipCode(), c.getAddressCountry(),
+                c.getPaymentTermsDays(), c.getDefaultCurrency(), c.getCreatedAt()
         );
     }
 }

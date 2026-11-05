@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.company.logicstic.dto.ApiResponse;
+import com.company.logicstic.common.PaginationValidator;
 import com.company.logicstic.dto.accessorial.AccessorialChargeView;
 import com.company.logicstic.dto.accessorial.CreateAccessorialChargeRequest;
 import com.company.logicstic.dto.accessorial.DetentionCalculationRequest;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,10 +45,13 @@ public class AccessorialController {
     @GetMapping("/loads/{loadId}/accessorials")
     public ResponseEntity<ApiResponse<List<AccessorialChargeView>>> getAccessorials(
             @PathVariable UUID loadId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
             HttpServletRequest request
     ) {
-        List<AccessorialChargeView> data = accessorialService.getAccessorialsForLoad(loadId);
-        return ResponseEntity.ok(ApiResponse.success(data, request));
+        var pageable = PaginationValidator.pageRequest(page, pageSize, Sort.by("createdAt").descending());
+        var data = accessorialService.getAccessorialsForLoad(loadId, pageable);
+        return ResponseEntity.ok(ApiResponse.successPage(data, request));
     }
 
     @PostMapping("/trip-stops/{stopId}/calculate-detention")

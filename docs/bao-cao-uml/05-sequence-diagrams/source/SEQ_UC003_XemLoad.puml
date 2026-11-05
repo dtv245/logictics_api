@@ -1,0 +1,35 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 3.3 — UC003 Xem chi tiết Load
+actor "Người dùng" as U
+boundary "LoadShow" as F
+control "dataProvider" as P
+control "LoadController" as C
+control "LoadService" as S
+participant "LoadRepository" as R
+database "PostgreSQL" as DB
+U -> F : Mở chi tiết
+F -> P : useShow(loads, id)
+P -> C : GET /api/loads/{id}
+C -> S : getById(id)
+S -> R : findById(id)
+R -> DB : Truy vấn
+DB --> R : Load hoặc rỗng
+alt Có Load
+ S -> S : LoadMapper.toView(load)
+ S --> C : LoadView
+ C --> P : ApiResponse
+ P --> F : Dữ liệu
+ F --> U : Hiển thị chi tiết
+else Không tìm thấy hoặc yêu cầu lỗi
+ S --> C : ResourceNotFoundException
+ C --> P : Lỗi
+ P --> F : Lỗi
+ F --> U : Hiển thị lỗi; có nút thử lại
+end
+@enduml

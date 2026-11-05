@@ -47,9 +47,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/lark/authorize", "/api/auth/lark/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/lark/callback", "/api/payroll/provider-callbacks/{provider}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/lark/events").permitAll()
+
+                        // Lark Base sync: explicit operations roles; webhook remains provider-authenticated.
+                        .requestMatchers("/api/lark/base/**").hasAnyRole("ADMIN", "DISPATCHER")
 
                         // General authenticated user endpoints
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/me").authenticated()
+                        .requestMatchers("/api/driver/me/licenses", "/api/driver/me/health-checks", "/api/driver/me/certifications")
+                        .hasRole("DRIVER")
+                        .requestMatchers("/api/driver/me/profile", "/api/driver/me/emergency-contacts")
+                        .hasRole("DRIVER")
+                        .requestMatchers("/api/driver/me/contracts", "/api/driver/me/insurances")
+                        .hasRole("DRIVER")
+                        .requestMatchers("/api/driver/me/dependents", "/api/driver/me/bank-accounts")
+                        .hasRole("DRIVER")
+                        .requestMatchers("/api/driver/me/operational-status").hasRole("DRIVER")
                         .requestMatchers("/api/driver/me/payslips", "/api/payslips/**").authenticated()
                         .requestMatchers("/api/notifications/**").authenticated()
 
@@ -74,6 +87,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/optimization/**")
                         .hasAnyRole("ADMIN", "DISPATCHER")
 
+                        // AI dispatch and gap endpoints are internal operations tools.
+                        // Do not let them fall through to the authenticated-only default:
+                        // a customer-facing principal must never reach AI run/approve/reject.
+                        .requestMatchers("/api/ai/**")
+                        .hasAnyRole("ADMIN", "DISPATCHER")
+
                         // Billing & Invoices
                         .requestMatchers("/api/invoices/**")
                         .hasAnyRole("ADMIN", "ACCOUNTANT")
@@ -89,7 +108,7 @@ public class SecurityConfig {
                         .hasAnyRole("ADMIN", "ACCOUNTANT")
 
                         // Expenses & Accessorials
-                        .requestMatchers("/api/expenses/*/approve")
+                        .requestMatchers("/api/expenses/*/approve", "/api/expenses/*/reject")
                         .hasAnyRole("ADMIN", "ACCOUNTANT")
                         .requestMatchers("/api/accessorial-charges/*/approve")
                         .hasAnyRole("ADMIN", "ACCOUNTANT")
@@ -107,11 +126,23 @@ public class SecurityConfig {
                         // Payroll & Settlements
                         .requestMatchers("/api/driver-pay-policies/**", "/api/driver-settlements/**", "/api/pay-periods/**", "/api/payroll/**")
                         .hasAnyRole("ADMIN", "ACCOUNTANT", "PAYROLL", "PAYROLL_MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/loads/*/costs/*/verify",
+                                "/api/loads/*/costs/*/approve", "/api/loads/*/costs/*/void")
+                        .hasAnyRole("ADMIN", "ACCOUNTANT")
                         .requestMatchers("/api/loads/*/costs/**")
                         .hasAnyRole("ADMIN", "ACCOUNTANT", "PAYROLL", "PAYROLL_MANAGER")
 
                         // Core Operations Entities
                         .requestMatchers("/api/employees/**").hasAnyRole("ADMIN", "DISPATCHER")
+                        .requestMatchers(HttpMethod.GET, "/api/drivers/*/licenses/*/sensitive").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/drivers/*/profile/sensitive").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/drivers/*/insurances/*/sensitive").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/drivers/*/dependents/*/sensitive").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/drivers/*/bank-accounts/*/sensitive").hasRole("ADMIN")
+                        .requestMatchers("/api/drivers/*/contracts/**", "/api/drivers/*/insurances/**")
+                        .hasAnyRole("ADMIN", "PAYROLL", "PAYROLL_MANAGER")
+                        .requestMatchers("/api/drivers/*/dependents/**", "/api/drivers/*/bank-accounts/**")
+                        .hasAnyRole("ADMIN", "PAYROLL", "PAYROLL_MANAGER")
                         .requestMatchers("/api/drivers/**").hasAnyRole("ADMIN", "DISPATCHER")
                         .requestMatchers("/api/customers/**").hasAnyRole("ADMIN", "ACCOUNTANT", "DISPATCHER")
                         .requestMatchers("/api/trucks/**").hasAnyRole("ADMIN", "ACCOUNTANT", "DISPATCHER")

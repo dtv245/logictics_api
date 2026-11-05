@@ -1,0 +1,12 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+left to right direction
+title Hình 2.10 — UC008 Xem chứng từ của Load
+actor "Người dùng có quyền" as U
+rectangle "Hệ thống Logistics" {
+ usecase "UC008\nXem chứng từ của Load" as A
+}
+U -- A
+@enduml

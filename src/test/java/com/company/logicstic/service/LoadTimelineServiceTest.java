@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import com.company.logicstic.dto.load.LoadEventView;
 import com.company.logicstic.dto.load.LoadTimelineResponse;
 import com.company.logicstic.dto.load.RecordLoadEventRequest;
@@ -110,7 +114,8 @@ class LoadTimelineServiceTest {
         e2.setEventType("DISPATCHED");
         e2.setOccurredAt(OffsetDateTime.now().minusHours(1));
 
-        when(loadEventRepository.findByLoadIdOrderByOccurredAtAsc(loadId)).thenReturn(List.of(e1, e2));
+        when(loadEventRepository.findPageByLoadId(org.mockito.ArgumentMatchers.eq(loadId), any(Pageable.class)))
+                .thenAnswer(invocation -> new PageImpl<>(List.of(e1, e2), PageRequest.of(0, 100), 2));
 
         LoadTimelineResponse response = loadTimelineService.getTimeline(loadId);
 

@@ -10,6 +10,7 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -66,6 +67,9 @@ public class Document extends BaseAuditableEntity {
 
     @Column(name = "status", nullable = false, columnDefinition = "text DEFAULT 'active'")
     private String status;
+
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
 
     @Column(name = "description", length = 1000)
     private String description;

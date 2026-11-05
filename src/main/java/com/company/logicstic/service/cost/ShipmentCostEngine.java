@@ -16,6 +16,7 @@ import com.company.logicstic.dto.cost.ShipmentCostView;
 import com.company.logicstic.entity.Expense;
 import com.company.logicstic.entity.Load;
 import com.company.logicstic.entity.ShipmentCost;
+import com.company.logicstic.entity.Trip;
 import com.company.logicstic.entity.Truck;
 import com.company.logicstic.entity.Employee;
 import com.company.logicstic.exception.ResourceNotFoundException;
@@ -25,10 +26,13 @@ import com.company.logicstic.repository.EmployeeRepository;
 import com.company.logicstic.repository.LoadRepository;
 import com.company.logicstic.repository.ShipmentCostRepository;
 import com.company.logicstic.repository.TripRepository;
+import com.company.logicstic.repository.TripStopRepository;
 import com.company.logicstic.repository.TruckRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +41,7 @@ public class ShipmentCostEngine {
     private final ShipmentCostRepository shipmentCostRepository;
     private final LoadRepository loadRepository;
     private final TripRepository tripRepository;
+    private final TripStopRepository tripStopRepository;
     private final TruckRepository truckRepository;
     private final ExpenseRepository expenseRepository;
     private final EmployeeRepository employeeRepository;
@@ -47,12 +52,27 @@ public class ShipmentCostEngine {
         Load load = loadRepository.findById(loadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Load not found: " + loadId));
 
+        Trip trip = null;
+        if (req.tripId() != null) {
+            trip = tripRepository.findById(req.tripId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Trip not found: " + req.tripId()));
+            requireTripBelongsToLoad(loadId, trip);
+        }
+        Truck truck = null;
+        if (req.truckId() != null) {
+            truck = truckRepository.findById(req.truckId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Truck not found: " + req.truckId()));
+        }
+        if (trip != null && truck != null && trip.getTruck() != null
+                && !truck.getId().equals(trip.getTruck().getId())) {
+            throw new BadRequestException("SHIPMENT_COST_ATTRIBUTION_INVALID",
+                    "Cost truck " + truck.getId() + " does not match trip truck " + trip.getTruck().getId());
+        }
+
         ShipmentCost cost = new ShipmentCost();
         cost.setLoad(load);
-        if (req.tripId() != null) cost.setTrip(tripRepository.findById(req.tripId())
-                .orElseThrow(() -> new ResourceNotFoundException("Trip not found: " + req.tripId())));
-        if (req.truckId() != null) cost.setTruck(truckRepository.findById(req.truckId())
-                .orElseThrow(() -> new ResourceNotFoundException("Truck not found: " + req.truckId())));
+        cost.setTrip(trip);
+        cost.setTruck(truck);
         if (req.driverId() != null) cost.setDriver(employeeRepository.findById(req.driverId())
                 .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + req.driverId())));
         cost.setCategory(requireEnum(ShipmentCostCategory.class, req.category(), "category"));
@@ -87,6 +107,79 @@ public class ShipmentCostEngine {
         return toView(saved);
     }
 
+    /** DRAFT -> VERIFIED. Repeating the command on a VERIFIED cost is a no-op that preserves its audit. */
+    @Transactional
+    public ShipmentCostView verifyCost(UUID loadId, UUID costId, UUID actorId) {
+        ShipmentCost cost = requireCostForUpdate(loadId, costId);
+        if (ShipmentCostStatus.VERIFIED.name().equals(cost.getStatus())) {
+            return toView(cost);
+        }
+        if (!ShipmentCostStatus.DRAFT.name().equals(cost.getStatus())) {
+            throw new BadRequestException("SHIPMENT_COST_STATE_INVALID",
+                    "Only DRAFT costs can be verified; current status is " + cost.getStatus());
+        }
+        cost.setStatus(ShipmentCostStatus.VERIFIED.name());
+        cost.setVerifiedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        cost.setVerifiedBy(actorId);
+        return toView(shipmentCostRepository.save(cost));
+    }
+
+    /** VERIFIED -> APPROVED. Approval is what makes an ACTUAL cost contribute to profitability. */
+    @Transactional
+    public ShipmentCostView approveCost(UUID loadId, UUID costId, UUID actorId) {
+        ShipmentCost cost = requireCostForUpdate(loadId, costId);
+        if (ShipmentCostStatus.APPROVED.name().equals(cost.getStatus())) {
+            return toView(cost);
+        }
+        if (!ShipmentCostStatus.VERIFIED.name().equals(cost.getStatus())) {
+            throw new BadRequestException("SHIPMENT_COST_STATE_INVALID",
+                    "Only VERIFIED costs can be approved; current status is " + cost.getStatus());
+        }
+        cost.setStatus(ShipmentCostStatus.APPROVED.name());
+        cost.setApprovedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        cost.setApprovedBy(actorId);
+        return toView(shipmentCostRepository.save(cost));
+    }
+
+    /** Any non-voided state -> VOIDED with a mandatory reason and an audit trail. */
+    @Transactional
+    public ShipmentCostView voidCost(UUID loadId, UUID costId, String reason, UUID actorId) {
+        if (reason == null || reason.isBlank()) {
+            throw new BadRequestException("SHIPMENT_COST_VOID_REASON_REQUIRED", "A void reason is required");
+        }
+        String trimmedReason = reason.trim();
+        if (trimmedReason.length() > 500) {
+            throw new BadRequestException("SHIPMENT_COST_VOID_REASON_INVALID", "Void reason must be at most 500 characters");
+        }
+        ShipmentCost cost = requireCostForUpdate(loadId, costId);
+        if (ShipmentCostStatus.VOIDED.name().equals(cost.getStatus())) {
+            return toView(cost);
+        }
+        cost.setStatus(ShipmentCostStatus.VOIDED.name());
+        cost.setVoidedAt(OffsetDateTime.now(ZoneOffset.UTC));
+        cost.setVoidedBy(actorId);
+        cost.setVoidReason(trimmedReason);
+        return toView(shipmentCostRepository.save(cost));
+    }
+
+    private ShipmentCost requireCostForUpdate(UUID loadId, UUID costId) {
+        ShipmentCost cost = shipmentCostRepository.findByIdForUpdate(costId)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipment cost not found: " + costId));
+        if (cost.getLoad() == null || !loadId.equals(cost.getLoad().getId())) {
+            throw new ResourceNotFoundException("Shipment cost not found: " + costId);
+        }
+        return cost;
+    }
+
+    private void requireTripBelongsToLoad(UUID loadId, Trip trip) {
+        boolean attributed = tripStopRepository.findByLoadId(loadId).stream()
+                .anyMatch(stop -> stop.getTrip() != null && trip.getId().equals(stop.getTrip().getId()));
+        if (!attributed) {
+            throw new BadRequestException("SHIPMENT_COST_ATTRIBUTION_INVALID",
+                    "Trip " + trip.getId() + " is not assigned to load " + loadId);
+        }
+    }
+
     @Transactional
     public ShipmentCostView syncExpenseToShipmentCost(UUID expenseId) {
         Expense expense = expenseRepository.findByIdForUpdate(expenseId)
@@ -116,25 +209,11 @@ public class ShipmentCostEngine {
     }
 
     @Transactional(readOnly = true)
-    public List<ShipmentCostView> getCostsForLoad(UUID loadId) {
+    public Page<ShipmentCostView> getCostsForLoad(UUID loadId, Pageable pageable) {
         if (!loadRepository.existsById(loadId)) {
             throw new ResourceNotFoundException("Load not found: " + loadId);
         }
-        return shipmentCostRepository.findByLoadId(loadId).stream()
-                .map(this::toView)
-                .toList();
-    }
-
-    private String mapCategory(String expCat) {
-        if (expCat == null) return ShipmentCostCategory.OTHER.name();
-        String upper = expCat.toUpperCase();
-        if (upper.contains("FUEL")) return ShipmentCostCategory.FUEL.name();
-        if (upper.contains("TOLL")) return ShipmentCostCategory.TOLL.name();
-        if (upper.contains("MAINT")) return ShipmentCostCategory.MAINTENANCE.name();
-        if (upper.contains("DRIVER") || upper.contains("PAYROLL")) return ShipmentCostCategory.DRIVER.name();
-        if (upper.contains("ACCESS")) return ShipmentCostCategory.ACCESSORIAL.name();
-        if (upper.contains("INSUR")) return ShipmentCostCategory.INSURANCE.name();
-        return ShipmentCostCategory.OTHER.name();
+        return shipmentCostRepository.findPageByLoadId(loadId, pageable).map(this::toView);
     }
 
     private <E extends Enum<E>> String requireEnum(Class<E> enumType, String value, String field) {
@@ -165,8 +244,13 @@ public class ShipmentCostEngine {
                 c.getCurrency(),
                 c.getIncurredAt(),
                 c.getVerifiedAt(),
+                c.getVerifiedBy(),
                 c.getApprovedAt(),
+                c.getApprovedBy(),
                 c.getPostedAt(),
+                c.getVoidedAt(),
+                c.getVoidedBy(),
+                c.getVoidReason(),
                 c.getNote(),
                 c.getVersion()
         );

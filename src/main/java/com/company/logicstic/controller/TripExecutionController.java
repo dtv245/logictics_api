@@ -5,14 +5,17 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.company.logicstic.dto.ApiResponse;
+import com.company.logicstic.common.PaginationValidator;
 import com.company.logicstic.dto.trip.AssignDriverRequest;
 import com.company.logicstic.dto.trip.TripDriverAssignmentView;
 import com.company.logicstic.dto.trip.TripStopView;
@@ -52,19 +55,25 @@ public class TripExecutionController {
     @GetMapping("/trips/{tripId}/drivers")
     public ResponseEntity<ApiResponse<List<TripDriverAssignmentView>>> getTripDrivers(
             @PathVariable UUID tripId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
             HttpServletRequest request
     ) {
-        List<TripDriverAssignmentView> data = tripExecutionService.getTripDrivers(tripId);
-        return ResponseEntity.ok(ApiResponse.success(data, request));
+        var pageable = PaginationValidator.pageRequest(page, pageSize, Sort.by("effectiveFrom").descending());
+        var data = tripExecutionService.getTripDrivers(tripId, pageable);
+        return ResponseEntity.ok(ApiResponse.successPage(data, request));
     }
 
     @GetMapping("/trips/{tripId}/stops")
     public ResponseEntity<ApiResponse<List<TripStopView>>> getTripStops(
             @PathVariable UUID tripId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
             HttpServletRequest request
     ) {
-        List<TripStopView> data = tripExecutionService.getTripStops(tripId);
-        return ResponseEntity.ok(ApiResponse.success(data, request));
+        var pageable = PaginationValidator.pageRequest(page, pageSize, Sort.by("order").ascending());
+        var data = tripExecutionService.getTripStops(tripId, pageable);
+        return ResponseEntity.ok(ApiResponse.successPage(data, request));
     }
 
     @PostMapping("/trip-stops/{id}/arrive")

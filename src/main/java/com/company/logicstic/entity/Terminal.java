@@ -10,6 +10,7 @@ import org.hibernate.annotations.UuidGenerator;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -58,4 +59,20 @@ public class Terminal extends BaseAuditableEntity {
 
     @Column(name = "address_zip_code", nullable = false, columnDefinition = "text")
     private String addressZipCode;
+
+    /** WGS84 latitude; null when the terminal has not been geocoded. */
+    @Column(name = "latitude")
+    private Double latitude;
+
+    /** WGS84 longitude; null when the terminal has not been geocoded. */
+    @Column(name = "longitude")
+    private Double longitude;
+
+    /** Local opening time; null when working hours are unknown. */
+    @Column(name = "working_hours_open")
+    private LocalTime workingHoursOpen;
+
+    /** Local closing time; may be earlier than the opening time for overnight shifts. */
+    @Column(name = "working_hours_close")
+    private LocalTime workingHoursClose;
 }

@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.data.domain.Sort;
+import com.company.logicstic.common.PaginationValidator;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -47,10 +49,14 @@ public class DriverSettlementController {
             @RequestParam(required = false) UUID driverId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String settlementType,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
             HttpServletRequest request
     ) {
-        List<DriverSettlementView> data = engine.list(payPeriodId, driverId, status, settlementType);
-        return ResponseEntity.ok(ApiResponse.success(data, request));
+        var pageable = PaginationValidator.pageRequest(page, pageSize, Sort.by("calculatedAt").descending()
+                .and(Sort.by("settlementNumber").descending()));
+        var data = engine.list(payPeriodId, driverId, status, settlementType, pageable);
+        return ResponseEntity.ok(ApiResponse.successPage(data, request));
     }
 
     @PostMapping("/calculate")

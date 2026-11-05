@@ -6,6 +6,7 @@ import com.company.logicstic.dto.truck.UpdateTruckRequest;
 import com.company.logicstic.common.ExpectedVersionGuard;
 import com.company.logicstic.dto.truck.TruckView;
 import com.company.logicstic.entity.Employee;
+import com.company.logicstic.entity.EmployeeType;
 import com.company.logicstic.entity.Truck;
 import com.company.logicstic.exception.ConflictException;
 import com.company.logicstic.exception.ResourceNotFoundException;
@@ -74,6 +75,15 @@ public class TruckService {
         truckRepository.deleteById(id);
     }
 
+    private Employee requireDriver(UUID id) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + id));
+        if (employee.getEmployeeType() != EmployeeType.DRIVER) {
+            throw new ResourceNotFoundException("Driver not found: " + id);
+        }
+        return employee;
+    }
+
     private void applyFields(Truck truck, CreateTruckRequest req) {
         truck.setNumber(req.number());
         truck.setType(req.type());
@@ -91,17 +101,13 @@ public class TruckService {
         truck.setAdrEquipmentOrangePlateNumber(req.adrEquipmentOrangePlateNumber());
 
         if (req.mainDriverId() != null) {
-            Employee driver = employeeRepository.findById(req.mainDriverId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + req.mainDriverId()));
-            truck.setMainDriver(driver);
+            truck.setMainDriver(requireDriver(req.mainDriverId()));
         } else {
             truck.setMainDriver(null);
         }
 
         if (req.secondaryDriverId() != null) {
-            Employee driver = employeeRepository.findById(req.secondaryDriverId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + req.secondaryDriverId()));
-            truck.setSecondaryDriver(driver);
+            truck.setSecondaryDriver(requireDriver(req.secondaryDriverId()));
         } else {
             truck.setSecondaryDriver(null);
         }

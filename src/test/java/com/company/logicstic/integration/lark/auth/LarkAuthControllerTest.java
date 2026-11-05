@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.List;
 import java.util.UUID;
@@ -90,5 +91,22 @@ class LarkAuthControllerTest {
         .andExpect(jsonPath("$.data.accessToken").value("mock.jwt.token"))
         .andExpect(jsonPath("$.data.email").value("john@company.com"))
         .andExpect(jsonPath("$.data.roles[0]").value("DISPATCHER"));
+  }
+
+  @Test
+  @DisplayName("GET callback is rejected because the contract requires POST JSON")
+  void callback_getMethodRejected() throws Exception {
+    mockMvc.perform(get("/api/auth/lark/callback")).andExpect(status().isMethodNotAllowed());
+    verifyNoInteractions(authService);
+  }
+
+  @Test
+  @DisplayName("Callback request without state is rejected before the service is called")
+  void callback_missingStateRejected() throws Exception {
+    mockMvc.perform(post("/api/auth/lark/callback")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"code\":\"authorization-code\"}"))
+        .andExpect(status().isBadRequest());
+    verifyNoInteractions(authService);
   }
 }

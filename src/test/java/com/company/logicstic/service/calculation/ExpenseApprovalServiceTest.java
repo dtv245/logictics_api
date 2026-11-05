@@ -60,4 +60,33 @@ class ExpenseApprovalServiceTest {
         assertThrows(BadRequestException.class, () -> service.approve(expense.getId(), "accountant@example.test"));
         assertEquals("PENDING_APPROVAL", expense.getStatus()); verifyNoInteractions(projector);
     }
+
+    @Test void rejectsPendingExpenseWithMandatoryReasonAndActor() {
+        var result = service.reject(expense.getId(), "  Missing receipt  ", "accountant@example.test");
+        assertEquals("REJECTED", result.status());
+        assertEquals("Missing receipt", expense.getRejectionReason());
+        assertNotNull(expense.getRejectedAt());
+        assertEquals(actor.getId().toString(), expense.getRejectedById());
+        verify(expenses).save(expense);
+        verifyNoInteractions(projector);
+    }
+
+    @Test void repeatRejectionPreservesOriginalAudit() {
+        expense.setStatus("REJECTED");
+        expense.setRejectionReason("original");
+        expense.setRejectedById("original-actor");
+        service.reject(expense.getId(), "different reason", "accountant@example.test");
+        assertEquals("original", expense.getRejectionReason());
+        assertEquals("original-actor", expense.getRejectedById());
+        verify(expenses, never()).save(any());
+    }
+
+    @Test void rejectionRequiresReasonAndARejectableState() {
+        assertThrows(BadRequestException.class,
+                () -> service.reject(expense.getId(), "   ", "accountant@example.test"));
+        expense.setStatus("APPROVED");
+        assertThrows(BadRequestException.class,
+                () -> service.reject(expense.getId(), "no longer pending", "accountant@example.test"));
+        verify(expenses, never()).save(any());
+    }
 }

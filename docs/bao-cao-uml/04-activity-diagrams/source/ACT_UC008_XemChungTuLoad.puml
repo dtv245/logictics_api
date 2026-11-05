@@ -1,0 +1,30 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 2.11 — UC008 Xem chứng từ của Load
+|Người dùng|
+start
+:Mở chi tiết Load, chọn tab chứng từ;
+|Frontend|
+:Kiểm tra quyền, tenant và id Load;
+if (Đủ điều kiện đọc?) then (không)
+ :Không thực hiện truy vấn; hiển thị theo trạng thái quyền;
+ stop
+else (có)
+ :GET /api/documents với loadId và phân trang;
+endif
+|Backend|
+:Kiểm tra quyền, phân trang và sort;
+|Database|
+:Truy vấn chứng từ theo loadId;
+|Backend|
+:Chuyển trang Document thành DocumentView;
+|Frontend|
+if (Có lỗi truy vấn?) then (có)
+ :Hiển thị trạng thái lỗi;
+else (không)
+ :Hiển thị trang kết quả trong bảng;
+endif
+stop
+@enduml

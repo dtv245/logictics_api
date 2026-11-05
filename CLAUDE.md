@@ -30,15 +30,17 @@ This project is indexed by GitNexus as **logictics_api** (9446 symbols, 21311 re
 | `gitnexus://repo/logictics_api/processes` | All execution flows |
 | `gitnexus://repo/logictics_api/process/{name}` | Step-by-step execution trace |
 
-## CLI
+## Skills
 
-| Task | Read this skill file |
+Skills are installed globally in `~/.claude/skills/` (shared with `logictics-app`); invoke them by name. Do not duplicate them under `.claude/skills/` in this repo.
+
+| Task | Skill |
 | --- | --- |
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus-cli/SKILL.md` |
+| Understand architecture / "How does X work?" | `gitnexus-exploring` |
+| Blast radius / "What breaks if I change X?" | `gitnexus-impact-analysis` |
+| Trace bugs / "Why is X failing?" | `gitnexus-debugging` |
+| Rename / extract / split / refactor | `gitnexus-refactoring` |
+| Tools, resources, schema reference | `gitnexus-guide` |
+| Index, status, clean, wiki CLI commands | `gitnexus-cli` |
 
 <!-- gitnexus:end -->

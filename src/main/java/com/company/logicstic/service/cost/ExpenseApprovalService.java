@@ -49,6 +49,46 @@ public class ExpenseApprovalService {
                 expense.getApprovedById(), cost == null ? null : cost.getId());
     }
 
+    /**
+     * Submitted -> REJECTED with a mandatory reason. Repeating the command preserves the
+     * original rejection audit instead of overwriting it.
+     */
+    @Transactional
+    public ApprovalResult reject(UUID expenseId, String reason, String authenticatedEmail) {
+        var actor = employees.findByEmail(authenticatedEmail)
+                .orElseThrow(() -> new ForbiddenException("Authenticated employee is required for rejection"));
+        if (reason == null || reason.isBlank()) {
+            throw new BadRequestException("EXPENSE_REJECTION_REASON_REQUIRED", "A rejection reason is required");
+        }
+        String trimmedReason = reason.trim();
+        if (trimmedReason.length() > 500) {
+            throw new BadRequestException("EXPENSE_REJECTION_REASON_INVALID",
+                    "Rejection reason must be at most 500 characters");
+        }
+        Expense expense = expenses.findByIdForUpdate(expenseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found: " + expenseId));
+        String status = normalizeStatus(expense.getStatus());
+        if ("REJECTED".equals(status)) {
+            return new ApprovalResult(expense.getId(), expense.getStatus(), expense.getApprovedAt(),
+                    expense.getApprovedById(), null);
+        }
+        if (!Set.of("PENDING", "SUBMITTED", "PENDING_APPROVAL").contains(status)) {
+            throw new BadRequestException("EXPENSE_REJECTION_STATE_INVALID",
+                    "Only submitted/pending expenses can be rejected");
+        }
+        expense.setStatus("REJECTED");
+        expense.setRejectionReason(trimmedReason);
+        expense.setRejectedAt(OffsetDateTime.now(ZoneOffset.UTC).truncatedTo(java.time.temporal.ChronoUnit.MICROS));
+        expense.setRejectedById(actor.getId().toString());
+        expenses.save(expense);
+        return new ApprovalResult(expense.getId(), expense.getStatus(), expense.getApprovedAt(),
+                expense.getApprovedById(), null);
+    }
+
+    private String normalizeStatus(String status) {
+        return status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+    }
+
     public record ApprovalResult(UUID expenseId, String status, OffsetDateTime approvedAt,
                                  String approvedBy, UUID shipmentCostId) {}
 }

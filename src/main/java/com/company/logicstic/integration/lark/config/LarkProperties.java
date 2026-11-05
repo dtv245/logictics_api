@@ -14,9 +14,22 @@ public record LarkProperties(
     String jwtIssuer,
     Duration jwtTtl,
     Duration stateTtl,
-    String defaultTenantId) {
+    String defaultTenantId,
+    String verificationToken,
+    String encryptKey) {
 
+  /** Preserve existing authentication and Base client construction. */
+  public LarkProperties(boolean enabled, String appId, String appSecret, String redirectUri,
+      String baseUrl, String jwtSecret, String jwtIssuer, Duration jwtTtl, Duration stateTtl,
+      String defaultTenantId) {
+    this(enabled, appId, appSecret, redirectUri, baseUrl, jwtSecret, jwtIssuer, jwtTtl,
+        stateTtl, defaultTenantId, "", "");
+  }
+
+  @org.springframework.boot.context.properties.bind.ConstructorBinding
   public LarkProperties {
+    verificationToken = verificationToken == null ? "" : verificationToken;
+    encryptKey = encryptKey == null ? "" : encryptKey;
     if (baseUrl == null || baseUrl.isBlank()) {
       baseUrl = "https://open.larksuite.com";
     }
@@ -37,5 +50,10 @@ public record LarkProperties(
     if (defaultTenantId == null || defaultTenantId.isBlank()) {
       defaultTenantId = "local-development";
     }
+  }
+
+  @Override
+  public String toString() {
+    return "LarkProperties[enabled=" + enabled + ", credentials=<redacted>]";
   }
 }

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="505px" preserveAspectRatio="none" style="width:528px;height:505px;" version="1.1" viewBox="0 0 528 505" width="528px" zoomAndPan="magnify"><defs/><g><text fill="#000000" font-family="DejaVu Sans" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="402" x="78.5" y="16.708">Hình 3.6 — Quan hệ dữ liệu Load (trích đoạn)</text><!--MD5=[b8a2cb9a13c9f6eb9af75ab9fc9108ad]
+class customers--><rect fill="#FEFECE" height="60.8047" id="customers" style="stroke: #A80036; stroke-width: 1.5;" width="107" x="30" y="48.9531"/><ellipse cx="49.05" cy="64.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M53.1594,70.9531 L45.4406,70.9531 L45.4406,58.5625 L53.1594,58.5625 L53.1594,60.7188 L47.8938,60.7188 L47.8938,63.3906 L52.6594,63.3906 L52.6594,65.5469 L47.8938,65.5469 L47.8938,68.7969 L53.1594,68.7969 L53.1594,70.9531 Z "/><text fill="#000000" font-family="DejaVu Sans" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="66" x="63.95" y="69.1074">customers</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="31" x2="136" y1="80.9531" y2="80.9531"/><ellipse cx="41" cy="91.9531" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="81" x="50" y="95.1636">id : UUID «PK»</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="31" x2="136" y1="101.7578" y2="101.7578"/><!--MD5=[3ac45ebf6295c35f6eed676849e13752]
+class trucks--><rect fill="#FEFECE" height="60.8047" id="trucks" style="stroke: #A80036; stroke-width: 1.5;" width="107" x="220" y="48.9531"/><ellipse cx="251.2" cy="64.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M255.3094,70.9531 L247.5906,70.9531 L247.5906,58.5625 L255.3094,58.5625 L255.3094,60.7188 L250.0438,60.7188 L250.0438,63.3906 L254.8094,63.3906 L254.8094,65.5469 L250.0438,65.5469 L250.0438,68.7969 L255.3094,68.7969 L255.3094,70.9531 Z "/><text fill="#000000" font-family="DejaVu Sans" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="39" x="268.8" y="69.1074">trucks</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="221" x2="326" y1="80.9531" y2="80.9531"/><ellipse cx="231" cy="91.9531" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="81" x="240" y="95.1636">id : UUID «PK»</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="221" x2="326" y1="101.7578" y2="101.7578"/><!--MD5=[1ae746dc2ccbf45b5bccc5d48417e362]
+class employees--><rect fill="#FEFECE" height="60.8047" id="employees" style="stroke: #A80036; stroke-width: 1.5;" width="107" x="410" y="48.9531"/><ellipse cx="428.6" cy="64.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M432.7094,70.9531 L424.9906,70.9531 L424.9906,58.5625 L432.7094,58.5625 L432.7094,60.7188 L427.4438,60.7188 L427.4438,63.3906 L432.2094,63.3906 L432.2094,65.5469 L427.4438,65.5469 L427.4438,68.7969 L432.7094,68.7969 L432.7094,70.9531 Z "/><text fill="#000000" font-family="DejaVu Sans" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="67" x="443.4" y="69.1074">employees</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="411" x2="516" y1="80.9531" y2="80.9531"/><ellipse cx="421" cy="91.9531" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="81" x="430" y="95.1636">id : UUID «PK»</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="411" x2="516" y1="101.7578" y2="101.7578"/><!--MD5=[e63bf27c19c3322af365533c0b090f7d]
+class loads--><rect fill="#FEFECE" height="112.0234" id="loads" style="stroke: #A80036; stroke-width: 1.5;" width="230" x="158.5" y="208.9531"/><ellipse cx="252.25" cy="224.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M256.3594,230.9531 L248.6406,230.9531 L248.6406,218.5625 L256.3594,218.5625 L256.3594,220.7188 L251.0938,220.7188 L251.0938,223.3906 L255.8594,223.3906 L255.8594,225.5469 L251.0938,225.5469 L251.0938,228.7969 L256.3594,228.7969 L256.3594,230.9531 Z "/><text fill="#000000" font-family="DejaVu Sans" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="34" x="272.75" y="229.1074">loads</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="159.5" x2="387.5" y1="240.9531" y2="240.9531"/><ellipse cx="169.5" cy="251.9531" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="81" x="178.5" y="255.1636">id : UUID «PK»</text><line style="stroke: #A80036; stroke-width: 1.0;" x1="159.5" x2="387.5" y1="261.7578" y2="261.7578"/><ellipse cx="169.5" cy="272.7578" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="140" x="178.5" y="275.9683">customer_id : UUID «FK»</text><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="172" x="178.5" y="288.7729">assigned_truck_id : UUID «FK»</text><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="204" x="178.5" y="301.5776">assigned_dispatcher_id : UUID «FK»</text><ellipse cx="169.5" cy="311.1719" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="69" x="178.5" y="314.3823">status : text</text><!--MD5=[c318aec3d614b5a425a51256ebef0684]
+class trip_stops--><rect fill="#FEFECE" height="73.6094" id="trip_stops" style="stroke: #A80036; stroke-width: 1.5;" width="136" x="205.5" y="420.9531"/><ellipse cx="239.4" cy="436.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke: #A80036; stroke-width: 1.0;"/><path d="M243.5094,442.9531 L235.7906,442.9531 L235.7906,430.5625 L243.5094,430.5625 L243.5094,432.7188 L238.2438,432.7188 L238.2438,435.3906 L243.0094,435.3906 L243.0094,437.5469 L238.2438,437.5469 L238.2438,440.7969 L243.5094,440.7969 L243.5094,442.9531 Z "/><text fill="#000000" font-family="DejaVu Sans" font-size="12" lengthAdjust="spacingAndGlyphs" textLength="62" x="257.6" y="441.1074">trip_stops</text><line style="stroke: #A80036; stroke-width: 1.5;" x1="206.5" x2="340.5" y1="452.9531" y2="452.9531"/><ellipse cx="216.5" cy="463.9531" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="81" x="225.5" y="467.1636">id : UUID «PK»</text><line style="stroke: #A80036; stroke-width: 1.0;" x1="206.5" x2="340.5" y1="473.7578" y2="473.7578"/><ellipse cx="216.5" cy="484.7578" fill="#000000" rx="3" ry="3" style="stroke: #000000; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="11" lengthAdjust="spacingAndGlyphs" textLength="110" x="225.5" y="487.9683">load_id : UUID «FK»</text><!--MD5=[f2d2aa96d535eff50986d834b714dc3f]
+link customers to loads--><path d="M113.19,108.7031 C140.85,135.4831 182.82,176.1331 216.88,209.1231 " fill="none" id="customers-loads" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="8" x="132.8068" y="129.3276">1</text><text fill="#000000" font-family="DejaVu Sans" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="23" x="185.1521" y="198.0829">0..*</text><!--MD5=[f99954d47c23035233c9fe3de237b655]
+link trucks to loads--><path d="M273.5,108.7031 C273.5,135.4831 273.5,176.1331 273.5,209.1231 " fill="none" id="trucks-loads" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="24" x="236.6" y="129.3276">0..1</text><text fill="#000000" font-family="DejaVu Sans" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="23" x="249.0266" y="198.0829">0..*</text><!--MD5=[9484d9e18428dea6dcff8b64814234e8]
+link employees to loads--><path d="M433.81,108.7031 C406.15,135.4831 364.18,176.1331 330.12,209.1231 " fill="none" id="employees-loads" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="24" x="378.0214" y="122.4795">0..1</text><text fill="#000000" font-family="DejaVu Sans" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="23" x="312.901" y="198.0829">0..*</text><!--MD5=[3c78ae4eed7a45533e7c86cdd80882a9]
+link loads to trip_stops--><path d="M273.5,320.7931 C273.5,353.1131 273.5,393.0431 273.5,421.1931 " fill="none" id="loads-trip_stops" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="DejaVu Sans" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="8" x="263.55" y="341.4524">1</text><text fill="#000000" font-family="DejaVu Sans" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="23" x="248.3078" y="409.8728">0..*</text><!--MD5=[8641070c7caa24c277e02408e5566c52]
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 3.6 — Quan hệ dữ liệu Load (trích đoạn)
+entity customers {
+* id : UUID <<PK>>
+}
+entity trucks {
+* id : UUID <<PK>>
+}
+entity employees {
+* id : UUID <<PK>>
+}
+entity loads {
+* id : UUID <<PK>>
+- -
+* customer_id : UUID <<FK>>
+assigned_truck_id : UUID <<FK>>
+assigned_dispatcher_id : UUID <<FK>>
+* status : text
+}
+entity trip_stops {
+* id : UUID <<PK>>
+- -
+* load_id : UUID <<FK>>
+}
+customers "1" - - "0..*" loads
+trucks "0..1" - - "0..*" loads
+employees "0..1" - - "0..*" loads
+loads "1" - - "0..*" trip_stops
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 17:22:07 GMT+07:00 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 25.0.4.1+1-1-26.04.4-Ubuntu
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>

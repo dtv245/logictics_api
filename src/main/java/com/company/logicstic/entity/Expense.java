@@ -66,6 +66,12 @@ public class Expense extends BaseAuditableEntity {
     @Column(name = "rejection_reason", length = 500)
     private String rejectionReason;
 
+    @Column(name = "rejected_at")
+    private OffsetDateTime rejectedAt;
+
+    @Column(name = "rejected_by_id", length = 50)
+    private String rejectedById;
+
     @Column(name = "amount_amount", nullable = false, precision = 18, scale = 2)
     private BigDecimal amountAmount;
 

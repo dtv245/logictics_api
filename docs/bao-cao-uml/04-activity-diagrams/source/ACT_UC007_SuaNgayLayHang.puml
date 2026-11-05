@@ -1,0 +1,33 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 2.9 — UC007 Sửa ngày nghiệp vụ — UI ĐANG BỊ TẮT
+|Người gọi được cấp quyền|
+start
+:Gửi ngày, lý do, nguồn và expectedChangeId;
+|Backend|
+:Kiểm tra quyền, dữ liệu và nhân viên;
+if (Dữ liệu hợp lệ?) then (không)
+ :Trả lỗi;
+ stop
+else (có)
+ |Database|
+ :Khóa và đọc Load;
+ |Backend|
+ if (Load tồn tại và mã lịch sử khớp?) then (không)
+  :Trả lỗi không tìm thấy hoặc 409;
+  stop
+ else (có)
+  if (Ngày thay đổi?) then (có)
+   |Database|
+   :Ghi lịch sử bất biến và cập nhật Load;
+  else (không)
+   :Giữ nguyên lịch sử;
+  endif
+  |Backend|
+  :Trả LoadView;
+  stop
+ endif
+endif
+@enduml

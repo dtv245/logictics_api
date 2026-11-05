@@ -1,0 +1,39 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 3.4 — UC004 Xem timeline Load
+actor "Người dùng" as U
+boundary "LoadTimelinePanel" as F
+control "LoadTimelineController" as C
+control "LoadTimelineService" as S
+participant "LoadRepository" as R
+participant "LoadEventRepository" as E
+database "PostgreSQL" as DB
+U -> F : Chọn thẻ timeline
+F -> C : GET /api/loads/{id}/timeline
+C -> C : PaginationValidator.pageRequest(...)
+C -> S : getTimeline(loadId, pageable)
+S -> R : findById(loadId)
+R -> DB : Truy vấn Load
+DB --> R : Load hoặc rỗng
+alt Load không tồn tại
+ S --> C : ResourceNotFoundException
+ C --> F : Lỗi
+ F --> U : Hiển thị lỗi
+else Tồn tại
+ S -> E : findPageByLoadId(loadId, pageable)
+ E -> DB : Truy vấn sự kiện
+ DB --> E : Trang sự kiện
+ S --> C : LoadTimelineResponse
+ C --> F : ApiResponse
+ alt Có sự kiện
+  F --> U : Hiển thị timeline
+ else Danh sách rỗng
+  F --> U : Hiển thị trạng thái rỗng
+ end
+end
+@enduml

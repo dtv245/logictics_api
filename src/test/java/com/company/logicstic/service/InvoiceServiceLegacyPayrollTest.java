@@ -49,8 +49,20 @@ class InvoiceServiceLegacyPayrollTest {
     @Test
     void employeeLegacySearchFilterIsRejectedInsteadOfSilentlyIgnored() {
         var error = assertThrows(BadRequestException.class, () -> service.search(null, null, null,
-                UUID.randomUUID(), 1, 20, "number", true));
+                null, null, null, UUID.randomUUID(), 1, 20, "number", true));
         assertEquals("INVOICE_LEGACY_PAYROLL_FIELD", error.getCode());
+        verifyNoInteractions(invoices, customers, loads, mapper);
+    }
+
+    @Test
+    void createRejectsStatusTheBillingGuardCannotInterpret() {
+        var request = new CreateInvoiceRequest("CUSTOMER", "SOMEDAY", null, null, null, null, null, null,
+                BigDecimal.ZERO, "USD", BigDecimal.ZERO, "USD", BigDecimal.ZERO, "USD",
+                null, null, null);
+
+        var error = assertThrows(BadRequestException.class, () -> service.create(request));
+
+        assertEquals("INVOICE_STATUS_INVALID", error.getCode());
         verifyNoInteractions(invoices, customers, loads, mapper);
     }
 

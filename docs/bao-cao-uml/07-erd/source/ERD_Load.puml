@@ -1,0 +1,35 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 3.6 — Quan hệ dữ liệu Load (trích đoạn)
+entity customers {
+* id : UUID <<PK>>
+}
+entity trucks {
+* id : UUID <<PK>>
+}
+entity employees {
+* id : UUID <<PK>>
+}
+entity loads {
+* id : UUID <<PK>>
+--
+* customer_id : UUID <<FK>>
+assigned_truck_id : UUID <<FK>>
+assigned_dispatcher_id : UUID <<FK>>
+* status : text
+}
+entity trip_stops {
+* id : UUID <<PK>>
+--
+* load_id : UUID <<FK>>
+}
+customers "1" -- "0..*" loads
+trucks "0..1" -- "0..*" loads
+employees "0..1" -- "0..*" loads
+loads "1" -- "0..*" trip_stops
+@enduml

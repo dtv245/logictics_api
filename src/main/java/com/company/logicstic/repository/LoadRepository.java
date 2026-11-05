@@ -38,4 +38,17 @@ public interface LoadRepository extends JpaRepository<Load, UUID> {
             @Param("dispatcherId") UUID dispatcherId,
             Pageable pageable
     );
+
+    /**
+     * Unassigned loads ordered by the earliest due date, so callers can apply a
+     * limit in the database instead of loading every load into memory.
+     */
+    @Query("""
+            SELECT l FROM Load l
+            WHERE l.assignedTruck IS NULL
+            ORDER BY CASE WHEN l.requestedDeliveryDate IS NULL THEN 1 ELSE 0 END,
+                     l.requestedDeliveryDate ASC,
+                     l.number ASC
+            """)
+    java.util.List<Load> findUnassigned(Pageable pageable);
 }

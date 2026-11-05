@@ -1,0 +1,57 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 3.1 — UC001 Tạo Load
+actor "Người dùng" as U
+boundary "LoadCreate / LoadForm" as F
+control "dataProvider" as P
+control "LoadController" as C
+control "LoadService" as S
+participant "LoadMapper" as M
+participant "CustomerRepository /\nTruckRepository / EmployeeRepository" as R
+participant "LoadRepository" as L
+participant "LoadPickupBusinessDateService" as B
+database "PostgreSQL" as DB
+U -> F : Nhập và lưu
+F -> F : Kiểm tra biểu mẫu; buildResourceMutation
+alt Dữ liệu frontend không hợp lệ
+ F --> U : Hiển thị lỗi
+else Hợp lệ
+ F -> P : create(loads, values)
+ P -> C : POST /api/loads
+ C -> C : Kiểm tra quyền và @Valid
+ C -> S : create(request)
+ S -> M : toEntity(request)
+ S -> R : findById các quan hệ cần thiết
+ R -> DB : Truy vấn
+ DB --> R : Kết quả
+ alt Quan hệ không tồn tại
+  S --> C : ResourceNotFoundException
+  C --> P : Lỗi
+  P --> F : Lỗi trường / yêu cầu
+  F --> U : Hiển thị lỗi
+ else Quan hệ hợp lệ
+  S -> L : saveAndFlush(load)
+  L -> DB : Lưu Load
+  S -> B : capture(load, date, provenance)
+  opt Có ngày và thay đổi hợp lệ
+   B -> DB : Ghi lịch sử ngày lấy hàng
+  end
+  S -> L : saveAndFlush(load)
+  L -> DB : Lưu thay đổi
+  opt Có eventPublisher
+   S -> S : publishLoadChanged(...)
+  end
+  S -> M : toView(saved)
+  S --> C : LoadView
+  C --> P : 201 ApiResponse
+  P --> F : Kết quả
+  F --> U : Chuyển về danh sách
+ end
+end
+note over B,DB : Lỗi provenance hoặc lưu dữ liệu làm rollback giao dịch.
+@enduml

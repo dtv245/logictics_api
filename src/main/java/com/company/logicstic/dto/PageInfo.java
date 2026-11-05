@@ -24,7 +24,7 @@ public class PageInfo {
     @JsonProperty("total")
     private long totalElements;
 
-    @JsonProperty("pages")
+    @JsonProperty("totalPages")
     private int totalPages;
 
     @JsonProperty("hasNext")
@@ -39,6 +39,18 @@ public class PageInfo {
     public static PageInfo of(org.springframework.data.domain.Page<?> page) {
         return PageInfo.builder()
                 .pageNumber(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .hasNext(page.hasNext())
+                .hasPrevious(page.hasPrevious())
+                .build();
+    }
+
+    /** Create metadata for the existing 1-based list API convention. */
+    public static PageInfo ofOneBased(org.springframework.data.domain.Page<?> page) {
+        return PageInfo.builder()
+                .pageNumber(page.getNumber() + 1)
                 .pageSize(page.getSize())
                 .totalElements(page.getTotalElements())
                 .totalPages(page.getTotalPages())

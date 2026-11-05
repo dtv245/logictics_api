@@ -1,0 +1,6 @@
+app:
+  ai:
+    default-provider: Groq
+    active-model: ${GROQ_MODEL:openai/gpt-oss-20b}
+    api-key: ${GROQ_API_KEY:}
+    base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1}

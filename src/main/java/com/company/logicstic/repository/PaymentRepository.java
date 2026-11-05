@@ -11,6 +11,7 @@ import java.util.UUID;
 
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "invoice")
     @Query("""
             SELECT p FROM Payment p
             WHERE (:status IS NULL OR p.status = :status)

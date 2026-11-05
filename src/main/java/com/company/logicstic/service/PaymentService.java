@@ -1,6 +1,8 @@
 package com.company.logicstic.service;
 
 import com.company.logicstic.common.CurrencyGuard;
+import com.company.logicstic.common.PaginationValidator;
+import com.company.logicstic.common.QuerySortPolicy;
 import com.company.logicstic.dto.CurrentUserResponse;
 import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.payment.*;
@@ -17,7 +19,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,8 +35,9 @@ public class PaymentService {
     private final RatingFingerprintService fingerprints;
 
     public PagedResponse<PaymentView> search(String status,UUID invoiceId,int page,int pageSize,String orderBy,boolean descending) {
-        var sort=descending?Sort.by(orderBy).descending():Sort.by(orderBy).ascending();
-        return PagedResponse.from(paymentRepository.search(status,invoiceId,PageRequest.of(page-1,pageSize,sort)).map(paymentMapper::toView));
+        Sort sort = QuerySortPolicy.sort("payments", orderBy, descending);
+        var pageable = PaginationValidator.pageRequest(page, pageSize, sort);
+        return PagedResponse.from(paymentRepository.search(status, invoiceId, pageable).map(paymentMapper::toView));
     }
     public PaymentView getById(UUID id) {
         return paymentRepository.findById(id).map(paymentMapper::toView).orElseThrow(()->new ResourceNotFoundException("Payment not found: "+id));

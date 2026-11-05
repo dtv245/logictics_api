@@ -13,6 +13,8 @@ import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -254,9 +256,9 @@ public class DriverPayEngine {
     }
 
     @Transactional(readOnly = true)
-    public List<DriverSettlementView> list(UUID payPeriodId, UUID driverId, String status, String settlementType) {
-        List<DriverSettlement> settlements = settlementRepository.findSettlements(payPeriodId, driverId, status, settlementType);
-        return settlements.stream().map(s -> DriverSettlementView.from(s, List.of())).toList();
+    public Page<DriverSettlementView> list(UUID payPeriodId, UUID driverId, String status, String settlementType, Pageable pageable) {
+        return settlementRepository.findSettlementPage(payPeriodId, driverId, status, settlementType, pageable)
+                .map(s -> DriverSettlementView.from(s, List.of()));
     }
 
     @Transactional(readOnly = true)

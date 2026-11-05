@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "610a4af3-eebb-4256-ba69-cf6c3d1dc3cf",
+    "_postman_id": "c799d9e2-2bc1-44e8-b213-76059bea821b",
     "name": "LogisticsX TMS - Part 2 (Trips, Optimization, Execution, Costs & Billing)",
     "description": "LogisticsX API TMS End-to-End Automated Test Suite (Postman v2.1)\nCovering entire business lifecycle according to OpenAPI 3.1 specification.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -328,6 +328,799 @@
                   "    pm.environment.set(\"driverAssignmentId\", d.id);",
                   "    console.log(\"Saved driverAssignmentId:\", d.id);",
                   "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.1 Create Driver Violation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/violations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "violations"
+              ]
+            },
+            "description": "Create confirmed driver violation; HOS provider telemetry remains separate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"violationDate\": \"2026-10-30T09:00:00Z\",\n  \"violationType\": \"SPEED\",\n  \"description\": \"Synthetic confirmed speed violation\",\n  \"fineAmount\": 250000.0,\n  \"fineCurrency\": \"VND\",\n  \"tripId\": \"{{tripId}}\",\n  \"resolutionStatus\": \"OPEN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.violationDate = new Date(Date.now() - 600000).toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "if (d && d.id) pm.environment.set('driverViolationId', d.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.2 List Driver Violations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/violations?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "violations"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List active confirmed violations with bounded paging"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.3 Get Driver Violation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/violations/{{driverViolationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "violations",
+                "{{driverViolationId}}"
+              ]
+            },
+            "description": "Get violation and resolution state"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.4 Update Driver Violation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/violations/{{driverViolationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "violations",
+                "{{driverViolationId}}"
+              ]
+            },
+            "description": "Update violation resolution without deleting history",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"violationDate\": \"2026-10-30T09:00:00Z\",\n  \"violationType\": \"SPEED\",\n  \"description\": \"Synthetic confirmed speed violation\",\n  \"fineAmount\": 250000.0,\n  \"fineCurrency\": \"VND\",\n  \"tripId\": \"{{tripId}}\",\n  \"resolutionStatus\": \"UNDER_REVIEW\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.violationDate = new Date(Date.now() - 600000).toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.5 Deactivate Driver Violation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/violations/{{driverViolationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "violations",
+                "{{driverViolationId}}"
+              ]
+            },
+            "description": "Retain the confirmed violation and inactivate its directory record"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.6 Create Driver Accident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/accidents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "accidents"
+              ]
+            },
+            "description": "Create accident record in the existing accident_reports aggregate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"truckId\": \"{{truckId}}\",\n  \"tripId\": \"{{tripId}}\",\n  \"accidentType\": \"COLLISION\",\n  \"severity\": \"MINOR\",\n  \"accidentDateTime\": \"2026-10-30T09:00:00Z\",\n  \"latitude\": 21.028511,\n  \"longitude\": 105.804817,\n  \"address\": \"Synthetic Postman location\",\n  \"description\": \"Synthetic low-severity test accident\",\n  \"anyInjuries\": false,\n  \"vehicleDamaged\": true,\n  \"estimatedDamageCost\": 125000.0,\n  \"vehicleDrivable\": true,\n  \"policeReportFiled\": false,\n  \"insuranceNotified\": false,\n  \"status\": \"REPORTED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.accidentDateTime = new Date(Date.now() - 600000).toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;",
+                  "if (d && d.id) pm.environment.set('driverAccidentId', d.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.7 List Driver Accidents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/accidents?page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "accidents"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List non-cancelled accident history"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.8 Get Driver Accident",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/accidents/{{driverAccidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "accidents",
+                "{{driverAccidentId}}"
+              ]
+            },
+            "description": "Get accident details; signatures are not exposed"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.9 Update Driver Accident",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/accidents/{{driverAccidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "accidents",
+                "{{driverAccidentId}}"
+              ]
+            },
+            "description": "Move the accident report to review status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"truckId\": \"{{truckId}}\",\n  \"tripId\": \"{{tripId}}\",\n  \"accidentType\": \"COLLISION\",\n  \"severity\": \"MINOR\",\n  \"accidentDateTime\": \"2026-10-30T09:00:00Z\",\n  \"latitude\": 21.028511,\n  \"longitude\": 105.804817,\n  \"address\": \"Synthetic Postman location\",\n  \"description\": \"Synthetic low-severity test accident\",\n  \"anyInjuries\": false,\n  \"vehicleDamaged\": true,\n  \"estimatedDamageCost\": 125000.0,\n  \"vehicleDrivable\": true,\n  \"policeReportFiled\": false,\n  \"insuranceNotified\": false,\n  \"status\": \"UNDER_REVIEW\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = JSON.parse(pm.request.body.raw);",
+                  "body.accidentDateTime = new Date(Date.now() - 600000).toISOString();",
+                  "pm.request.body.raw = JSON.stringify(body, null, 2);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.10 Cancel Driver Accident",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/accidents/{{driverAccidentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "accidents",
+                "{{driverAccidentId}}"
+              ]
+            },
+            "description": "Cancel without deleting the existing accident report"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.11 Driver Profile Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/{{driverId}}/profile-summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "{{driverId}}",
+                "profile-summary"
+              ]
+            },
+            "description": "Review profile group counts, active compliance status, and the driver's upcoming expiry items"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07.4.12 Expiring Driver Compliance Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/drivers/expiring?days=30&page=1&pageSize=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "drivers",
+                "expiring"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List driver compliance records expiring within 30 days with bounded paging"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200/201/204\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response time < threshold\", function () {",
+                  "    const threshold = Number(pm.environment.get(\"responseTimeoutThreshold\")) || 3000;",
+                  "    pm.expect(pm.response.responseTime).to.be.below(threshold);",
+                  "});",
+                  "",
+                  "let json = {};",
+                  "try {",
+                  "    json = pm.response.json();",
+                  "} catch (e) {}",
+                  "",
+                  "if (json && json.success !== undefined) {",
+                  "    pm.test(\"ApiResponse success flag is true\", function () {",
+                  "        if (!json.success && json.errors) {",
+                  "            console.error(\"[API ERROR]\", JSON.stringify(json.errors), \"requestId:\", json.meta ? json.meta.requestId : \"\");",
+                  "        }",
+                  "        pm.expect(json.success).to.be.true;",
+                  "    });",
+                  "}",
+                  "const d = (json && json.data !== undefined) ? json.data : json;"
                 ]
               }
             }

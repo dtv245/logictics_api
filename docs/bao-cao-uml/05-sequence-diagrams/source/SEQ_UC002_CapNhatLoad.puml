@@ -1,0 +1,48 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 3.2 — UC002 Cập nhật Load — UI đang bị tắt, cần xác minh
+actor "Người dùng" as U
+boundary "LoadEdit / LoadForm" as F
+control "dataProvider" as P
+control "LoadController" as C
+control "LoadService" as S
+participant "LoadRepository" as R
+participant "LoadPickupBusinessDateService" as B
+database "PostgreSQL" as DB
+U -> F : Sửa và lưu Load đã tải
+F -> F : prepare(values), expectedVersion
+F -> P : update(loads, id, values)
+P -> C : PUT /api/loads/{id}
+C -> C : Kiểm tra quyền và @Valid
+C -> S : update(id, command)
+S -> R : findByIdForUpdate(id)
+R -> DB : SELECT với khóa ghi
+DB --> R : Load hoặc rỗng
+alt Không tồn tại hoặc version không khớp
+ S --> C : Lỗi không tìm thấy / xung đột
+ C --> P : Lỗi
+ P --> F : Lỗi
+ F --> U : Phản hồi lỗi và xung đột
+else Hợp lệ
+ S -> S : require expectedVersion; ánh xạ và resolveRelations
+ S -> B : capture(load, date, provenance)
+ opt Ngày hợp lệ đã thay đổi
+  B -> DB : Ghi lịch sử ngày
+ end
+ S -> R : saveAndFlush(load)
+ R -> DB : Lưu Load
+ opt Có eventPublisher
+  S -> S : publishLoadChanged(...)
+ end
+ S --> C : LoadView
+ C --> P : 200 ApiResponse
+ P --> F : Kết quả
+ F --> U : Chuyển đến chi tiết
+end
+note over S,B : Lỗi quan hệ hoặc provenance gây rollback;\nresolveRelations dùng các repository khách hàng, xe, nhân viên.
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 3.13 — Các thành phần được đối chiếu
+component "Frontend React" as F
+component "API Spring Boot" as A
+component "Xác thực Lark" as L
+component "Nghiệp vụ Load / Document" as B
+database "PostgreSQL" as D
+cloud "Lark" as X
+F --> A : HTTP / API
+A --> L
+A --> B
+L --> X : OAuth / API
+B --> D : JPA / JDBC
+note bottom
+Quan hệ ở mức mã và cấu hình;
+chưa chứng minh tích hợp production hoạt động.
+end note
+@enduml

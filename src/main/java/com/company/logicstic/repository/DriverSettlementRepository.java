@@ -1,6 +1,8 @@
 package com.company.logicstic.repository;
 
 import com.company.logicstic.entity.DriverSettlement;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -34,5 +36,19 @@ public interface DriverSettlementRepository extends JpaRepository<DriverSettleme
             @Param("driverId") UUID driverId,
             @Param("status") String status,
             @Param("settlementType") String settlementType
+    );
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"driver", "payPeriod", "payPolicy", "parentSettlement"})
+    @Query("SELECT s FROM DriverSettlement s " +
+           "WHERE (:payPeriodId IS NULL OR s.payPeriod.id = :payPeriodId) " +
+           "AND (:driverId IS NULL OR s.driver.id = :driverId) " +
+           "AND (:status IS NULL OR s.status = :status) " +
+           "AND (:settlementType IS NULL OR s.settlementType = :settlementType)")
+    Page<DriverSettlement> findSettlementPage(
+            @Param("payPeriodId") UUID payPeriodId,
+            @Param("driverId") UUID driverId,
+            @Param("status") String status,
+            @Param("settlementType") String settlementType,
+            Pageable pageable
     );
 }

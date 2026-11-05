@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import tools.jackson.databind.ObjectMapper;
@@ -17,16 +20,23 @@ public class FleetHistoryRepository {
     public boolean trucksExist(List<UUID> ids){return jdbc.queryForObject("select count(*) from trucks where id in (select value::uuid from jsonb_array_elements_text(?::jsonb))",Long.class,json.writeValueAsString(ids))==ids.size();}
     public Optional<Policy> policy(UUID id){return policies("id=?",id).stream().findFirst();}
     public Optional<Policy> policy(String code,int version){return policies("policy_code=? and policy_version=?",code,version).stream().findFirst();}
-    public List<Policy> policies(){return policies("true order by policy_code asc, policy_version desc");}
+    public List<Policy> policies(){return policies("true order by policy_code asc, policy_version desc, id asc");}
+    public Page<Policy> policyPage(Pageable pageable) {
+        List<Policy> rows = jdbc.query("select * from fleet_policy_versions order by policy_code asc, policy_version desc, id asc limit ? offset ?",
+            this::readPolicy, pageable.getPageSize(), pageable.getOffset());
+        Long total = jdbc.queryForObject("select count(*) from fleet_policy_versions", Long.class);
+        return new PageImpl<>(rows, pageable, total == null ? 0 : total);
+    }
     private List<Policy> policies(String where,Object...args) {
-        return jdbc.query("select * from fleet_policy_versions where "+where,(r,n)->{
-            var m=json.readTree(r.getString("mappings"));
-            return new Policy(r.getObject("id",UUID.class),r.getString("policy_code"),r.getInt("policy_version"),
-                json.convertValue(m.get("membershipStates"),json.getTypeFactory().constructMapType(Map.class,String.class,Boolean.class)),
-                json.convertValue(m.get("capacityStates"),json.getTypeFactory().constructMapType(Map.class,String.class,Boolean.class)),
-                json.convertValue(m.get("activityStates"),json.getTypeFactory().constructMapType(Map.class,String.class,Activity.class)),
-                json.readValue(r.getString("sources"),json.getTypeFactory().constructCollectionType(List.class,Source.class)),r.getString("approval_reference"),r.getObject("published_by",UUID.class),instant(r,"published_at"));
-        },args);
+        return jdbc.query("select * from fleet_policy_versions where "+where, this::readPolicy, args);
+    }
+    private Policy readPolicy(java.sql.ResultSet r, int row) throws java.sql.SQLException {
+        var m=json.readTree(r.getString("mappings"));
+        return new Policy(r.getObject("id",UUID.class),r.getString("policy_code"),r.getInt("policy_version"),
+            json.convertValue(m.get("membershipStates"),json.getTypeFactory().constructMapType(Map.class,String.class,Boolean.class)),
+            json.convertValue(m.get("capacityStates"),json.getTypeFactory().constructMapType(Map.class,String.class,Boolean.class)),
+            json.convertValue(m.get("activityStates"),json.getTypeFactory().constructMapType(Map.class,String.class,Activity.class)),
+            json.readValue(r.getString("sources"),json.getTypeFactory().constructCollectionType(List.class,Source.class)),r.getString("approval_reference"),r.getObject("published_by",UUID.class),instant(r,"published_at"));
     }
     public void insert(Policy p){jdbc.update("insert into fleet_policy_versions values (?,?,?,?::jsonb,?::jsonb,?,?,?)",p.id(),p.code(),p.version(),
         json.writeValueAsString(Map.of("membershipStates",p.membershipStates(),"capacityStates",p.capacityStates(),"activityStates",p.activityStates())),json.writeValueAsString(p.sources()),p.approvalReference(),p.publishedBy(),at(p.publishedAt()));}

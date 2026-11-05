@@ -19,6 +19,8 @@ import com.company.logicstic.repository.TripStopRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -68,20 +70,26 @@ public class LoadTimelineService {
     }
 
     @Transactional(readOnly = true)
-    public LoadTimelineResponse getTimeline(UUID loadId) {
+    public LoadTimelineResponse getTimeline(UUID loadId, Pageable pageable) {
         Load load = loadRepository.findById(loadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Load not found: " + loadId));
 
-        List<LoadEventView> eventViews = loadEventRepository.findByLoadIdOrderByOccurredAtAsc(loadId).stream()
-                .map(this::toEventView)
-                .toList();
+        Page<LoadEventView> events = loadEventRepository.findPageByLoadId(loadId, pageable).map(this::toEventView);
 
         return new LoadTimelineResponse(
                 load.getId(),
                 load.getNumber() != null ? String.valueOf(load.getNumber()) : null,
                 load.getStatus(),
-                eventViews
+                events.getContent(),
+                com.company.logicstic.dto.PageInfo.ofOneBased(events)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public LoadTimelineResponse getTimeline(UUID loadId) {
+        Pageable firstPage = org.springframework.data.domain.PageRequest.of(0, 100,
+                org.springframework.data.domain.Sort.by("occurredAt").ascending().and(org.springframework.data.domain.Sort.by("id")));
+        return getTimeline(loadId, firstPage);
     }
 
     private LoadEventView toEventView(LoadEvent e) {

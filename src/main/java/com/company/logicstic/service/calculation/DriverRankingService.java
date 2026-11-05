@@ -15,6 +15,7 @@ import com.company.logicstic.dto.report.DriverRankingReport;
 import com.company.logicstic.dto.report.DriverRankingWeights;
 import com.company.logicstic.dto.report.ReportPeriodDto;
 import com.company.logicstic.entity.Employee;
+import com.company.logicstic.entity.EmployeeType;
 import com.company.logicstic.entity.Load;
 import com.company.logicstic.entity.Trip;
 import com.company.logicstic.entity.TripDriverAssignment;
@@ -73,10 +74,7 @@ public class DriverRankingService {
         OffsetDateTime start = from != null ? from.atStartOfDay(appZoneId).toOffsetDateTime() : null;
         OffsetDateTime endExclusive = to != null ? to.plusDays(1).atStartOfDay(appZoneId).toOffsetDateTime() : null;
 
-        List<Employee> allEmployees = employeeRepository.findAll();
-        List<Employee> drivers = allEmployees.stream()
-                .filter(e -> e.getRole() == null || "DRIVER".equalsIgnoreCase(e.getRole().getName()))
-                .toList();
+        List<Employee> drivers = employeeRepository.findAllByEmployeeType(EmployeeType.DRIVER);
 
         if (drivers.isEmpty()) {
             return new DriverRankingReport(

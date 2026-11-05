@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="424px" preserveAspectRatio="none" style="width:516px;height:424px;" version="1.1" viewBox="0 0 516 424" width="516px" zoomAndPan="magnify"><defs/><g><text fill="#000000" font-family="DejaVu Sans" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="371" x="84" y="16.708">Hình 2.1 — Các use case Load đã khảo sát</text><!--MD5=[9757fcc2736ee63b7cec6e2f4b1a4dc5]
+cluster Hệ thống Logistics--><rect fill="#FFFFFF" height="369" style="stroke: #000000; stroke-width: 1.5;" width="198.17" x="307" y="44.9531"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="147" x="332.585" y="59.9482">Hệ thống Logistics</text><ellipse cx="406.0809" cy="372.9503" fill="#EDF5FA" rx="45.1509" ry="24.8072" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="382.5809" y="367.6437">UC001</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="63" x="374.5809" y="383.9406">Tạo Load</text><ellipse cx="406.0801" cy="278.9555" fill="#EDF5FA" rx="68.4101" ry="34.3524" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="382.5801" y="262.4933">UC002</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="99" x="356.5801" y="278.7902">Cập nhật Load</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="102" x="355.0801" y="295.0871">(UI đang bị tắt)</text><ellipse cx="406.0773" cy="185.9485" fill="#EDF5FA" rx="78.1773" ry="23.7654" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="382.5773" y="179.0206">UC003</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="118" x="347.0773" y="195.3175">Xem chi tiết Load</text><ellipse cx="406.0841" cy="103.9493" fill="#EDF5FA" rx="83.0841" ry="23.7162" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="382.5841" y="96.942">UC004</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="126" x="343.0841" y="113.2389">Xem timeline Load</text><!--MD5=[ee0fec323975fbe97ba28321ad4c4bf3]
+entity U--><ellipse cx="134.5" cy="195.1531" fill="#FEFECE" rx="8" ry="8" style="stroke: #A80036; stroke-width: 1.5;"/><path d="M134.5,203.1531 L134.5,230.1531 M121.5,211.1531 L147.5,211.1531 M134.5,230.1531 L121.5,245.1531 M134.5,230.1531 L147.5,245.1531 " fill="none" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="147" x="6" y="260.6482">Người dùng vận hành</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="257" x="6" y="276.9451">(ADMIN, ACCOUNTANT, DISPATCHER)</text><!--MD5=[1d922222e278ecd8b27330c4392d9646]
+link U to C--><path d="M209.36,280.7031 C236.94,297.6031 268.88,316.0831 299,330.9531 C321.2,341.9131 347.02,352.1831 367.62,359.8231 " fill="none" id="U-C" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[663563b60489509691c7129d3ed82e08]
+link U to E--><path d="M263.19,254.7431 C290.13,259.3431 317.46,264.0031 340.84,267.9931 " fill="none" id="U-E" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[bc5b4db8d2824d344a6fda70d9c66f8d]
+link U to D--><path d="M263.19,210.6931 C288.91,206.2031 314.98,201.6631 337.63,197.7131 " fill="none" id="U-D" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[314d573dca6c2d794bcf8dcd57d7e88c]
+link U to T--><path d="M219.34,185.2331 C244.61,171.5631 272.64,157.0831 299,144.9531 C316.31,136.9831 335.64,129.2031 353.01,122.5931 " fill="none" id="U-T" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[de7a30ef18c7b133d09f77e777ee50dc]
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+left to right direction
+title Hình 2.1 — Các use case Load đã khảo sát
+actor "Người dùng vận hành\n(ADMIN, ACCOUNTANT, DISPATCHER)" as U
+rectangle "Hệ thống Logistics" {
+ usecase "UC001\nTạo Load" as C
+ usecase "UC002\nCập nhật Load\n(UI đang bị tắt)" as E
+ usecase "UC003\nXem chi tiết Load" as D
+ usecase "UC004\nXem timeline Load" as T
+}
+U - - C
+U - - E
+U - - D
+U - - T
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 17:22:07 GMT+07:00 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 25.0.4.1+1-1-26.04.4-Ubuntu
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>

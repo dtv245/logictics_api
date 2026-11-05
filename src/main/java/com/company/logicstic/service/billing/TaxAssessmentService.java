@@ -64,4 +64,12 @@ public class TaxAssessmentService {
     public TaxAssessment get(UUID id) {
         return assessments.find(id).orElseThrow(()->new ResourceNotFoundException("Tax assessment not found"));
     }
+
+    @Transactional(readOnly=true)
+    public java.util.List<TaxAssessment> list(UUID loadId, UUID customerId) {
+        if(loadId==null && customerId==null)
+            throw new BadRequestException("INVOICE_TAX_ASSESSMENT_FILTER_REQUIRED",
+                    "Tax assessment lookup must be scoped by load or customer");
+        return assessments.list(loadId,customerId);
+    }
 }

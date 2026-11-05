@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "domains": {
+    "load": {
+      "tableEnv": "LARK_BASE_LOADS_TABLE_ID",
+      "fields": [
+        {
+          "key": "id",
+          "source": "id",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_ID_FIELD",
+          "proposal": "TMS ID",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "number",
+          "source": "number",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_NUMBER_FIELD",
+          "proposal": "Load Number",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "name",
+          "source": "name",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_NAME_FIELD",
+          "proposal": "Load Name",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "status",
+          "source": "status",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_STATUS_FIELD",
+          "proposal": "Status",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "customer",
+          "source": "customer.name",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_CUSTOMER_FIELD",
+          "proposal": "Customer",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "truck",
+          "source": "assignedTruck.number",
+          "type": 1,
+          "required": false,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_TRUCK_FIELD",
+          "proposal": "Truck Number",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "dispatcher",
+          "source": "assignedDispatcher",
+          "type": 1,
+          "required": false,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_DISPATCHER_FIELD",
+          "proposal": "Dispatcher",
+          "converter": "FULL_NAME",
+          "options": []
+        },
+        {
+          "key": "deliveryDate",
+          "source": "requestedDeliveryDate",
+          "type": 5,
+          "required": false,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_DELIVERY_DATE_FIELD",
+          "proposal": "Delivery Date",
+          "converter": "UTC_MILLIS",
+          "options": []
+        },
+        {
+          "key": "deliveryZone",
+          "source": "@deliveryZone",
+          "type": 1,
+          "required": false,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_DELIVERY_ZONE_FIELD",
+          "proposal": "Delivery Time Zone",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "lifecycle",
+          "source": "@lifecycle",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_LOAD_LIFECYCLE_FIELD",
+          "proposal": "TMS Lifecycle",
+          "converter": "TEXT",
+          "options": []
+        }
+      ]
+    },
+    "driver": {
+      "tableEnv": "LARK_BASE_DRIVERS_TABLE_ID",
+      "fields": [
+        {
+          "key": "id",
+          "source": "id",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_DRIVER_ID_FIELD",
+          "proposal": "TMS ID",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "name",
+          "source": "@self",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_DRIVER_NAME_FIELD",
+          "proposal": "Full Name",
+          "converter": "FULL_NAME",
+          "options": []
+        },
+        {
+          "key": "email",
+          "source": "email",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_DRIVER_EMAIL_FIELD",
+          "proposal": "Email",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "phone",
+          "source": "phoneNumber",
+          "type": 1,
+          "required": false,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_DRIVER_PHONE_FIELD",
+          "proposal": "Phone",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "status",
+          "source": "status",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_DRIVER_STATUS_FIELD",
+          "proposal": "Status",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "salaryType",
+          "source": "salaryType",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_DRIVER_SALARY_TYPE_FIELD",
+          "proposal": "Salary Type",
+          "converter": "TEXT",
+          "options": []
+        },
+        {
+          "key": "lifecycle",
+          "source": "@lifecycle",
+          "type": 1,
+          "required": true,
+          "owner": "TMS",
+          "fieldEnv": "LARK_BASE_DRIVER_LIFECYCLE_FIELD",
+          "proposal": "TMS Lifecycle",
+          "converter": "TEXT",
+          "options": []
+        }
+      ]
+    }
+  }
+}
+

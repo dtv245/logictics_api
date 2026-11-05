@@ -1,0 +1,29 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 2.7 — UC005 Tra cứu danh sách Load
+|Người dùng|
+start
+:Mở màn hình điều phối;
+|Frontend|
+:Tải từng trang Load có giới hạn;
+|Backend|
+:Kiểm tra quyền, phân trang và sắp xếp;
+|Database|
+:Truy vấn Load theo điều kiện;
+|Backend|
+:Trả trang LoadView;
+|Frontend|
+if (Lỗi tải?) then (có)
+ :Hiển thị lỗi, cho phép thử lại;
+ stop
+else (không)
+ :Tổng hợp trang; cảnh báo nếu bị cắt;
+ |Người dùng|
+ :Nhập từ khóa hoặc chọn bộ lọc;
+ |Frontend|
+ :Lọc tập đã tải và hiển thị hàng đợi;
+ stop
+endif
+@enduml

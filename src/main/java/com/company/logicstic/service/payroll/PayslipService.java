@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.security.MessageDigest;
@@ -50,7 +52,16 @@ public class PayslipService {
   return List.copyOf(result);
  }
  @Transactional(readOnly=true)
- public List<PayslipView> mine(UUID employee) {return payslips.findByDriverIdOrderByIssuedAtDesc(employee).stream().map(this::view).toList();}
+ public Page<PayslipView> mine(UUID employee, Pageable pageable) {
+  return payslips.findPageByDriverId(employee, pageable).map(p -> new PayslipView(
+   p.getId(), p.getPayrollItemId(), p.getDriverId(), p.getIssuedAt(), p.getIssuedBy(), null,
+   "/api/payslips/" + p.getId() + "/pdf", p.getRendererVersion(), p.getPdfSha256()));
+ }
+ @Transactional(readOnly=true)
+ public List<PayslipView> mine(UUID employee) {
+  return mine(employee, org.springframework.data.domain.PageRequest.of(0, 100,
+   org.springframework.data.domain.Sort.by("issuedAt").descending().and(org.springframework.data.domain.Sort.by("id")))).getContent();
+ }
  @Transactional(readOnly=true)
  public PayslipView get(UUID id,UUID employee,boolean payrollRole) {return view(authorized(id,employee,payrollRole));}
  @Transactional(readOnly=true)

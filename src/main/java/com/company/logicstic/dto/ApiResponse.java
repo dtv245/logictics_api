@@ -3,6 +3,7 @@ package com.company.logicstic.dto;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.Page;
 
 public record ApiResponse<T>(
         boolean success,
@@ -34,6 +35,17 @@ public record ApiResponse<T>(
             HttpServletRequest request
     ) {
         return new ApiResponse<>(true, code, message, data, List.of(), ResponseMeta.from(request));
+    }
+
+    /** Keeps the established list-in-data shape and adds page metadata under meta.pagination. */
+    public static <T> ApiResponse<List<T>> successPage(Page<T> page, HttpServletRequest request) {
+        return new ApiResponse<>(true, "OK", "Request completed successfully", page.getContent(),
+                List.of(), ResponseMeta.from(request, page));
+    }
+
+    public static <T> ApiResponse<List<T>> successPageZeroBased(Page<T> page, HttpServletRequest request) {
+        return new ApiResponse<>(true, "OK", "Request completed successfully", page.getContent(),
+                List.of(), ResponseMeta.from(request, page, false));
     }
 
     public static <T> ApiResponse<T> failure(

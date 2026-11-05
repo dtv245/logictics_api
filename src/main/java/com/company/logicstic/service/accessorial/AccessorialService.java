@@ -34,6 +34,8 @@ import com.company.logicstic.repository.TripStopRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -160,13 +162,11 @@ public class AccessorialService {
     }
 
     @Transactional(readOnly = true)
-    public List<AccessorialChargeView> getAccessorialsForLoad(UUID loadId) {
+    public Page<AccessorialChargeView> getAccessorialsForLoad(UUID loadId, Pageable pageable) {
         if (!loadRepository.existsById(loadId)) {
             throw new ResourceNotFoundException("Load not found: " + loadId);
         }
-        return accessorialChargeRepository.findByLoadId(loadId).stream()
-                .map(this::toView)
-                .toList();
+        return accessorialChargeRepository.findPageByLoadId(loadId, pageable).map(this::toView);
     }
 
     public AccessorialChargeView toView(AccessorialCharge c) {

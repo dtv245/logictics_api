@@ -6,6 +6,8 @@ import com.company.logicstic.service.payroll.PayrollReconciliationService;
 import com.company.logicstic.exception.BadRequestException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
 import tools.jackson.databind.ObjectMapper;
 import java.util.*;
@@ -74,7 +76,12 @@ public class PayrollPaymentSchedulingService {
   return PayrollPaymentView.from(payment);
  }
  @Transactional(readOnly=true)
- public List<PayrollPaymentView> list(UUID itemId) {return payments.findByItemIdOrderByAttemptNumberAsc(itemId).stream().map(PayrollPaymentView::from).toList();}
+ public Page<PayrollPaymentView> list(UUID itemId, Pageable pageable) {return payments.findPageByItemId(itemId, pageable);}
+ @Transactional(readOnly=true)
+ public List<PayrollPaymentView> list(UUID itemId) {
+  return list(itemId, org.springframework.data.domain.PageRequest.of(0, 100,
+   org.springframework.data.domain.Sort.by("attemptNumber").ascending().and(org.springframework.data.domain.Sort.by("id")))).getContent();
+ }
  private void validate(SchedulePayrollPaymentRequest r) {
   if(r==null || r.idempotencyKey()==null || r.idempotencyKey().isBlank() || r.idempotencyKey().length()>120
    || r.paymentMethod()==null || !Set.of("MANUAL","BANK_TRANSFER","STRIPE").contains(r.paymentMethod())

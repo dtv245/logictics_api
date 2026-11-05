@@ -3,9 +3,12 @@ import com.company.logicstic.service.payroll.PayslipService;
 import com.company.logicstic.dto.payroll.PayslipView;
 import com.company.logicstic.repository.EmployeeRepository;
 import com.company.logicstic.exception.ForbiddenException;
+import com.company.logicstic.common.PaginationHeaders;
+import com.company.logicstic.common.PaginationValidator;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.http.*;
+import org.springframework.data.domain.Sort;
 import lombok.RequiredArgsConstructor;
 import java.util.*;
 @RestController @RequiredArgsConstructor
@@ -13,7 +16,14 @@ public class PayslipController {
  private final PayslipService payslips;
  private final EmployeeRepository employees;
  @PostMapping("/api/payroll/runs/{id}/payslips") public List<PayslipView> issue(@PathVariable UUID id,Authentication auth) {return payslips.issue(id,actor(auth));}
- @GetMapping("/api/driver/me/payslips") public List<PayslipView> mine(Authentication auth) {return payslips.mine(actor(auth));}
+ @GetMapping("/api/driver/me/payslips") public ResponseEntity<List<PayslipView>> mine(
+  Authentication auth,
+  @RequestParam(defaultValue="1") Integer page,
+  @RequestParam(defaultValue="20") Integer pageSize) {
+  var pageable=PaginationValidator.pageRequest(page,pageSize,Sort.by("issuedAt").descending());
+  var result=payslips.mine(actor(auth),pageable);
+  return ResponseEntity.ok().headers(PaginationHeaders.from(result)).body(result.getContent());
+ }
  @GetMapping("/api/payslips/{id}") public PayslipView get(@PathVariable UUID id,Authentication auth) {return payslips.get(id,actor(auth),payrollRole(auth));}
  @GetMapping(value="/api/payslips/{id}/pdf",produces="application/pdf")
  public ResponseEntity<byte[]> pdf(@PathVariable UUID id,Authentication auth) {

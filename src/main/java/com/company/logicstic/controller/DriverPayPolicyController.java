@@ -1,6 +1,7 @@
 package com.company.logicstic.controller;
 
 import com.company.logicstic.dto.ApiResponse;
+import com.company.logicstic.common.PaginationValidator;
 import com.company.logicstic.dto.payroll.DriverPayPolicyRequest;
 import com.company.logicstic.dto.payroll.DriverPayPolicyView;
 import com.company.logicstic.service.payroll.DriverPayPolicyService;
@@ -9,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -20,9 +22,15 @@ public class DriverPayPolicyController {
     private final DriverPayPolicyService service;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<DriverPayPolicyView>>> list(HttpServletRequest request) {
-        List<DriverPayPolicyView> data = service.list().stream().map(DriverPayPolicyView::from).toList();
-        return ResponseEntity.ok(ApiResponse.success(data, request));
+    public ResponseEntity<ApiResponse<List<DriverPayPolicyView>>> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            HttpServletRequest request
+    ) {
+        var pageable = PaginationValidator.lookupPageRequest(page, pageSize,
+                Sort.by("policyCode").ascending().and(Sort.by("policyVersion").descending()));
+        var data = service.list(pageable).map(DriverPayPolicyView::from);
+        return ResponseEntity.ok(ApiResponse.successPage(data, request));
     }
 
     @GetMapping("/{id}")

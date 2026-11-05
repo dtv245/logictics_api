@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.UUID;
 
 import com.company.logicstic.entity.AccessorialCharge;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,6 +18,9 @@ public interface AccessorialChargeRepository extends JpaRepository<AccessorialCh
     java.util.Optional<AccessorialCharge> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") UUID id);
 
     List<AccessorialCharge> findByLoadId(UUID loadId);
+
+    @EntityGraph(attributePaths = {"load", "trip", "tripStop"})
+    Page<AccessorialCharge> findPageByLoadId(UUID loadId, Pageable pageable);
 
     List<AccessorialCharge> findByTripId(UUID tripId);
 

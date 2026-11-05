@@ -7,6 +7,9 @@ import java.util.UUID;
 
 import com.company.logicstic.entity.TripDriverAssignment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -23,6 +26,9 @@ public interface TripDriverAssignmentRepository extends JpaRepository<TripDriver
             @Param("from") OffsetDateTime from, @Param("to") OffsetDateTime to);
 
     List<TripDriverAssignment> findByTripIdOrderByEffectiveFromDesc(UUID tripId);
+
+    @EntityGraph(attributePaths = {"trip", "driver"})
+    Page<TripDriverAssignment> findPageByTripId(UUID tripId, Pageable pageable);
 
     List<TripDriverAssignment> findByTripIdAndEffectiveToIsNull(UUID tripId);
 

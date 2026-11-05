@@ -1,0 +1,40 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 3.5 — Các lớp chính của Load
+class Load {
++id: UUID
++version: Long
++status: String
++requestedPickupBusinessDate: LocalDate
+}
+class LoadController {
++create(request)
++update(id, body)
++getById(id)
+}
+class LoadService {
++create(request)
++update(id, command)
++getById(id)
+}
+interface LoadRepository {
++findByIdForUpdate(id)
++search(...)
+}
+class Customer
+class Truck
+class Employee
+class TripStop
+LoadController --> LoadService
+LoadService --> LoadRepository
+LoadRepository ..> Load
+Load "0..*" --> "1" Customer
+Load "0..*" --> "0..1" Truck
+Load "0..*" --> "0..1" Employee
+TripStop "0..*" --> "1" Load
+@enduml

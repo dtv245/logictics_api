@@ -6,6 +6,7 @@ import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.terminal.CreateTerminalRequest;
 import com.company.logicstic.dto.terminal.TerminalView;
 import com.company.logicstic.entity.Terminal;
+import com.company.logicstic.exception.BadRequestException;
 import com.company.logicstic.exception.ConflictException;
 import com.company.logicstic.exception.ResourceNotFoundException;
 import com.company.logicstic.repository.TerminalRepository;
@@ -73,6 +74,11 @@ public class TerminalService {
     }
 
     private void applyFields(Terminal terminal, CreateTerminalRequest req) {
+        if ((req.latitude() == null) != (req.longitude() == null)) {
+            throw new BadRequestException(
+                    "TERMINAL_COORDINATES_REQUIRED",
+                    "Latitude and longitude must be provided together");
+        }
         terminal.setName(req.name());
         terminal.setCountryCode(req.countryCode() != null ? req.countryCode().trim().toUpperCase() : null);
         terminal.setType(req.type());
@@ -83,5 +89,9 @@ public class TerminalService {
         terminal.setAddressLine2(req.addressLine2());
         terminal.setAddressState(req.addressState());
         terminal.setAddressZipCode(req.addressZipCode());
+        terminal.setLatitude(req.latitude());
+        terminal.setLongitude(req.longitude());
+        terminal.setWorkingHoursOpen(req.workingHoursOpen());
+        terminal.setWorkingHoursClose(req.workingHoursClose());
     }
 }

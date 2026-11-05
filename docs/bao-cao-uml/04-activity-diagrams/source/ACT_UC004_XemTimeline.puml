@@ -1,0 +1,37 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 2.5 — UC004 Xem timeline Load
+|Người dùng|
+start
+:Chọn thẻ timeline trong chi tiết;
+|Frontend|
+:GET /api/loads/{id}/timeline;
+|Backend|
+:Kiểm tra quyền và tham số trang;
+|Database|
+:Tìm Load theo id;
+|Backend|
+if (Load tồn tại?) then (không)
+ :Trả lỗi không tìm thấy;
+ |Frontend|
+ :Hiển thị lỗi;
+ stop
+else (có)
+ |Database|
+ :Đọc trang sự kiện theo thời gian;
+ |Backend|
+ :Tạo LoadTimelineResponse;
+ |Frontend|
+ if (Có sự kiện?) then (có)
+  :Hiển thị timeline và trạng thái;
+ else (không)
+  :Hiển thị trạng thái rỗng;
+ endif
+ stop
+endif
+@enduml

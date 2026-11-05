@@ -11,6 +11,7 @@ import java.util.UUID;
 
 public interface LoadConditionReportRepository extends JpaRepository<LoadConditionReport, UUID> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"load", "inspectedBy"})
     @Query("""
             SELECT r FROM LoadConditionReport r
             WHERE (:loadId IS NULL OR r.load.id = :loadId)

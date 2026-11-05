@@ -23,8 +23,13 @@ public record ShipmentCostView(
         String currency,
         OffsetDateTime incurredAt,
         OffsetDateTime verifiedAt,
+        UUID verifiedBy,
         OffsetDateTime approvedAt,
+        UUID approvedBy,
         OffsetDateTime postedAt,
+        OffsetDateTime voidedAt,
+        UUID voidedBy,
+        String voidReason,
         String note,
         Long version
 ) {}

@@ -1,0 +1,38 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 3.8 — UC006 Xóa Load — CẦN XÁC MINH GIAO DIỆN
+actor "Người gọi được cấp quyền" as U
+control "LoadController" as C
+control "LoadService" as S
+participant "LoadRepository" as R
+database "PostgreSQL" as D
+U -> C : DELETE /api/loads/{id}
+C -> S : delete(id)
+S -> R : findByIdForUpdate(id)
+R -> D : Tìm và khóa Load
+D --> R : Load hoặc rỗng
+alt Có lịch sử ngày nghiệp vụ
+ S --> C : ApiException 409
+ C --> U : Lỗi bảo vệ lịch sử
+else Không có lịch sử
+ S -> R : existsById(id)
+ R -> D : Kiểm tra tồn tại
+ alt Không tồn tại
+  S --> C : ResourceNotFoundException
+  C --> U : Lỗi
+ else Tồn tại
+  S -> R : deleteById(id)
+  R -> D : Xóa
+  alt Lỗi ràng buộc dữ liệu
+   D --> S : Lỗi lưu; rollback
+   C --> U : Lỗi
+  else Thành công
+   S --> C : Hoàn tất
+   C --> U : 200 ApiResponse(null)
+  end
+ end
+end
+note over U,C : Chưa xác minh nút xóa được mount ở giao diện hiện tại.
+@enduml

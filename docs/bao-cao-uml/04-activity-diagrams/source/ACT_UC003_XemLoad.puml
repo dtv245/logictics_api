@@ -1,0 +1,30 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 2.4 — UC003 Xem chi tiết Load
+|Người dùng|
+start
+:Mở trang chi tiết Load;
+|Frontend|
+:GET /api/loads/{id};
+|Backend|
+:Kiểm tra quyền; yêu cầu LoadService.getById;
+|Database|
+:Tìm Load theo id;
+|Backend|
+if (Tồn tại?) then (có)
+ :Ánh xạ LoadView và trả kết quả;
+ |Frontend|
+ :Hiển thị chi tiết;
+ stop
+else (không)
+ :Trả lỗi không tìm thấy;
+ |Frontend|
+ :Hiển thị lỗi và cho phép thử lại;
+ stop
+endif
+@enduml

@@ -5,17 +5,17 @@
 | Field | Value |
 |---|---|
 | Schema Version | 1 |
-| Revision | 71 |
+| Revision | 82 |
 | Project | LogisticsX TMS |
 | Repository Root | /home/vumoi/logictics_api |
 | Execution Mode | SCOPED_TASK |
-| Last Updated | 2026-10-07T09:25:33.544820+07:00 |
-| Current Phase | 7 — Backend Development / Lark employee mapping |
+| Last Updated | 2026-11-04T07:49:32+07:00 |
+| Current Phase | 0 — Source Code Audit / Hybrid Multi-Tenant |
 | Active Role | Tech Lead |
-| Status | READY_FOR_REVIEW |
-| Next Role | Tech Lead |
-| Next Action | Review Lark mapping/profile changes and global default Checkstyle/SpotBugs failures; follow docs/lark-employee-login.md for real provider login on the matching backend build. No commit or deployment performed. |
-| Handoff Sequence | 71 |
+| Status | IN_PROGRESS |
+| Next Role | Database Engineer |
+| Next Action | Preflight found no Registry URL in the checked runtime and cannot identify the target/history. Keep Phase 1 gated until the existing Registry endpoint is available for read-only history inspection; preserve all dirty work. |
+| Handoff Sequence | 82 |
 
 ## 2. Project Snapshot
 
@@ -25,7 +25,7 @@
 - **Core Features:** Reporting, trip execution, cost ledger, settlement, payroll, rating, optimization.
 - **Technology:** Java 21, Spring Boot 4.1, JPA, Flyway, PostgreSQL.
 - **Constraints:** Preserve user worktree changes; no inferred financial or distance semantics.
-- **Scope:** Approved backend remediation replacement plan, signing-key fix, and explicitly approved Customer omitted-search / SETTLED reporting follow-ups; historical convention outputs retained.
+- **Scope:** The latest task is the user-approved Hybrid Multi-Tenant architecture, starting with Phase 0 audit. PAGINATION-001 remains independently IN_PROGRESS and all prior completed work and dirty files must be preserved.
 - **Out of Scope:** Production deployment in this task.
 - **Repository Baseline:** Existing Spring application; uncommitted Phase 0 documents, V2–V7 migrations, and implementation artifacts were already present.
 
@@ -33,28 +33,28 @@
 
 ### Current Objective
 
-- **Feature/Task ID:** LARK-LINK-001 — persistent Lark → Employee authentication
-- **Objective:** Require persistent open_id/union_id mapping; auto-link exactly one ACTIVE employee by normalized provider email, fail closed with 403, protect concurrent first login and restore nodb. Provision the user-confirmed account with the highest supported ADMIN role as a separate authorized DB action.
-- **Acceptance Gate:** Requested unit/HTTP/PG/concurrency tests, full Maven verify, Flyway clean/upgrade and packaged nodb/runtime checks; run and report Checkstyle/SpotBugs honestly, no commit with failures. Real provider login instructions delivered.
-- **Allowed Change Scope:** Lark login/repository, supporting nodb bootstrap/config/tests, version-sensitive verification fixtures/tooling, documentation/memory; disposable PostgreSQL/JAR verification and explicitly requested single-account ADMIN provisioning in working DB. No hardcoded identity, automatic admin creation, token/secret persistence, broad style rewrite or application deployment.
+- **Feature/Task ID:** HYBRID-MT-001 — Hybrid Multi-Tenant, Phase 0 audit
+- **Objective:** Audit source thực tế và ghi nhận kiến trúc hiện trạng/đích, kế hoạch, database/API và quyết định trong `docs/architecture/`; sau đó triển khai tuần tự các phase đã được người dùng chỉ định.
+- **Acceptance Gate:** Phase 0 tài liệu nhất quán với source và baseline `./mvnw test` đã chạy. Không chạy migration lên DB chưa xác minh. Phase 1 phải kiểm tra deployed Control/registry DB và Flyway history trước khi tạo migration có version; giữ nguyên flow đăng nhập và tenant migrations hiện hữu.
+- **Allowed Change Scope:** Backend Hybrid Multi-Tenant docs/code/tests/migrations trong repo backend; không ghi đè thay đổi đang có, không triển khai production, không chạy migration trên DB không xác định. Giữ nguyên PAGINATION-001 và mọi file dirty không liên quan.
 
 ### Phase Status
 
 | Phase | Primary Owner | Allowed Active Roles | Status | Outputs / Evidence |
 |---|---|---|---|---|
-| 0. Project Understanding | Product Owner | Product Owner; Business Analyst; Tech Lead | DONE | Phase 0 audit documents |
+| 0. Project Understanding | Product Owner | Product Owner; Business Analyst; Tech Lead | IN_PROGRESS | Hybrid Multi-Tenant source audit and baseline complete; Phase 1 migration awaits deployed Control/registry DB identity and Flyway history verification |
 | 1. Business Analysis | Business Analyst | Business Analyst; Product Owner; QA / Tester; Backend Developer | DONE | BE-CALC-002–004 complete; unsupported maintenance currency and combined totals are explicitly PARTIAL per plan |
 | 2. Domain Modeling | Software Architect | Software Architect; Business Analyst; Tech Lead; Database Engineer | NOT_STARTED | — |
 | 3. Database Design | Database Engineer | Database Engineer; Software Architect; Backend Developer | DONE | Approved backend schema V35 clean/V34 upgrade/validate; V34 separately clean/V33 upgrade; earlier SHA unchanged, production rollout separate |
 | 4. System Architecture | Software Architect | Software Architect; Tech Lead; Security Engineer; Database Engineer | DONE | ADR-001 and ADR-002 |
 | 5. API Design | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer; Security Engineer | NOT_STARTED | — |
 | 6. Project Structure | Tech Lead | Tech Lead; Software Architect; Backend Developer; Frontend Developer | DONE | Existing Spring layout |
-| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | READY_FOR_REVIEW | LARK-LINK-001 functional/runtime gates PASS; default global static checks FAIL, see HOFF-0071 and docs/lark-employee-login.md |
+| 7. Backend Development | Backend Developer | Backend Developer; Tech Lead; Database Engineer; QA / Tester; Security Engineer; Code Reviewer | IN_PROGRESS | PAGINATION-001 audit baseline in docs/PAGINATION_AUDIT.md; source changes and tests not started yet |
 | 8. Frontend Development | Frontend Developer | Frontend Developer; Tech Lead; QA / Tester; Security Engineer; Code Reviewer | NOT_APPLICABLE | API-only repository scope |
 | 9. Integration | Tech Lead | Tech Lead; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
 | 10. Testing | QA / Tester | QA / Tester; Backend Developer; Frontend Developer; Tech Lead | DONE | Same-source clean V38 and populated V38 clone PASS: 563 executed, 214 PG, zero skips/failures/errors; retained V35/V36/V37 upgrade fixtures; 26 Python; JAR/Flyway/JPA/API/profile identity PASS locally |
 | 11. Security Review | Security Engineer | Security Engineer; Software Architect; Backend Developer; Frontend Developer; Code Reviewer | NOT_STARTED | — |
-| 12. Performance Review | Tech Lead | Tech Lead; Database Engineer; Backend Developer; Frontend Developer; QA / Tester | NOT_STARTED | — |
+| 12. Performance Review | Tech Lead | Tech Lead; Database Engineer; Backend Developer; Frontend Developer; QA / Tester | IN_PROGRESS | Static endpoint/N+1/index audit recorded; local PostgreSQL planner estimates stale and no representative large dataset; plans pending |
 | 13. Code Review | Code Reviewer | Code Reviewer; Tech Lead; Security Engineer | NOT_STARTED | — |
 | 14. DevOps | DevOps Engineer | DevOps Engineer; Tech Lead; Security Engineer; QA / Tester | NOT_STARTED | — |
 | 15. Observability | DevOps Engineer | DevOps Engineer; Tech Lead; Backend Developer | NOT_STARTED | — |
@@ -86,13 +86,15 @@
 | FE-HANDOFF-001 | Frontend API/request/business-flow alignment | Tech Lead | DONE | docs/frontend-backend-integration-context.md; captured OpenAPI/index/notes/examples and portable ZIP | Frontend consumes context; implementation/E2E remains a separate task |
 
 | LARK-LINK-001 | User Lark mapping and explicit account provisioning request | Backend Developer | READY_FOR_REVIEW | 593 Java / 228 PG zero skips; 26 Python; V39 upgrade, executable profiles and ADMIN account confirmed; global static checks FAIL | Review source/static baseline; perform real provider login on matching build |
+| PAGINATION-001 | Pagination bounds, query efficiency, stable sorting, response compatibility | Backend Developer | IN_PROGRESS | docs/PAGINATION_AUDIT.md inventories GET list routes and current gaps; no implementation yet | Preserve as independent work; run GitNexus impact before its edits |
+| DRIVER-PROFILE-001 | Driver Profile slices 0–7, backward-compatible APIs, PII masking/RBAC, expiry warnings | Tech Lead / Backend Developer | DONE | `docs/driver-profile-plan.md`; V45–V50; expiry views, summary, expiring list, tenant-aware daily warning scan; full suite 867 tests green | Preserve unrelated PAGINATION-001; no commit/push |
 
 ## 4. Requirements and Scope
 
 ### In Scope
 
 - Execute plan tasks in verified order.
-- Latest authorized scope: LARK-LINK-001 persistence/race/nodb changes, verification and separate highest-role provisioning for the user-confirmed account.
+- Latest authorized scope: DRIVER-PROFILE-001 slices 0–7 as specified in `docs/driver-profile-plan.md`. PAGINATION-001 remains an independent active item; preserve its dirty files and worktree changes.
 
 ### Out of Scope
 
@@ -107,6 +109,9 @@
 | BE-CALC-002 | Distance-dependent metrics must not infer legacy miles | Revenue, customer balance, reconciliation | ReportController | Maven compile passed; tests not run | DONE |
 | BE-CALC-003 | OTD, transit, delay and exception metrics use requested/delivered/pickup/exception timestamps | Dedicated calculator services | ReportController | Maven compile passed; tests not run | DONE |
 | BE-CALC-004 | Legacy distance is not interpreted as miles; combined cost remains PARTIAL where currencies/sources are unreconciled | Expense and maintenance reports | ReportController | Maven compile passed; tests not run | DONE |
+| PAGINATION-001 | Every list request has a hard response cap; keep existing page bases/fields; avoid per-row queries and unstable page ordering | Core tables, payroll history, AI and sync lists | Existing ApiResponse/PagedResponse and direct Page contracts retained or compatibly extended | Audit saved first; implementation/query-count tests pending | IN_PROGRESS |
+| DRIVER-PROFILE-001 | Extend driver records incrementally; preserve legacy API, tenant isolation, self ownership and masked PII | Reuse `driver_licenses`, `documents`, `accident_reports`; new personal and HR records | Existing `/api/drivers` compatible; new management and `/api/driver/me/...` routes | Slice 1: 828; Slice 2: 836; Slice 3: 842; Slice 4: 847; Slice 5: 852; Slice 6: 860; Slice 7: 867 tests green; Newman unavailable. | DONE — all slices 0–7 |
+| HYBRID-MT-001 | Preserve tenant-per-company operations; add control and central reporting planes, provider-scoped identity and backend-computed scope | Current registry V1; tenant V1–V53 retained; no control/org/global identity/reporting schema yet | Phase 0 contracts in `docs/architecture`; no new API implemented | Current worktree `./mvnw test`: 894 tests, 0 failures/errors, 232 skipped | Phase 0 audit complete; Phase 1 awaits deployed Control/registry DB identity and Flyway history verification ; Registry preflight cannot identify configured DB/history; NOT READY |
 | BE-CALC-005–009 | State changes are command-controlled; historical assignments/snapshots are preserved | V2–V8, trip execution, timeline, snapshots | Trip execution and timeline APIs | Maven + PostgreSQL/Flyway verification | DONE |
 | BE-CALC-010–012 | Independent lifecycle, no duplicate source, actual-only/currency/mileage guards and user-authorized policy V1 | V9 costs/accessorials, V3 mileage; code-based classification V1 | Explainable profit/ratio metrics, unknown availability, currency/unallocated buckets | 100 tests, 0 failure/error, 1 legacy skip; 9 live PG cases | DONE |
 | BE-CALC-013–014 | Effective policies, immutable locks, append-only corrections and source eligibility | V10/V13 | Protected policy/settlement APIs and per-line actual cost | 141 regression tests incl.21 PG, clean/upgrade | DONE |
@@ -122,13 +127,13 @@
 
 ## 5. Architecture and Data Snapshot
 
-- **Architecture Style:** Tenant-aware Spring modular monolith; ADR-001 selects database per tenant.
-- **Modules / Boundaries:** Controller → service → repository/entity.
-- **Dependency Direction:** HTTP depends on services; services depend on repositories/entities.
-- **Authentication / Authorization:** JWT tenant claim routes to a tenant data source.
-- **Data Model / Migration:** Source latest V39; existing mapping migration bytes preserved. Clean V1→V39, populated V38→V39/checksum preservation and JPA validation verified. Working DB us_logisticsx was already V39 when inspected; only the explicitly authorized single-account Employee/ADMIN action wrote working data.
-- **API / Integration Contract:** Normalized 401/403, mapped messaging, mandatory Payment invoice/key/PENDING, metadata-only PUT, core expectedVersion and nested HTTP errors. Final local OpenAPI 140 paths and canonical hash verified. Client readiness remains unverified; frontend unchanged.
-- **Deployment / Runtime:** Dirty local JAR source/build identity and executable verified. OCI/release mismatch gates implemented; existing container/image unchanged, external restart observed and anonymous Payment still 200. This task did not rebuild/restart/deploy it; no production readiness inferred.
+- **Architecture Style:** Tenant-aware Spring modular monolith; ADR-001 selects database per tenant. User approved additive Hybrid design: isolated company DBs + Control DB + Central Reporting DB.
+- **Modules / Boundaries:** Existing Controller → service → repository/entity; Control, operational tenant routing, and reporting require isolated datasource/repository/transaction boundaries.
+- **Dependency Direction:** Existing HTTP depends on services; services depend on repositories/entities. New control/reporting services must not leak into tenant business repositories.
+- **Authentication / Authorization:** Current single default Lark provider emits one tenant JWT; claim routes one tenant data source. Platform/Operational token separation, global identity, membership and org scopes are absent.
+- **Data Model / Migration:** Tenant migration files V1–V53 exist in the worktree; registry migration V1 exists. No live deployed Control DB/Flyway history inspected. Existing migration files are preserved; no migration was run.
+- **API / Integration Contract:** Existing Lark callback and tenant-local `/api/me` remain; no context-selection or group-report APIs exist. Current frontend synthesizes only the authenticated tenant.
+- **Deployment / Runtime:** Spring Boot 4.1.1 / Java 21, PostgreSQL, Flyway. Existing registry DS is conditionally configured; deployment environment and actual DB identity need confirmation before Phase 1 migration.
 
 ## 6. Decisions
 
@@ -177,6 +182,7 @@
 | RSK-006 | CRITICAL | Existing runtime exposes anonymous Payment and lacks verified revision/key | Same image/start, Payment 200, V35 | Authorized secure rollout, explicit secret and deployed chain verification | Tech Lead / DevOps Engineer | OPEN |
 | RSK-007 | HIGH | Client lacks inspected key/version contracts | Adjacent client read-only inventory | Confirm updates before enforcement rollout | Frontend Developer / Tech Lead | OPEN |
 | RSK-008 | HIGH | Separate candidate identity/schema semantics require audit | Opaque legacy Payment UUID/client contract provenance and audit principal length | Separate scope/audit; no inferred mappings or broad schema fixes. Customer/SETTLED explicitly approved and locally verified in DEC-015/HOFF-0069. | Tech Lead / Product Owner | OPEN |
+| RSK-010 | HIGH | Current database statistics cannot validate hundred-thousand-row pagination performance | `us_logisticsx` has stale/partial reltuples and zero n_live_tup; `logistics` has reltuples -1; `TASK_DB_URL` is unset | Use disposable representative fixtures; record query counts, plans, and latency only when actually measured | Tech Lead / Database Engineer | OPEN |
 
 | RSK-009 | HIGH | Global default static analysis remains failing | Checkstyle 22,212 violations / 460 files; SpotBugs 491 findings; neither configured in project POM | Report failures; review scope/rules/baseline separately, no broad rewrite or clean-gate claim | Tech Lead | OPEN |
 
@@ -195,6 +201,8 @@
 | BLK-007 | Former fleet policy gate. | Four A directions and exact FLEET-DEC-008/009 A received/locked; implement without defaults; health unavailable already authorized. | Product Owner | RESOLVED |
 
 | BLK-008 | Deployed remediation completion gate unmet | Confirm client/key/candidate audits and authorized secure image/tenant rollout; backend local scope complete | Tech Lead / DevOps Engineer | OPEN |
+| BLK-009 | Driver Profile sensitive PII at-rest protection choice | User selected application-layer AES-256-GCM with managed keys and HMAC blind indexes; reused across all implemented PII fields | Product Owner / Tech Lead | RESOLVED |
+| BLK-010 | Employee DELETE with compliance child records may cascade-delete history | User selected history preservation; compliance FKs RESTRICT and driver DELETE returns 409 while compliance records exist | Product Owner / Tech Lead | RESOLVED |
 
 ## 8. Artifact Index
 
@@ -235,6 +243,9 @@
 | Frontend integration context | docs/frontend-backend-integration-context.md | Tech Lead | DONE | Vietnamese flows/roles/requests/response/error/cache/version/retry/UI acceptance and client gap inventory |
 | Frontend OpenAPI bundle | docs/frontend/ | Tech Lead | DONE | Source/JAR/canonical hashes match; 140 paths, 176 operations, 291 schemas, 669 refs resolved and 20 examples validated with explicit notes |
 | Portable frontend handoff | docs/frontend-backend-handoff.zip | Tech Lead | DONE | Same docs plus referenced domain/verification artifacts, integrity manifest; no credentials |
+| Pagination audit | docs/PAGINATION_AUDIT.md | Tech Lead | DONE | Current-tree GET list inventory, source-level N+1/unbounded reads, stale DB estimate caveat, and measurement plan; saved before code edits |
+| Driver Profile plan | docs/driver-profile-plan.md | Tech Lead | DONE (Slice 0) | Repo conventions, reuse candidates, seven-slice API/data/RBAC/test/Postman plan, and pending decisions recorded; no business code changed |
+| Database preflight | docs/architecture/database-preflight.md | Database Engineer | BLOCKED | Registry endpoint/history unavailable; no migration or data changes |
 
 - LARK-LINK-001: docs/lark-employee-login.md; /tmp/logisticsx-remediation-tests-on3kzg2a/maven.log; /tmp/logisticsx-regression-vx7jrvm_/maven.log; /tmp/logisticsx-lark-repackage-auj_j_au/summary.json and artifact-manifest.json; /tmp/logisticsx-artifact-2a7r1_10/summary.json; /tmp/lark-static-evidence/summary.json.
 
@@ -1740,6 +1751,240 @@
 - **Next Required Action:** Review functional source and static-check scope/baseline, then follow docs/lark-employee-login.md on the matching backend build for real Lark login and confirm persisted mapping/ADMIN authorization.
 - **Acceptance Gate:** Local implementation/runtime verified; global static checks openly FAIL and no commit/deployment inferred. Real-provider and deployed completion require their own evidence.
 - **Do Not Redo:** Preserve HOFF-0001…0070, unrelated dirty work and V1–V39 bytes. Do not rerun the completed 593-test suite without new changes/failures, recreate the account, invent Lark IDs, hardcode identity, auto-create admins, persist tokens or broadly reformat/stage.
+
+### HOFF-0072 — Tech Lead → Backend Developer
+
+- **Timestamp:** 2026-10-28T20:50:25+07:00
+- **From Role:** Tech Lead
+- **To Role:** Backend Developer
+- **Phase:** 12 — Performance Review / pagination audit
+- **Status:** DONE
+- **Objective:** Complete the source/database-baseline pagination audit before any application-code edit and hand off an actionable implementation scope.
+- **Inputs Read:** Current user request and AGENTS.md; current-tree GET controllers/services/repositories/entities/mappers; shared pagination classes; Flyway migration/index inventory; Postman presence; existing frontend pagination contract notes; test-only Hibernate statistics coverage; PostgreSQL catalog metadata.
+- **Completed:** Indexed the full dirty worktree with GitNexus; inventoried paged and unpaged GET lists, nested collections, report scans, N+1 suspects, search/index risks, page-base and response-shape conventions; saved docs/PAGINATION_AUDIT.md before code changes.
+- **Requirement IDs:** PAGINATION-001.
+- **Files and Artifacts:** docs/PAGINATION_AUDIT.md; .ai-workflow/PROJECT_MEMORY.md.
+- **Decisions:** Keep existing CRUD page numbers 1-based and AI/payroll page numbers 0-based. Existing app already has `open-in-view=false`. Do not use stale database estimates or empty-data query plans as large-table performance proof. Preserve all pre-existing dirty changes.
+- **Assumptions:** Current uncommitted AI/Lark source belongs to the user and is in scope for audit; write changes only where required for the stated pagination objective.
+- **Verification:** `node .gitnexus/run.cjs analyze --index-only` succeeded (16,278 nodes / 43,091 edges / 453 clusters / 1,141 flows) but reported incomplete flow coverage; this does not establish absence of unseen callers. PostgreSQL planner metadata read only: `us_logisticsx` estimates are partial/stale and `n_live_tup` is zero throughout; `logistics` has no usable row estimates. `PersistenceReadPostgresTest` has `hibernate.generate_statistics=true` but is disabled because TASK_DB_URL is unset; its query-count assertions were not run. No EXPLAIN ANALYZE, timing, or runtime SQL-count claim is made. Re-run `git diff --check` and the workflow validator after this append.
+- **Open Issues and Risks:** No representative 100k-row database exists in the available stats. Several GET lists have no cap; payment query parameters bypass shared validation; invoice/payment/truck/inspection/document/role/AI/profitability mapping has N+1 suspects. GitNexus process tracing is truncated, so required per-symbol impact must run before editing and be source-confirmed.
+- **Blockers:** None for implementing bounds and query-count tests. Representative EXPLAIN/latency evidence requires a disposable scaled PostgreSQL dataset.
+- **Next Required Action:** Backend Developer runs GitNexus impact on shared pagination and the first selected endpoint symbols, source-confirms the blast radius, then implements and tests one API slice at a time, beginning with payment bounds and the highest-risk unbounded lists.
+- **Acceptance Gate:** Audit document exists before any source-code modification; each implementation step preserves API bases and contracts, has a hard size bound, covers sorting/tie-breaking and query-count behavior, and records actual evidence or NOT RUN.
+- **Do Not Redo:** Preserve HOFF-0001…0071 and existing dirty changes. Do not restart the active API container or claim that planner estimates/query plans prove performance at scale. Do not repeat this source inventory absent new endpoint changes.
+
+
+### HOFF-0073 — Tech Lead → Product Owner
+
+- **Timestamp:** 2026-10-30T15:51:01+07:00
+- **From Role:** Tech Lead
+- **To Role:** Product Owner
+- **Phase:** 0 — Driver Profile discovery / Slice 0
+- **Status:** DONE
+- **Objective:** Complete repository audit and produce an implementation-ready plan for the requested driver profile slices without changing business code.
+- **Inputs Read:** Current driver-profile request and AGENTS.md; project workflow skill/playbook; Maven/application configuration, tenant Flyway migrations, base entity/auditing, ID/security/error/pagination conventions, driver/license/document/trip/accident/HOS/notification models/controllers, test/Postman structure, current worktree status, and applicable official Vietnam legal sources.
+- **Completed:** Slice 0 documentation artifact created at `docs/driver-profile-plan.md` with current conventions, reuse mapping, proposed tables/routes/RBAC/privacy/pagination/expiry behavior, migration sequence, per-slice tests/Postman/docs gates, and legal reference links. Preserved all existing dirty files. No business source, migration, tests, or Postman changed.
+- **Requirement IDs:** DRIVER-PROFILE-001.
+- **Files and Artifacts:** `docs/driver-profile-plan.md`; `.ai-workflow/PROJECT_MEMORY.md`.
+- **Decisions:** Keep `EmployeeView`, `CreateEmployeeRequest`, and existing routes backward-compatible; reuse `driver_licenses`, `Document`, and `AccidentReport`; derive current trip from effective assignment; use Flyway tenant migrations and UUID/audit base. Two user decisions remain open: PII at-rest protection and hard-delete behavior with driver compliance history.
+- **Assumptions:** Tentative migration numbers V45–V51 must be recalculated at each slice against the then-current tree. Legacy license expiry timestamp semantics require data review. INFO-only 30/7-day expiry logs are the current fallback because no recipient-aware notification creation/scheduler exists.
+- **Verification:** Read-only repo audit completed. GitNexus impact for DriverController could not resolve because the checked-in/index database version mismatches the available runner (v42/v40), producing `risk: UNKNOWN`; this is recorded as unresolved and no code edit proceeded. `docs/driver-profile-plan.md` is the Slice 0 artifact. Maven/Newman tests were not run because Slice 0 changed no code.
+- **Open Issues and Risks:** Application-layer encryption requires approved key management and rotation design. `driver_licenses.employee_id` currently cascades on employee deletion; protecting compliance history changes legacy DELETE behavior. These are explicit decision gates, not assumed defaults.
+- **Blockers:** User decision on (1) A — mask at API and rely on environment-managed database/storage encryption, or B — add application-layer encryption with managed key/rotation; and (2) A — retain cascade delete, or B — restrict hard deletion and return 409 while driver history exists.
+- **Next Required Action:** User selects both options; then Backend Developer starts Slice 1, rechecks the migration head, runs GitNexus impact for edited symbols and proceeds one tested slice at a time.
+- **Acceptance Gate:** Preserve legacy API; implement each slice with validation, tenant/driver ownership, mask tests, role tests, PostgreSQL migration/constraint checks, Postman/Newman and full `./mvnw test`; continue automatically only after a green suite.
+- **Do Not Redo:** Preserve HOFF-0001…0072, PAGINATION-001 and all pre-existing dirty changes. Do not use GitNexus `UNKNOWN` as an all-clear, edit V1–V44, duplicate existing license/document/accident domains, run tests for documentation-only Slice 0, or commit/push.
+
+### HOFF-0074 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-30T16:28:07+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / Driver Profile Slice 1
+- **Status:** DONE
+- **Objective:** Implement and verify driving licenses, health checks, and driver certifications using existing domains and the selected PII protection/history decisions.
+- **Inputs Read:** Driver profile plan, V45/schema and existing employee/license/document modules, GitNexus impact findings, focused Slice 1 tests, and full Maven suite output.
+- **Completed:** V45 and additive DocumentView.expiryDate; license, health-check, and certification repositories/DTOs/mappers/services/controllers; masked and ADMIN-sensitive routes; driver self read-only routes; encryption/backfill and unique blind indexes; compliance delete restriction/deactivation; Postman and plan updates.
+- **Requirement IDs:** DRIVER-PROFILE-001 Slice 1; decisions 1B and 2B.
+- **Files and Artifacts:** V45, driver license/health-check/certification source and tests, DocumentView, SecurityConfig, DatabaseFailures, Postman collections/generator, and docs/driver-profile-plan.md.
+- **Decisions:** Application-layer AES-GCM plus HMAC blind index; compliance rows restrict employee hard-delete and individual delete endpoints deactivate.
+- **Assumptions:** Existing deployment provisions the managed encryption/index keys before rollout.
+- **Verification:** ./mvnw test BUILD SUCCESS, 828 tests, 0 failures/errors, 232 skipped. Slice-specific 11 tests green. Newman was unavailable and localhost API was unavailable for collection execution.
+- **Open Issues and Risks:** GitNexus impact showed HIGH for reused DriverLicense/Document and HIGH for DatabaseFailures; impact findings were reported, source was checked, and changes were additive. git diff --check may still report pre-existing Lark EOF whitespace.
+- **Blockers:** None for Slice 1; Newman smoke execution is unavailable because Newman is not installed.
+- **Next Required Action:** Continue Slice 2 only after the full suite is green; do not commit/push.
+- **Acceptance Gate:** Preserve old driver APIs, protect cleartext credential data, pass PostgreSQL/security/service tests, update Postman/docs, and pass the full Maven suite before Slice 2.
+- **Do Not Redo:** Keep V45 immutable; preserve all unrelated dirty work and PAGINATION-001.
+
+### HOFF-0075 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-30T16:37:58+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / Driver Profile Slice 2
+- **Status:** DONE
+- **Objective:** Add personal driver profile and emergency contacts while preserving privacy, driver ownership, and compatibility with the existing employee API.
+- **Inputs Read:** Slice 2 plan, V46 migration/entity mappings, security/current-user services, encryption implementation, test fixtures, GitNexus impacts, focused test results, and full Maven suite output.
+- **Completed:** V46 tables; profile upsert/read and ADMIN-only sensitive endpoint; application encryption and HMAC indexes for CCCD/MST; masked manager/self views; paged emergency-contact CRUD/deactivation with one active primary; Postman synthetic profile and self-service requests; updated plan.
+- **Requirement IDs:** DRIVER-PROFILE-001 Slice 2; decisions 1B and 2B.
+- **Files and Artifacts:** DriverProfile, DriverEmergencyContact, related DTO/repository/mapper/service/controller classes; SecurityConfig, DatabaseFailures; V46; Slice 2 service/integration tests; Postman generator and collections; docs/driver-profile-plan.md.
+- **Decisions:** Employee row is pessimistically locked for serialized contact-primary changes. Personal profile/contact FKs cascade on employee deletion; compliance evidence remains restricted by Slice 1 FKs. Omitted/null or same masked CCCD/MST preserves encrypted data; altered mask is rejected. Sensitive full profile view is ADMIN-only and no-store.
+- **Assumptions:** Each database remains tenant-isolated, so keyed blind-index uniqueness is scoped to that tenant. Profile PII is optional; omission during PUT preserves existing identifiers.
+- **Verification:** Focused tests green (10 unit, 6 PostgreSQL/Flyway/MockMvc integration); full ./mvnw test BUILD SUCCESS, 836 tests, 0 failures/errors, 232 skipped. Postman generator succeeded; main collection, three parts, and environment parsed as valid JSON. Newman is not installed. git diff --check reported one existing blank line at EOF in unrelated LarkBaseService.java; left unchanged.
+- **Open Issues and Risks:** Slice 3 and later remain. No Newman smoke run in this environment. Preserve unrelated worktree changes and the separate PAGINATION-001 task.
+- **Blockers:** None to start Slice 3. Newman verification requires the CLI to be available.
+- **Next Required Action:** Start Slice 3 (contracts and insurance), run GitNexus impact before edits, and maintain the full-suite gate. No commit/push.
+- **Acceptance Gate:** Preserve legacy endpoints and compliance history; mask/encrypt identifiers; validate ownership/RBAC, PostgreSQL migration and constraints, unit/API tests, Postman/docs; full Maven suite must pass.
+- **Do Not Redo:** Keep V45/V46 immutable; retain backward compatibility and 1B/2B decisions.
+
+### HOFF-0076 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-30T16:48:30+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / Driver Profile Slice 3
+- **Status:** DONE
+- **Objective:** Add employment-contract and insurance history APIs with retained history, role restrictions, driver self reads, and encrypted identifiers.
+- **Inputs Read:** Driver-profile plan; current contract/insurance/rating domains from GitNexus; SecurityConfig, DriverService delete flow, DocumentRepository and DriverPiiCipher source; PostgreSQL/Flyway tests; focused and full Maven output.
+- **Completed:** V47 schema and entities; contract/insurance DTOs, repositories, mappers, services and controllers; ADMIN/PAYROLL/PAYROLL_MANAGER access and ADMIN-only sensitive insurance view; driver self read-only lists; encrypted BHXH/BHYT identifiers; employee hard-delete checks; Postman requests and docs.
+- **Requirement IDs:** DRIVER-PROFILE-001 Slice 3; decisions 1B and 2B.
+- **Files and Artifacts:** V47; EmploymentContract and DriverInsurance source; controllers, services, repositories, DTOs, mappers; SecurityConfig, DriverService, DatabaseFailures; service and PostgreSQL integration tests; Postman generator/collections; docs/driver-profile-plan.md.
+- **Decisions:** Contract types are open entity strings constrained by request/DB validation to PROBATION/FIXED_TERM/INDEFINITE. INDEFINITE has no expiry; fixed-term/probation requires an expiry. Contract and insurance DELETE deactivate; employee FK restrict preserves history. Insurance PII uses AES-GCM plus non-unique HMAC indexes so records can retain repeated values across periods. Self views remain masked.
+- **Assumptions:** Roles managing HR/payroll records are ADMIN, PAYROLL, and PAYROLL_MANAGER; drivers receive read-only masked lists.
+- **Verification:** Focused tests green (4 service unit and 8 PostgreSQL/Flyway/MockMvc integration); unique-index registry test green after additive contractNumber mapping; full ./mvnw test BUILD SUCCESS, 842 tests, 0 failures/errors, 232 skipped. Postman generator succeeded and all 5 JSON files parsed. Newman unavailable.
+- **Open Issues and Risks:** GitNexus process coverage remains incomplete; SecurityConfig impact LOW, DriverPiiCipher MEDIUM (18 callers), DatabaseFailures HIGH (30 callers, one additive registry mapping only), DriverService class LOW (2 controller references; exact delete method symbol unresolved and source checked). No Newman smoke run.
+- **Blockers:** None to start Slice 4.
+- **Next Required Action:** Run GitNexus impact before Slice 4 edits; preserve all unrelated dirty work and PAGINATION-001; no commit/push.
+- **Acceptance Gate:** Preserve legacy API, encrypt/mask sensitive identifiers, enforce role and owner boundaries, validate PostgreSQL migration/FK/constraints and CRUD lifecycle, update Postman/docs, pass full Maven suite.
+- **Do Not Redo:** Keep V45–V47 immutable and preserve decisions 1B/2B.
+
+### HOFF-0077 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-30T16:56:45+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / Driver Profile Slice 4
+- **Status:** DONE
+- **Objective:** Add dependent/tax deduction records and bank-account history with encryption, masking, ownership, role rules, and retained history.
+- **Inputs Read:** Driver-profile plan; V48 migration/schema; existing DriverPiiCipher, employee locking/deletion, authorization, paging, Postman generator; GitNexus impact results; focused and full Maven outputs.
+- **Completed:** V48 `driver_dependents` and `driver_bank_accounts`; entity/repository/DTO/mapper/service/controller implementations; sensitive ADMIN-only no-store views; read-only masked `/api/driver/me/dependents` and `/bank-accounts`; employee deletion blocks on either history table; Postman CRUD and self requests; docs.
+- **Requirement IDs:** DRIVER-PROFILE-001 Slice 4; decisions 1B and 2B.
+- **Files and Artifacts:** V48; dependent/account entity, repository, DTO, mapper, service and controllers; `SecurityConfig`, `DriverService`, `DatabaseFailures`; unit and PostgreSQL/Flyway/MockMvc integration tests; Postman generator/collections/environment; `docs/driver-profile-plan.md`.
+- **Decisions:** CCCD/MST and bank numbers use existing application AES-GCM and field-scoped HMAC. HMAC indexes are non-unique to support history. Employee FK uses RESTRICT; resource DELETE deactivates only. Employee row lock serializes setting the sole active primary account; database partial unique index remains the race guard. Sensitive cleartext is ADMIN-only and no-store; driver self routes are read-only.
+- **Assumptions:** Dependent IDs/tax codes may recur in distinct dependent/history records; no unique constraint was added. Bank numbers are normalized to uppercase without spaces/hyphens before encryption.
+- **Verification:** Focused suite green (13 tests: 2 dependent unit, 1 bank unit, 10 PostgreSQL/Flyway/MockMvc integration); full `./mvnw test` BUILD SUCCESS, 847 tests, 0 failures/errors, 232 skipped. Flyway applied/validated V1–V48. Postman generator succeeded and all five JSON artifacts parsed. Newman unavailable. One first focused run exposed malformed JSON in the new test helper and an invalid-account fixture that was actually allowed by the DTO; both fixtures were corrected before the green run.
+- **Open Issues and Risks:** GitNexus process coverage remains incomplete. `DatabaseFailures` impact HIGH (30 callers); the only Slice 4 change was one additive unique-index mapping for the primary bank index. `DriverPiiCipher` impact MEDIUM; reused without modification. Newman collection execution remains unavailable.
+- **Blockers:** None to start Slice 5.
+- **Next Required Action:** Refresh GitNexus index, run impact on Slice 5 driver listing/security/service touchpoints, then implement operational status and availability filtering; preserve unrelated dirty changes and PAGINATION-001. No commit/push.
+- **Acceptance Gate:** Preserve old `/api/drivers` fields, enforce tenant/self/RBAC boundaries, avoid duplicate current-trip state, validate migration/FK/list query behavior, update Postman/docs, and pass full Maven suite.
+- **Do Not Redo:** Keep V45–V48 immutable and preserve decisions 1B/2B.
+
+### HOFF-0078 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-30T17:11:30+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / Driver Profile Slice 5
+- **Status:** DONE
+- **Objective:** Add a separate operational availability/status resource and an additive driver directory filter while retaining old API response shapes.
+- **Inputs Read:** Driver-profile plan, V45–V49 migrations, existing trip-assignment semantics, employee directory/security and pagination conventions, Postman generator, GitNexus impacts, focused/full Maven reports.
+- **Completed:** V49 `driver_operational_statuses`; operational-status admin/self read routes; bounded and whitelisted `availability` filter; derived non-ambiguous current trip ID; tests, Postman, and docs. Added the new V49 unique constraint to `DatabaseFailures` mapping after GitNexus flagged HIGH shared impact; mapping-only change preserves other classifications.
+- **Files and Artifacts:** V49; `DriverOperationalStatus` entity/repository/DTO/mapper/service/controllers; `DriverDirectoryRepository`; additive `DriverService.search` and `DriverController` filter; self security matcher; unit/PostgreSQL tests; Postman generator/collections; `DatabaseFailures`; driver-profile docs.
+- **Requirement IDs:** DRIVER-PROFILE-001 Slice 5; decisions 1B and 2B.
+- **Decisions:** Keep status separate from `Employee.status`; return `EmployeeView` unchanged; derive `currentTripId` only for exactly one active assignment; store optional default vehicle as a separate preference; operational status employee FK cascades because it is not compliance history.
+- **Assumptions:** `lastKnownLocation` API is represented by latitude/longitude/update time; leave balance remains nullable until an HR source exists. A blank search string means no text filter in the availability branch.
+- **Verification:** Focused Slice 5/dependent/bank tests green (18); full `./mvnw test`: 852 tests, 0 failures, 0 errors, 232 skipped. Postman JSON rebuilt/parsed. Newman unavailable. `git diff --check` reports only the existing `LarkBaseService.java` EOF whitespace finding.
+- **Open Issues and Risks:** GitNexus coverage remains incomplete. New DriverDirectoryRepository was absent from the graph; source search confirmed its sole service caller. DriverController graph impact UNKNOWN due Spring route binding; source confirms the only endpoint entry. `DatabaseFailures` impact HIGH (30 callers), limited edit was additive mapping for the new constraint. No other failures found.
+- **Blockers:** None to start Slice 6.
+- **Next Required Action:** Refresh GitNexus index and impact `AccidentReport`, its controller/service/repository, `SecurityConfig`, and driver deletion path; reuse accident records and add only the missing confirmed-violation model. Preserve unrelated dirty work/PAGINATION-001; no commit/push.
+- **Acceptance Gate:** Keep HOS/provider telemetry separate from confirmed violations, preserve accident history, apply role/tenant/employee ownership checks, verify migration/API/Postman and full suite before advancing.
+- **Do Not Redo:** Keep V45–V49 immutable and preserve decisions 1B/2B.
+
+### HOFF-0079 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-30T17:25:20+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / Driver Profile Slice 6
+- **Status:** DONE
+- **Objective:** Add confirmed driver violations and expose the existing accident-report aggregate without duplicating provider feeds or hard-deleting history.
+- **Inputs Read:** Driver-profile plan, V1 accident/document/trip schema, V50 violation migration, AccidentReport/HosViolation impact reports, Document/assignment/employee repository semantics, security route rules, Postman generator, focused/full test reports.
+- **Completed:** V50 `driver_violations`; violation CRUD/inactivation; paged accident CRUD/cancellation over existing `accident_reports`; owner/trip/document validation; safe accident projection and linked document IDs; service/controller/PostgreSQL tests; Postman and docs.
+- **Files and Artifacts:** V50; `DriverViolation` entity/repository/DTO/mapper/service/controller; additive `AccidentReportProfileRepository`, `DriverAccidentService`, DTO/mapper/controller using existing `AccidentReport`, `Document` and assignment entities; unit and PostgreSQL/MockMvc tests; Postman folder 07; driver-profile docs.
+- **Requirement IDs:** DRIVER-PROFILE-001 Slice 6; decisions 1B and 2B.
+- **Decisions:** Keep HOS/behavior provider feeds separate. Employee FK on confirmed violation is RESTRICT; trip/document links use SET NULL. Existing accident table/entity is reused unchanged; request accepts one document ID but response lists all linked document IDs. DELETE deactivates violations or sets accident status CANCELLED. Accident View excludes signature, statement, police officer identity, and review notes. No driver self route was added because the Slice 6 contract is management-only.
+- **Assumptions:** Existing `/api/drivers/**` matcher provides ADMIN/DISPATCHER authorization. Trip associations are validated against assignment history at event time. Existing accident driver FK is already RESTRICT, preserving rows on employee deletion.
+- **Verification:** Focused suite green (19: 13 PostgreSQL/Flyway/MockMvc and 6 unit); full `./mvnw test`: 860 tests, 0 failures/errors, 232 skipped. Postman generator succeeded; all five JSON files parsed. Newman unavailable.
+- **Open Issues and Risks:** GitNexus impact for AccidentReport and HosViolation was HIGH; neither existing entity/feed was modified. GitNexus context MCP returned a storage-version mismatch; CLI impacts and source search were used. Graph process coverage remains incomplete. No functional blocker found.
+- **Blockers:** None to start Slice 7.
+- **Next Required Action:** Refresh GitNexus index and impact DriverLicenseView/Mapper/Service, DriverHealthCheckView, DriverCertificationView, contract/insurance views, DocumentView/Controller, SecurityConfig, and repository queries before adding expiryStatus, profile summary, expiring endpoint, and daily scanner. Preserve unrelated dirty work/PAGINATION-001; no commit/push.
+- **Acceptance Gate:** Configure 30-day default expiry threshold, compute statuses in Asia/Ho_Chi_Minh, support days/type paging, include every expiry-bearing view, and ensure daily logs contain no PII; then run focused and full test suite.
+- **Do Not Redo:** Keep V45–V50 immutable and preserve decisions 1B/2B.
+
+### HOFF-0080 — Backend Developer → Tech Lead
+
+- **Timestamp:** 2026-10-30T23:25:51+07:00
+- **From Role:** Backend Developer
+- **To Role:** Tech Lead
+- **Phase:** 7 — Backend Development / Driver Profile Slice 7
+- **Status:** DONE
+- **Objective:** Complete driver expiry status, profile summary, expiring list, and daily warning scan while preserving the legacy driver API.
+- **Inputs Read:** Driver-profile plan; GitNexus refreshed index and impacts for expiry Views/mappers/document service; tenant registry/data-source routing; V45–V50 tables and query conventions; focused/full Surefire reports.
+- **Completed:** Added configured `expiryStatus` to each expiry-bearing driver/document View; `GET /api/drivers/{driverId}/profile-summary`; paged `GET /api/drivers/expiring?days=&type=`; aggregate counts and compliance statuses; daily 30/7-day log scan using temporary tenant data sources; environment configuration, Postman requests, docs and tests.
+- **Files and Artifacts:** New expiry enum/calculator/DTOs/repositories/services/controller/scheduler configuration/job; additive changes to existing View/mappers and `DocumentService`; `application.yml`, `.env.example`; driver-profile PostgreSQL integration and expiry unit tests; Postman generator/collections/environment; `docs/driver-profile-plan.md`.
+- **Requirement IDs:** DRIVER-PROFILE-001 Slice 7; decisions 1B and 2B.
+- **Decisions:** No migration because Slice 7 stores no derived status or reminder state. Expiry window uses the configured timezone (default Asia/Ho_Chi_Minh) and warning days (default 30). Expiring results use a stable SQL order and a fixed type allowlist. Summary counts include inactive/history rows, while current statuses include only active/current records; upcoming summary is capped at 50. Since notifications have no recipient/create API, the scheduled job logs only tenant/type/record UUID/days, at exact 30 and 7 day thresholds. Multi-tenant scans use one temporary datasource per active registry entry and close it before moving on.
+- **Assumptions:** `/api/drivers/**` existing matcher is the management authorization boundary (ADMIN/DISPATCHER); driver users cannot access these admin/dispatcher summary routes. Documents already linked to a dedicated credential/contract record are not emitted twice as standalone document expiry items.
+- **Verification:** Focused new coverage: 7 tests, all pass (6 unit + 1 PostgreSQL/Flyway/MockMvc integration). Full `./mvnw -q test`: 867 tests, 0 failures, 0 errors, 232 skipped. Postman generator succeeded; collection, Part 1–3 and environment parse as JSON. Newman is unavailable. `git diff --check` reports only the pre-existing blank line at EOF in `LarkBaseService.java`.
+- **Open Issues and Risks:** GitNexus showed CRITICAL upstream impact on several DTO/mappers because of broad shared-response graph links; existing fields were retained, all direct constructor/mapping call sites were checked, additions are append-only, and focused/full regression suites passed. GitNexus whole-flow coverage remains incomplete. No functional blocker found.
+- **Blockers:** None for DRIVER-PROFILE-001.
+- **Next Required Action:** Feature complete. Preserve PAGINATION-001 and all unrelated dirty work; no commit/push.
+- **Acceptance Gate:** All slices 0–7 complete; PostgreSQL/Flyway/API/RBAC/unit coverage and full Maven suite green; Postman JSON validated; documentation and handoff updated.
+- **Do Not Redo:** Keep V45–V50 immutable and preserve decisions 1B/2B.
+
+
+### HOFF-0081 — Software Architect → Tech Lead
+
+- **Timestamp:** 2026-11-04T14:40:00+07:00
+- **From Role:** Software Architect
+- **To Role:** Tech Lead
+- **Phase:** 0 — Source Code Audit / Hybrid Multi-Tenant
+- **Status:** DONE
+- **Objective:** Audit the actual frontend/backend structure and document the user-approved Hybrid Multi-Tenant target without disturbing existing work.
+- **Inputs Read:** Backend and frontend git status; Spring Security/JWT/Lark OAuth; TenantContext/filter/routing/provisioning; datasource and Flyway config; registry and tenant migrations; tenant entities/repositories; frontend auth/context code; existing ADRs; Maven test reports.
+- **Completed:** Added six architecture documents covering current state, target architecture, implementation sequence, database design, API design, and accepted decisions. Confirmed database-per-tenant operational flow remains active; current Lark login uses one configured default tenant; registry DB only holds the tenant registry; no global identity/org scope/reporting/outbox/group report plane exists.
+- **Files and Artifacts:** `docs/architecture/current-state.md`; `target-architecture.md`; `implementation-plan.md`; `database-design.md`; `api-design.md`; `decisions.md`.
+- **Requirement IDs:** HYBRID-MT-001 / Phase 0.
+- **Decisions:** Preserve tenant context/routing/JWT filter/provisioning and all tenant migrations. Current worktree has tenant V1–V53 and registry V1; do not infer deployed Control DB migration version. No production or unidentified database migration was run.
+- **Assumptions:** Existing registry database may be the seed Control DB, but deployed DB identity/schema and Flyway history were not available for verification. No mapping from current tenant-local Lark users to global users is inferred.
+- **Verification:** `./mvnw test` PASS, exit 0: 894 tests, 0 failures, 0 errors, 232 skipped. Docs `git diff --check` PASS.
+- **Open Issues and Risks:** Worktrees contain unrelated dirty files and tenant migrations V41–V53; preserved. Control DB deployment target/history, owner credentials, and backup/recovery state are unknown, so Phase 1 versioned migration is gated.
+- **Blockers:** Confirm the exact deployed Control/registry database and its Flyway history before migration numbering or execution.
+- **Next Required Action:** Verify Control DB identity and schema history, then plan an additive Control-plane migration separately from tenant V1–V53; retain old authentication until new membership flow is proven.
+- **Acceptance Gate:** Control schema is additive/idempotent for a verified target, tested on disposable PostgreSQL, and leaves tenant schemas and login compatibility intact.
+- **Do Not Redo:** Preserve existing dirty work, PAGINATION-001, tenant V1–V53, and registry V1.
+
+
+### HOFF-0082 — Database Engineer → Tech Lead
+
+- **Timestamp:** 2026-11-04T07:49:32+07:00
+- **From Role:** Database Engineer
+- **To Role:** Tech Lead
+- **Phase:** 1 — Database Preflight / Hybrid Multi-Tenant
+- **Status:** BLOCKED
+- **Objective:** Identify the existing Registry DB and read its Flyway state before Phase 1 schema work, with no schema/data changes.
+- **Inputs Read:** Git status; application/profile YAML; root `.env` key names and sanitized DB paths; `.env.example`; effective root Compose config and running container metadata; Registry/tenant datasource and migration services; Registry migration files; read-only metadata queries on configured-name candidates.
+- **Completed:** Counted 465 existing worktree entries. Root `.env` DB_URL resolves to `logistics`; Compose API resolves to `us_logisticsx`; PostgreSQL bootstrap defaults to `logistics`. Tenancy is disabled and Registry URL absent. `logistics`/`us_logisticsx` lack `tenant_registry`; separate `master_logisticsx` lacks registry and Flyway history. Source contains Registry V1 while configured Flyway location is tenant-only. Added `docs/architecture/database-preflight.md`.
+- **Files and Artifacts:** `docs/architecture/database-preflight.md`; this handoff.
+- **Requirement IDs:** HYBRID-MT-001 — Database Preflight.
+- **Decisions:** Reuse existing Registry DB as Control DB; no new Control DB. No migration, DDL, application-row read, credential output, or production operation.
+- **Assumptions:** `master_logisticsx` is not treated as Registry without application endpoint evidence.
+- **Verification:** Effective compose/container config and read-only SQL confirmed candidate database names and table presence. Registry version/status/checksum rows were not queried because the target was not identified. No build/test was run.
+- **Open Issues and Risks:** Exact Registry endpoint and its `flyway_schema_history` are unknown; main Compose DB defaults disagree. Phase 1 is not ready.
+- **Blockers:** Make the existing Registry endpoint available through local secret-managed config and identify its host/service and DB name; do not send credentials.
+- **Next Required Action:** Repeat the read-only Registry history/checksum preflight once the correct DB is identifiable; then decide readiness.
+- **Acceptance Gate:** Correct Registry DB confirmed; history has no unexplained failed migration/checksum mismatch; pending versions are documented.
+- **Do Not Redo:** Preserve all existing dirty files and tenant migrations V41–V53; do not create a Control DB or run migration in this task.
 
 ## 10. Final Readiness
 

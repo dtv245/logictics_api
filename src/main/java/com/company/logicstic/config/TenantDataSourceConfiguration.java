@@ -27,7 +27,7 @@ public class TenantDataSourceConfiguration {
         return new TenantRoutingDataSource();
     }
 
-    @Bean
+    @Bean(name = {"tenantRegistryDataSource", "controlDataSource"})
     public DataSource tenantRegistryDataSource(TenancyProperties properties) {
         TenancyProperties.Registry registry = properties.getRegistry();
         String rawUrl = registry.getUrl();
@@ -55,6 +55,18 @@ public class TenantDataSourceConfiguration {
     public JdbcTemplate tenantRegistryJdbcTemplate(
             @Qualifier("tenantRegistryDataSource") DataSource tenantRegistryDataSource) {
         return new JdbcTemplate(tenantRegistryDataSource);
+    }
+
+    @Bean
+    @Primary
+    public JdbcTemplate tenantJdbcTemplate(@Qualifier("dataSource") DataSource tenantDataSource) {
+        return new JdbcTemplate(tenantDataSource);
+    }
+
+    @Bean
+    public JdbcTemplate controlJdbcTemplate(
+            @Qualifier("controlDataSource") DataSource controlDataSource) {
+        return new JdbcTemplate(controlDataSource);
     }
 
 }

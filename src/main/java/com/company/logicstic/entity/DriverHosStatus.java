@@ -52,6 +52,7 @@ public class DriverHosStatus {
     private Integer cycleMinutesRemaining;
 
     @Column(name = "time_until_break_required", columnDefinition = "interval")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.INTERVAL_SECOND)
     private Duration timeUntilBreakRequired;
 
     @Column(name = "is_in_violation", nullable = false)

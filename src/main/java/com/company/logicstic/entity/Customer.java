@@ -47,6 +47,14 @@ public class Customer extends BaseAuditableEntity {
     @Column(name = "is_vat_exempt", nullable = false)
     private Boolean isVatExempt;
 
+    /** Agreed payment term in days (0 = due on receipt); null when not agreed. */
+    @Column(name = "payment_terms_days")
+    private Integer paymentTermsDays;
+
+    /** ISO 4217 currency used for quotes to this customer; null when not configured. */
+    @Column(name = "default_currency", length = 3)
+    private String defaultCurrency;
+
     @Column(name = "address_city", columnDefinition = "text")
     private String addressCity;
 

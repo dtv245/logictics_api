@@ -28,4 +28,11 @@ public class TaxAssessmentController {
     public ResponseEntity<ApiResponse<TaxAssessment>> get(@PathVariable UUID id,HttpServletRequest request) {
         return ResponseEntity.ok(ApiResponse.success(assessments.get(id),request));
     }
+    @GetMapping
+    public ResponseEntity<ApiResponse<java.util.List<TaxAssessment>>> list(
+            @RequestParam(required = false) UUID loadId,
+            @RequestParam(required = false) UUID customerId,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(assessments.list(loadId,customerId),request));
+    }
 }

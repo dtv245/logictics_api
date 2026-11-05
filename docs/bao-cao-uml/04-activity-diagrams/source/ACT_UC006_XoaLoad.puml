@@ -1,0 +1,35 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 2.8 — UC006 Xóa Load — CẦN XÁC MINH GIAO DIỆN
+|Người gọi được cấp quyền|
+start
+:Gửi yêu cầu xóa Load theo id;
+|Backend|
+:Kiểm tra quyền;
+|Database|
+:Tìm Load với khóa ghi;
+|Backend|
+if (Có lịch sử ngày nghiệp vụ?) then (có)
+ :Trả lỗi xung đột 409;
+ stop
+else (không)
+ if (Load tồn tại?) then (không)
+  :Trả lỗi không tìm thấy;
+  stop
+ else (có)
+  |Database|
+  :Xóa Load;
+  if (Vi phạm ràng buộc dữ liệu?) then (có)
+   |Backend|
+   :Trả lỗi; rollback;
+   stop
+  else (không)
+   |Backend|
+   :Trả kết quả thành công;
+   stop
+  endif
+ endif
+endif
+@enduml

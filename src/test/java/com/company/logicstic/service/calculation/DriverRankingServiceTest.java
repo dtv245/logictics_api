@@ -47,7 +47,7 @@ class DriverRankingServiceTest {
     @Test
     @DisplayName("Returns empty drivers list when no drivers exist")
     void testGetRankingNoDrivers() {
-        when(employeeRepository.findAll()).thenReturn(List.of());
+        when(employeeRepository.findAllByEmployeeType(EmployeeType.DRIVER)).thenReturn(List.of());
 
         DriverRankingReport report = rankingService.getRanking(
                 LocalDate.of(2026, 9, 16),
@@ -69,15 +69,17 @@ class DriverRankingServiceTest {
     void testGetRankingCalculationAndSorting() {
         Employee driver1 = new Employee();
         driver1.setId(UUID.randomUUID());
+        driver1.setEmployeeType(EmployeeType.DRIVER);
         driver1.setFirstName("Alice");
         driver1.setLastName("Smith");
 
         Employee driver2 = new Employee();
         driver2.setId(UUID.randomUUID());
+        driver2.setEmployeeType(EmployeeType.DRIVER);
         driver2.setFirstName("Bob");
         driver2.setLastName("Jones");
 
-        when(employeeRepository.findAll()).thenReturn(List.of(driver1, driver2));
+        when(employeeRepository.findAllByEmployeeType(EmployeeType.DRIVER)).thenReturn(List.of(driver1, driver2));
 
         // Trips and assignments
         Trip trip1 = new Trip();

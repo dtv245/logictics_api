@@ -10,6 +10,7 @@ import com.company.logicstic.dto.trip.AssignDriverRequest;
 import com.company.logicstic.dto.trip.TripDriverAssignmentView;
 import com.company.logicstic.dto.trip.TripStopView;
 import com.company.logicstic.entity.Employee;
+import com.company.logicstic.entity.EmployeeType;
 import com.company.logicstic.entity.Trip;
 import com.company.logicstic.entity.TripDriverAssignment;
 import com.company.logicstic.entity.TripStop;
@@ -20,6 +21,8 @@ import com.company.logicstic.repository.TripDriverAssignmentRepository;
 import com.company.logicstic.repository.TripRepository;
 import com.company.logicstic.repository.TripStopRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +44,9 @@ public class TripExecutionService {
 
         Employee driver = employeeRepository.findById(req.driverId())
                 .orElseThrow(() -> new ResourceNotFoundException("Driver not found: " + req.driverId()));
+        if (driver.getEmployeeType() != EmployeeType.DRIVER) {
+            throw new ResourceNotFoundException("Driver not found: " + req.driverId());
+        }
 
         OffsetDateTime effectiveFrom = req.effectiveFrom() != null ? req.effectiveFrom() : OffsetDateTime.now();
         String assignmentType = req.assignmentType() != null && !req.assignmentType().isBlank()
@@ -80,13 +86,11 @@ public class TripExecutionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TripDriverAssignmentView> getTripDrivers(UUID tripId) {
+    public Page<TripDriverAssignmentView> getTripDrivers(UUID tripId, Pageable pageable) {
         if (!tripRepository.existsById(tripId)) {
             throw new ResourceNotFoundException("Trip not found: " + tripId);
         }
-        return assignmentRepository.findByTripIdOrderByEffectiveFromDesc(tripId).stream()
-                .map(this::toAssignmentView)
-                .toList();
+        return assignmentRepository.findPageByTripId(tripId, pageable).map(this::toAssignmentView);
     }
 
     @Transactional
@@ -126,13 +130,11 @@ public class TripExecutionService {
     }
 
     @Transactional(readOnly = true)
-    public List<TripStopView> getTripStops(UUID tripId) {
+    public Page<TripStopView> getTripStops(UUID tripId, Pageable pageable) {
         if (!tripRepository.existsById(tripId)) {
             throw new ResourceNotFoundException("Trip not found: " + tripId);
         }
-        return tripStopRepository.findByTripIdOrderByOrderAsc(tripId).stream()
-                .map(this::toStopView)
-                .toList();
+        return tripStopRepository.findPageByTripId(tripId, pageable).map(this::toStopView);
     }
 
     private TripStop findStop(UUID stopId) {

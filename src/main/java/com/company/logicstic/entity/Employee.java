@@ -16,7 +16,8 @@ import java.util.UUID;
     name = "employees",
     schema = "public",
     indexes = {
-        @Index(name = "ix_employees_role_id", columnList = "role_id")
+        @Index(name = "ix_employees_role_id", columnList = "role_id"),
+        @Index(name = "ix_employees_employee_type", columnList = "employee_type")
     }
 )
 @Getter
@@ -47,6 +48,10 @@ public class Employee extends BaseAuditableEntity {
 
     @Column(name = "status", nullable = false, columnDefinition = "text")
     private String status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "employee_type", nullable = false, length = 20)
+    private EmployeeType employeeType = EmployeeType.OFFICE_STAFF;
 
     @Column(name = "joined_date", nullable = false)
     private OffsetDateTime joinedDate;

@@ -36,6 +36,32 @@ class ShipmentCostEngineTest {
         assertEquals(new BigDecimal("31.25"), engine.allocateMaintenance(new BigDecimal("12.5"), new BigDecimal("2.5"), "USD"));
     }
 
+    @Test void repairExpenseBecomesDirectMaintenanceInsteadOfUnclassifiedOther() {
+        Expense expense = new Expense(); expense.setId(UUID.randomUUID()); expense.setStatus("APPROVED");
+        expense.setAmountAmount(new BigDecimal("40.00")); expense.setAmountCurrency("USD"); expense.setCategory("REPAIR");
+        Load load = new Load(); load.setId(UUID.randomUUID()); expense.setLoad(load);
+        when(repository.findBySourceTypeAndSourceId("EXPENSE", expense.getId())).thenReturn(Optional.empty());
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        ShipmentCost cost = engine.projectApprovedExpense(expense);
+
+        assertEquals("MAINTENANCE", cost.getCategory());
+        assertEquals("DIRECT", cost.getAllocationMethod());
+    }
+
+    @Test void roadSideExpenseCategoriesStayInsideTheClassifiableVocabulary() {
+        Expense expense = new Expense(); expense.setId(UUID.randomUUID()); expense.setStatus("APPROVED");
+        expense.setAmountAmount(new BigDecimal("9.00")); expense.setAmountCurrency("USD"); expense.setCategory("PARKING");
+        Load load = new Load(); load.setId(UUID.randomUUID()); expense.setLoad(load);
+        when(repository.findBySourceTypeAndSourceId("EXPENSE", expense.getId())).thenReturn(Optional.empty());
+        when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        ShipmentCost cost = engine.projectApprovedExpense(expense);
+
+        assertEquals("TOLL", cost.getCategory());
+        org.junit.jupiter.api.Assertions.assertNull(cost.getAllocationMethod());
+    }
+
     @Test void retryDoesNotRewriteFinalizedCostButRejectsAttributionDrift() {
         Expense expense = new Expense(); expense.setId(UUID.randomUUID()); expense.setStatus("APPROVED");
         expense.setAmountAmount(new BigDecimal("12.345")); expense.setAmountCurrency("USD"); expense.setCategory("fuel");

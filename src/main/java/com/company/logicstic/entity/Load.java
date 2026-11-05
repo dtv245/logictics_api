@@ -59,6 +59,14 @@ public class Load extends BaseAuditableEntity {
     @Column(name = "distance", nullable = false)
     private Double distance;
 
+    /** Cargo weight in pounds; null means the weight is not known yet. */
+    @Column(name = "weight_lbs")
+    private Double weightLbs;
+
+    /** Cargo volume in cubic feet; null means the volume is not known yet. */
+    @Column(name = "volume_cuft")
+    private Double volumeCuft;
+
     @Column(name = "is_in_proximity", nullable = false)
     private Boolean isInProximity;
 

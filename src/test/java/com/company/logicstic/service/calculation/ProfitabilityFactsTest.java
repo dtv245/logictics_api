@@ -137,7 +137,9 @@ class ProfitabilityFactsTest {
     @Test void groupedAndAllLoadReportsNeverSilentlyDropCorruptInvoices() {
         Load load = load("USD"); Invoice invoice = invoice(load,"ISSUED","100"); invoice.setSubtotalCurrency("VND");
         when(loads.findAll()).thenReturn(List.of(load));
-        assertThrows(CurrencyMismatchException.class, service::getAllLoadFinancialSummaries);
+        when(loads.findAll(any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(load)));
+        assertThrows(CurrencyMismatchException.class, () -> service.getAllLoadFinancialSummaries(1, 20));
         assertThrows(CurrencyMismatchException.class, service::getLaneProfitabilityReports);
         assertThrows(CurrencyMismatchException.class, service::getTruckProfitabilityReports);
     }

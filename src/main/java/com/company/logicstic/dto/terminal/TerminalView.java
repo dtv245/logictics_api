@@ -1,6 +1,7 @@
 package com.company.logicstic.dto.terminal;
 
 import com.company.logicstic.entity.Terminal;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -17,6 +18,10 @@ public record TerminalView(
         String addressLine2,
         String addressState,
         String addressZipCode,
+        Double latitude,
+        Double longitude,
+        LocalTime workingHoursOpen,
+        LocalTime workingHoursClose,
         OffsetDateTime createdAt,
         OffsetDateTime lastModifiedAt
 ) {
@@ -37,6 +42,10 @@ public record TerminalView(
                 t.getAddressLine2(),
                 t.getAddressState(),
                 t.getAddressZipCode(),
+                t.getLatitude(),
+                t.getLongitude(),
+                t.getWorkingHoursOpen(),
+                t.getWorkingHoursClose(),
                 t.getCreatedAt(),
                 t.getLastModifiedAt()
         );

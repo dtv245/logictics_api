@@ -1,0 +1,49 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 2.3 — UC002 Cập nhật Load — UI đang bị tắt, cần xác minh
+|Người dùng|
+start
+:Mở và sửa Load; chọn lưu;
+|Frontend|
+:Kiểm tra biểu mẫu và chuẩn bị expectedVersion;
+if (Hợp lệ?) then (không)
+ :Hiển thị lỗi;
+ stop
+else (có)
+ :PUT /api/loads/{id};
+endif
+|Backend|
+:Kiểm tra quyền, DTO;
+|Database|
+:Tìm Load với khóa ghi;
+|Backend|
+if (Tồn tại và version khớp?) then (không)
+ :Trả lỗi không tìm thấy hoặc xung đột;
+ |Frontend|
+ :Hiển thị lỗi và phản hồi xung đột;
+ stop
+else (có)
+ :Ánh xạ dữ liệu và kiểm tra quan hệ;
+ :capture ngày lấy hàng nghiệp vụ nếu có;
+ if (Hợp lệ?) then (không)
+  :Trả lỗi; rollback;
+  |Frontend|
+  :Hiển thị lỗi;
+  stop
+ else (có)
+  |Database|
+  :Lưu thay đổi và lịch sử ngày nếu cần;
+  |Backend|
+  :Phát sự kiện nội bộ nếu có publisher;
+  :Trả LoadView;
+  |Frontend|
+  :Chuyển đến chi tiết theo cấu hình;
+  stop
+ endif
+endif
+@enduml

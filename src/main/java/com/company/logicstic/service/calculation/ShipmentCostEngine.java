@@ -46,7 +46,9 @@ public class ShipmentCostEngine {
             projected.setTrip(expense.getTrip());
             projected.setTruck(expense.getTruck());
             projected.setDriver(expense.getEmployee());
-            projected.setCategory(mapCategory(expense.getCategory()));
+            String category = mapCategory(expense.getCategory());
+            projected.setCategory(category);
+            projected.setAllocationMethod(allocationMethodFor(category));
             projected.setAmount(rounding.money(requireAmount(expense), expense.getAmountCurrency(), FinancialRoundingPolicy.Boundary.INVOICE));
             projected.setCurrency(CurrencyGuard.normalize(expense.getAmountCurrency()));
             projected.setIncurredAt(expense.getExpenseDate());
@@ -58,7 +60,11 @@ public class ShipmentCostEngine {
         cost.setTrip(expense.getTrip());
         cost.setTruck(expense.getTruck());
         cost.setDriver(expense.getEmployee());
-        cost.setCategory(mapCategory(expense.getCategory()));
+        String category = mapCategory(expense.getCategory());
+        cost.setCategory(category);
+        // A direct expense is the evidence a maintenance cost was actually incurred; without
+        // DIRECT the V1 policy cannot classify it and it would silently leave profitability.
+        cost.setAllocationMethod(allocationMethodFor(category));
         cost.setCostBasis("ACTUAL");
         cost.setStatus("VERIFIED");
         cost.setSourceType("EXPENSE");
@@ -83,15 +89,25 @@ public class ShipmentCostEngine {
         return expense.getAmountAmount();
     }
 
+    /**
+     * The expense vocabulary (FUEL, TOLL, PARKING, SCALE, REPAIR, MAINTENANCE, TIRE, LUMPER,
+     * HOTEL, PERMIT, OTHER) is coarser than the ledger vocabulary. Every mapping here must land
+     * on a category the V1 profitability policy can classify; OTHER intentionally cannot.
+     */
     private String mapCategory(String category) {
         if (category == null) return "OTHER";
         String value = category.trim().toUpperCase();
         if (value.contains("FUEL")) return "FUEL";
-        if (value.contains("TOLL")) return "TOLL";
-        if (value.contains("MAINT")) return "MAINTENANCE";
-        if (value.contains("DRIVER") || value.contains("PAYROLL")) return "DRIVER";
-        if (value.contains("ACCESS")) return "ACCESSORIAL";
+        if (value.contains("TOLL") || value.contains("PARKING") || value.contains("SCALE")) return "TOLL";
+        if (value.contains("MAINT") || value.contains("REPAIR") || value.contains("TIRE")) return "MAINTENANCE";
+        if (value.contains("DRIVER") || value.contains("PAYROLL") || value.contains("HOTEL")) return "DRIVER";
+        if (value.contains("ACCESS") || value.contains("LUMPER")) return "ACCESSORIAL";
         if (value.contains("INSUR")) return "INSURANCE";
+        if (value.contains("PERMIT")) return "PERMIT";
         return "OTHER";
+    }
+
+    private String allocationMethodFor(String category) {
+        return "MAINTENANCE".equals(category) ? "DIRECT" : null;
     }
 }

@@ -1,0 +1,49 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+title Hình 2.2 — UC001 Tạo Load
+|Người dùng|
+start
+:Nhập dữ liệu Load và chọn lưu;
+|Frontend|
+:Kiểm tra biểu mẫu và chuẩn bị dữ liệu;
+if (Dữ liệu hợp lệ?) then (không)
+ :Hiển thị lỗi trường;
+ stop
+else (có)
+ :POST /api/loads;
+endif
+|Backend|
+:Kiểm tra quyền và DTO;
+if (Hợp lệ và quan hệ tồn tại?) then (không)
+ :Trả lỗi;
+ |Frontend|
+ :Hiển thị lỗi;
+ stop
+else (có)
+ :Ánh xạ Load và giải quyết quan hệ;
+ |Database|
+ :Lưu và flush Load;
+ |Backend|
+ :capture ngày lấy hàng nghiệp vụ nếu có;
+ if (Ngày và nguồn chứng minh hợp lệ?) then (không)
+  :Báo lỗi; giao dịch rollback;
+  |Frontend|
+  :Hiển thị lỗi;
+  stop
+ else (có)
+  |Database|
+  :Lưu lịch sử ngày nếu thay đổi; flush Load;
+  |Backend|
+  :Phát sự kiện nội bộ nếu publisher tồn tại;
+  :Trả 201 và LoadView;
+  |Frontend|
+  :Chuyển về danh sách theo cấu hình;
+  stop
+ endif
+endif
+@enduml

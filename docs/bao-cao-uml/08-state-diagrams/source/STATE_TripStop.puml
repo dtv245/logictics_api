@@ -1,0 +1,20 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 3.11 — Chuyển trạng thái TripStop (phạm vi service)
+[*] --> PENDING : giá trị khởi tạo entity
+PENDING --> ARRIVED : arriveStop
+EN_ROUTE --> ARRIVED : arriveStop
+ARRIVED --> SERVICE_STARTED : startStopService
+SERVICE_STARTED --> SERVICE_COMPLETED : completeStopService
+SERVICE_COMPLETED --> DEPARTED : departStop
+note right of EN_ROUTE
+Nguồn gốc chuyển vào EN_ROUTE
+chưa được khảo sát.
+end note
+note bottom of DEPARTED
+Các trạng thái ngoài tập cho phép bị từ chối.
+Không khẳng định DEPARTED là trạng thái cuối toàn hệ thống.
+end note
+@enduml

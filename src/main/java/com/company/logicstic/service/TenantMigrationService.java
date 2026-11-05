@@ -23,6 +23,7 @@ public class TenantMigrationService {
     private final TenantRegistryService tenantRegistryService;
     private final TenantDataSourceService tenantDataSourceService;
     private final TenancyProperties properties;
+    private final DriverLicensePiiBackfill driverLicensePiiBackfill;
 
     public TenantMigrationReport migrateAllActiveTenants() {
         List<TenantRegistryRecord> tenants = tenantRegistryService.findAllActiveTenants();
@@ -60,6 +61,7 @@ public class TenantMigrationService {
                     .cleanDisabled(true)
                     .load()
                     .migrate();
+            driverLicensePiiBackfill.backfill(dataSource);
         } catch (Exception ex) {
             throw new IllegalStateException("Migration failed for tenant " + tenant.tenantId(), ex);
         } finally {

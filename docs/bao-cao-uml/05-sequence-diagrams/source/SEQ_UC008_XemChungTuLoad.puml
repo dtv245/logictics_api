@@ -1,0 +1,35 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+title Hình 3.10 — UC008 Xem chứng từ của Load
+actor "Người dùng" as U
+boundary "LoadShow / LoadDocumentsPanel" as F
+control "dataProvider" as P
+control "DocumentController" as C
+control "DocumentService" as S
+participant "DocumentRepository" as R
+database "PostgreSQL" as D
+U -> F : Chọn tab chứng từ
+F -> F : Kiểm tra quyền, tenant và loadId
+alt Có quyền và đủ thông tin
+ F -> P : useList(documents, loadId, page)
+ P -> C : GET /api/documents?loadId=&page=&pageSize=
+ C -> S : search(type, status, loadId, ...)
+ S -> S : QuerySortPolicy.sort; PaginationValidator.pageRequest
+ S -> R : search(..., pageable)
+ R -> D : Truy vấn document theo loadId
+ D --> R : Trang Document
+ S -> S : DocumentView.from(document, expiryCalculator)
+ S --> C : PagedResponse<DocumentView>
+ C --> P : ApiResponse
+ P --> F : Trang dữ liệu
+ F --> U : Hiển thị bảng
+ opt Còn trang kế tiếp
+  F -> P : getList trang kế tiếp để nạp trước
+ end
+else Không đủ quyền hoặc thông tin
+ F --> U : Trạng thái quyền hoặc chờ thông tin
+end
+note over F,P : Lỗi truy vấn được chuyển cho bảng; 403 hiển thị ForbiddenState.
+@enduml

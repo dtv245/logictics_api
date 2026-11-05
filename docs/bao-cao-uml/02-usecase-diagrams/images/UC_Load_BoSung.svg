@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="351px" preserveAspectRatio="none" style="width:533px;height:351px;" version="1.1" viewBox="0 0 533 351" width="533px" zoomAndPan="magnify"><defs/><g><text fill="#000000" font-family="DejaVu Sans" font-size="18" lengthAdjust="spacingAndGlyphs" textLength="519" x="2" y="16.708">Hình 2.6 — Bổ sung Load (UC006-UC007 cần xác minh UI)</text><!--MD5=[9757fcc2736ee63b7cec6e2f4b1a4dc5]
+cluster Hệ thống Logistics--><rect fill="#FFFFFF" height="296" style="stroke: #000000; stroke-width: 1.5;" width="250.66" x="218" y="44.9531"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" font-weight="bold" lengthAdjust="spacingAndGlyphs" textLength="147" x="269.83" y="59.9482">Hệ thống Logistics</text><ellipse cx="343.3285" cy="300.9488" fill="#FEFECE" rx="106.3785" ry="23.6757" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="319.8285" y="293.6113">UC005</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="165" x="260.8285" y="309.9082">Tra cứu danh sách Load</text><ellipse cx="343.3273" cy="207.9512" fill="#FEFECE" rx="78.1773" ry="34.148" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="319.8273" y="191.1609">UC006</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="63" x="311.8273" y="207.4578">Xóa Load</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="118" x="284.3273" y="223.7547">(cần xác minh UI)</text><ellipse cx="343.3293" cy="108.9515" fill="#FEFECE" rx="109.3293" ry="29.3883" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="47" x="319.8293" y="96.0126">UC007</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="197" x="244.8293" y="112.3094">Sửa ngày lấy hàng nghiệp vụ</text><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="102" x="292.3293" y="128.6063">(UI đang bị tắt)</text><!--MD5=[ee0fec323975fbe97ba28321ad4c4bf3]
+entity U--><ellipse cx="100" cy="178.3031" fill="#FEFECE" rx="8" ry="8" style="stroke: #A80036; stroke-width: 1.5;"/><path d="M100,186.3031 L100,213.3031 M87,194.3031 L113,194.3031 M100,213.3031 L87,228.3031 M100,213.3031 L113,228.3031 " fill="none" style="stroke: #A80036; stroke-width: 1.5;"/><text fill="#000000" font-family="DejaVu Sans" font-size="14" lengthAdjust="spacingAndGlyphs" textLength="148" x="26" y="243.7982">Người dùng có quyền</text><!--MD5=[1516fef85b3cf51cac44b7c0b75b67eb]
+link U to A--><path d="M174.24,244.6631 C186.07,250.0831 198.28,255.3731 210,259.9531 C231.06,268.1831 254.49,275.9031 275.72,282.3731 " fill="none" id="U-A" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[d5aed61673c9ae9f1f71a234e9ad2199]
+link U to B--><path d="M174.39,207.9531 C202.96,207.9531 235.72,207.9531 264.68,207.9531 " fill="none" id="U-B" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[1d922222e278ecd8b27330c4392d9646]
+link U to C--><path d="M174.41,171.6631 C186.22,166.1931 198.38,160.7731 210,155.9531 C230.38,147.5031 252.89,139.1531 273.47,131.8831 " fill="none" id="U-C" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[88d246df853104fcdced4941212ee121]
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+left to right direction
+title Hình 2.6 — Bổ sung Load (UC006-UC007 cần xác minh UI)
+actor "Người dùng có quyền" as U
+rectangle "Hệ thống Logistics" {
+ usecase "UC005\nTra cứu danh sách Load" as A
+ usecase "UC006\nXóa Load\n(cần xác minh UI)" as B
+ usecase "UC007\nSửa ngày lấy hàng nghiệp vụ\n(UI đang bị tắt)" as C
+}
+U - - A
+U - - B
+U - - C
+@enduml
+
+PlantUML version 1.2020.02(Sun Mar 01 17:22:07 GMT+07:00 2020)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Java Version: 25.0.4.1+1-1-26.04.4-Ubuntu
+Operating System: Linux
+Default Encoding: UTF-8
+Language: en
+Country: null
+--></g></svg>

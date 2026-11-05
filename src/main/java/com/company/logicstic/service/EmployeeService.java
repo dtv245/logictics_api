@@ -4,7 +4,9 @@ import com.company.logicstic.dto.PagedResponse;
 import com.company.logicstic.dto.employee.CreateEmployeeRequest;
 import com.company.logicstic.dto.employee.EmployeeView;
 import com.company.logicstic.entity.Employee;
+import com.company.logicstic.entity.EmployeeType;
 import com.company.logicstic.entity.TenantRole;
+import com.company.logicstic.exception.BadRequestException;
 import com.company.logicstic.exception.ConflictException;
 import com.company.logicstic.exception.ResourceNotFoundException;
 import com.company.logicstic.repository.EmployeeRepository;
@@ -41,15 +43,13 @@ public class EmployeeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
     }
 
-    /** Drivers are employees — filter by role name = DRIVER */
+    /** Drivers are employee records distinguished by employee_type. */
     public PagedResponse<EmployeeView> searchDrivers(String search, String status,
                                                       int page, int pageSize, String orderBy, boolean descending) {
-        // We reuse the same search but filter by roleId being the 'DRIVER' role; 
-        // alternatively just rely on status filter on driver-specific roles
         Sort sort = com.company.logicstic.common.QuerySortPolicy.sort("employees", orderBy, descending);
         var pageable = com.company.logicstic.common.PaginationValidator.pageRequest(page, pageSize, sort);
-        // Pass roleId=null and let the caller filter; for now delegate to general search
-        return PagedResponse.from(employeeRepository.search(search, status, null, pageable).map(EmployeeView::from));
+        return PagedResponse.from(employeeRepository.searchByEmployeeType(
+                search, status, EmployeeType.DRIVER, pageable).map(EmployeeView::from));
     }
 
     @Transactional
@@ -59,6 +59,7 @@ public class EmployeeService {
         }
 
         Employee employee = new Employee();
+        employee.setEmployeeType(EmployeeType.OFFICE_STAFF);
         applyFields(employee, request);
         return EmployeeView.from(employeeRepository.save(employee));
     }
@@ -75,6 +76,27 @@ public class EmployeeService {
     }
 
     @Transactional
+    public EmployeeView createDriver(CreateEmployeeRequest request) {
+        if (employeeRepository.existsByEmail(request.email())) {
+            throw ConflictException.forUniqueField("email", "Employee with email '" + request.email() + "' already exists");
+        }
+        Employee employee = new Employee();
+        applyDriverFields(employee, request);
+        return EmployeeView.from(employeeRepository.save(employee));
+    }
+
+    @Transactional
+    public EmployeeView updateDriver(UUID id, CreateEmployeeRequest request) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
+        if (!employee.getEmail().equals(request.email()) && employeeRepository.existsByEmail(request.email())) {
+            throw ConflictException.forUniqueField("email", "Email '" + request.email() + "' is already in use");
+        }
+        applyDriverFields(employee, request);
+        return EmployeeView.from(employeeRepository.save(employee));
+    }
+
+    @Transactional
     public void delete(UUID id) {
         if (!employeeRepository.existsById(id)) {
             throw new ResourceNotFoundException("Employee not found: " + id);
@@ -83,6 +105,27 @@ public class EmployeeService {
     }
 
     private void applyFields(Employee employee, CreateEmployeeRequest req) {
+        applyCommonFields(employee, req);
+        if (req.roleId() != null) {
+            TenantRole role = roleRepository.findById(req.roleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + req.roleId()));
+            if ("DRIVER".equalsIgnoreCase(role.getNormalizedName())) {
+                throw new BadRequestException("DRIVER_ROLE_NOT_ASSIGNABLE",
+                        "Drivers are employee records and cannot be assigned a system role");
+            }
+            employee.setRole(role);
+        } else {
+            employee.setRole(null);
+        }
+    }
+
+    private void applyDriverFields(Employee employee, CreateEmployeeRequest req) {
+        applyCommonFields(employee, req);
+        employee.setEmployeeType(EmployeeType.DRIVER);
+        employee.setRole(null);
+    }
+
+    private void applyCommonFields(Employee employee, CreateEmployeeRequest req) {
         employee.setEmail(req.email());
         employee.setFirstName(req.firstName());
         employee.setLastName(req.lastName());
@@ -98,13 +141,6 @@ public class EmployeeService {
         employee.setAddressState(req.addressState());
         employee.setAddressZipCode(req.addressZipCode());
         employee.setAddressCountry(req.addressCountry());
-
-        if (req.roleId() != null) {
-            TenantRole role = roleRepository.findById(req.roleId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + req.roleId()));
-            employee.setRole(role);
-        } else {
-            employee.setRole(null);
-        }
     }
+
 }

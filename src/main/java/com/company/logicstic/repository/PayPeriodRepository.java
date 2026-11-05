@@ -1,6 +1,8 @@
 package com.company.logicstic.repository;
 
 import com.company.logicstic.entity.PayPeriod;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.UUID;
 
@@ -10,4 +12,5 @@ public interface PayPeriodRepository extends JpaRepository<PayPeriod, UUID> {
     java.util.Optional<PayPeriod> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") UUID id);
     boolean existsByPeriodCode(String code);
     java.util.List<PayPeriod> findAllByOrderByStartDateDesc();
+    Page<PayPeriod> findAll(Pageable pageable);
 }

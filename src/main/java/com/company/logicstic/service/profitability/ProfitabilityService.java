@@ -12,6 +12,9 @@ import com.company.logicstic.service.accessorial.AccessorialService;
 import com.company.logicstic.service.calculation.InvoiceReconciliationService;
 import com.company.logicstic.service.cost.ShipmentCostEngine;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -35,6 +38,11 @@ public class ProfitabilityService {
     public LoadFinancialSummary getLoadFinancialSummary(UUID loadId) {
         Load load = loadRepository.findById(loadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Load not found: " + loadId));
+        return summarize(load);
+    }
+
+    private LoadFinancialSummary summarize(Load load) {
+        UUID loadId = load.getId();
         String currency = CurrencyGuard.normalize(load.getDeliveryCostCurrency());
         BigDecimal revenue = BigDecimal.ZERO;
         for (Invoice invoice : invoiceRepository.findAllByLoadId(loadId)) {
@@ -90,16 +98,25 @@ public class ProfitabilityService {
                 s.costVarianceMetric(), s.contributionMarginMetric(), s.allocatedProfitMetric(), s.costClassification());
     }
 
-    public List<LoadFinancialSummary> getAllLoadFinancialSummaries() {
+    /**
+     * One page of load summaries. Paging is mandatory: the per-load fact lookup
+     * is several queries, so an unbounded scan turns a single report request
+     * into N+1 across the whole tenant history.
+     */
+    public Page<LoadFinancialSummary> getAllLoadFinancialSummaries(Integer page, Integer pageSize) {
+        Pageable pageable = PaginationValidator.pageRequest(
+                PaginationValidator.validatePage(page),
+                PaginationValidator.validatePageSize(pageSize),
+                Sort.by(Sort.Direction.DESC, "createdAt"));
         // Never hide invalid financial records behind catch-and-skip behavior.
-        return loadRepository.findAll().stream().map(l -> getLoadFinancialSummary(l.getId())).toList();
+        return loadRepository.findAll(pageable).map(this::summarize);
     }
 
     private record LaneKey(String origin, String destination, String currency) {}
     public List<LaneProfitabilityReport> getLaneProfitabilityReports() {
         Map<LaneKey, List<LoadFinancialSummary>> groups = new LinkedHashMap<>();
         for (Load load : loadRepository.findAll()) {
-            LoadFinancialSummary summary = getLoadFinancialSummary(load.getId());
+            LoadFinancialSummary summary = summarize(load);
             var key = new LaneKey(state(load.getOriginAddressState()), state(load.getDestinationAddressState()), summary.currency());
             groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(summary);
         }
@@ -121,7 +138,7 @@ public class ProfitabilityService {
         Map<TruckKey, List<LoadFinancialSummary>> groups = new LinkedHashMap<>();
         Map<UUID, String> numbers = new HashMap<>();
         for (Load load : loadRepository.findAll()) {
-            LoadFinancialSummary summary = getLoadFinancialSummary(load.getId());
+            LoadFinancialSummary summary = summarize(load);
             Truck truck = historicalTruck(load.getId());
             UUID id = truck == null ? null : truck.getId();
             if (truck != null) numbers.put(id, truck.getNumber());

@@ -1,6 +1,7 @@
 package com.company.logicstic.controller;
 
 import com.company.logicstic.dto.ApiResponse;
+import com.company.logicstic.common.PaginationValidator;
 import com.company.logicstic.entity.PayPeriod;
 import com.company.logicstic.service.payroll.PayPeriodService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -23,8 +25,13 @@ public class PayPeriodController {
             @NotNull LocalDate endDate, LocalDate paymentDate) {}
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PayPeriod>>> list(HttpServletRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(service.list(), request));
+    public ResponseEntity<ApiResponse<List<PayPeriod>>> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            HttpServletRequest request
+    ) {
+        var pageable = PaginationValidator.lookupPageRequest(page, pageSize, Sort.by("startDate").descending());
+        return ResponseEntity.ok(ApiResponse.successPage(service.list(pageable), request));
     }
 
     @PostMapping

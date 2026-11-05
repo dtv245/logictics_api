@@ -87,6 +87,57 @@ class LarkAuthServiceTest {
   }
 
   @Test
+  void expiredStateIsRejected() {
+    String state = authService.createState("/dashboard");
+    assertThatThrownBy(() -> authService.validateStateAt(
+        state, System.currentTimeMillis() + properties.stateTtl().toMillis() + 1))
+        .isInstanceOf(ApiException.class)
+        .satisfies(error -> assertThat(((ApiException) error).getMessage()).contains("expired"));
+  }
+
+  @Test
+  void stateCanOnlyBeConsumedOnce() {
+    String state = authService.createState("/dashboard");
+    assertThat(authService.validateState(state)).isEqualTo("/dashboard");
+    assertThatThrownBy(() -> authService.validateState(state))
+        .isInstanceOf(ApiException.class)
+        .satisfies(error -> assertThat(((ApiException) error).getMessage()).contains("already been used"));
+  }
+
+  @Test
+  void externalReturnToIsRejected() {
+    assertThatThrownBy(() -> authService.createState("https://attacker.example/"))
+        .isInstanceOf(ApiException.class)
+        .satisfies(error -> assertThat(((ApiException) error).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+  }
+
+  @Test
+  void invalidStateNeverExchangesCodeOrIssuesInternalToken() {
+    assertThatThrownBy(() -> authService.handleCallback("code", "tampered", null, null, "/"))
+        .isInstanceOf(ApiException.class);
+    verifyNoInteractions(authClient, employeeRepository, larkUserMappingRepository);
+  }
+
+  @Test
+  void replayedStateNeverExchangesCodeOrIssuesInternalToken() {
+    String state = authService.createState("/");
+    authService.validateState(state);
+    assertThatThrownBy(() -> authService.handleCallback("code", state, null, null, null))
+        .isInstanceOf(ApiException.class)
+        .satisfies(error -> assertThat(((ApiException) error).getMessage()).contains("already been used"));
+    verifyNoInteractions(authClient, employeeRepository, larkUserMappingRepository);
+  }
+
+  @Test
+  void missingCodeWithValidStateDoesNotExchangeCodeOrIssueInternalToken() {
+    String state = authService.createState("/");
+    assertThatThrownBy(() -> authService.handleCallback(" ", state, null, null, null))
+        .isInstanceOf(ApiException.class)
+        .satisfies(error -> assertThat(((ApiException) error).getStatus()).isEqualTo(HttpStatus.BAD_REQUEST));
+    verifyNoInteractions(authClient, employeeRepository, larkUserMappingRepository);
+  }
+
+  @Test
   @DisplayName("Existing mapping -> login success without querying employee by email")
   void existingMapping_loginSuccess() {
     String state = authService.createState("/dashboard");

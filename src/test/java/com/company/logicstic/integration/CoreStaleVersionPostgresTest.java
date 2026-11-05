@@ -51,7 +51,7 @@ class CoreStaleVersionPostgresTest {
         Object command;String field,table;Class<?> entity;
         if(resource.equals("loads")){
             db().update("insert into customers(id,name,status,is_vat_exempt) values (?,'Version customer','ACTIVE',false)",customer);
-            command=new CreateLoadRequest("Version fixture","FTL","DRAFT",0.0,false,customer,null,null,"MANUAL",null,null,null,false,null,null,null,null,null,null,null,null,BigDecimal.ZERO,"USD","Origin",null,"City","TX","00000","US",0.0,0.0,"Destination",null,"City","TX","00000","US",0.0,0.0,null,null);
+            command=new CreateLoadRequest("Version fixture","FTL","DRAFT",1.0,false,customer,null,null,"MANUAL",null,null,null,false,null,null,null,null,null,null,null,null,BigDecimal.ZERO,"USD","Origin",null,"City","TX","00000","US",41.0,-87.0,"Destination",null,"City","TX","00000","US",32.0,-96.0,null,null,null,null);
             field="notes";table="loads";entity=Load.class;
         }else if(resource.equals("trips")){
             command=new CreateTripRequest("Version fixture",0.0,"PLANNED",null);field="name";table="trips";entity=Trip.class;

@@ -1,0 +1,21 @@
+@startuml
+skinparam backgroundColor white
+skinparam defaultFontName DejaVu Sans
+skinparam shadowing false
+skinparam activityBackgroundColor #EDF5FA
+skinparam sequenceParticipantBackgroundColor #EDF5FA
+skinparam usecaseBackgroundColor #EDF5FA
+left to right direction
+title Hình 2.1 — Các use case Load đã khảo sát
+actor "Người dùng vận hành\n(ADMIN, ACCOUNTANT, DISPATCHER)" as U
+rectangle "Hệ thống Logistics" {
+ usecase "UC001\nTạo Load" as C
+ usecase "UC002\nCập nhật Load\n(UI đang bị tắt)" as E
+ usecase "UC003\nXem chi tiết Load" as D
+ usecase "UC004\nXem timeline Load" as T
+}
+U -- C
+U -- E
+U -- D
+U -- T
+@enduml

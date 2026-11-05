@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service @RequiredArgsConstructor @Slf4j
 public class FleetHistoryService {
@@ -55,6 +57,8 @@ public class FleetHistoryService {
     }
     public Policy policy(UUID id){return history.policy(id).orElseThrow(()->new ResourceNotFoundException("Fleet policy not found in tenant"));}
     public List<Policy> policies(){return history.policies();}
+    @Transactional(readOnly=true)
+    public Page<Policy> policies(Pageable pageable){return history.policyPage(pageable);}
     @Transactional public Event capture(Capture r,UUID actor) {
         actor(actor);if(r==null || r.truckId()==null || r.kind()==null || blank(r.status()) || r.occurredAt()==null || r.validUntil()==null
             || !r.occurredAt().isBefore(r.validUntil()) || !micro(r.occurredAt()) || !micro(r.validUntil()) || blank(r.sourceEventId()) || blank(r.reasonCode()) || blank(r.reason()))throw invalid("Explicit bounded interval/source/status/reason required");

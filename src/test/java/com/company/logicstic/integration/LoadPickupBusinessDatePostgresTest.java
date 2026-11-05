@@ -54,10 +54,11 @@ class LoadPickupBusinessDatePostgresTest {
     @AfterEach void clearAuthentication() { SecurityContextHolder.clearContext(); }
     private PickupBusinessDateProvenance provenance() { return new PickupBusinessDateProvenance("CUSTOMER_CONFIRMED_PICKUP", "Verified promised pickup date", "fixture agreement reference"); }
     private CreateLoadRequest request(UUID customer, String timestamp, LocalDate date) {
-        return new CreateLoadRequest("Date fixture", "FTL", "DRAFT", 0.0, false, customer, null, null, "MANUAL",
+        return new CreateLoadRequest("Date fixture", "FTL", "DRAFT", 1.0, false, customer, null, null, "MANUAL",
                 timestamp == null ? null : OffsetDateTime.parse(timestamp), null, null, false, null, null, null, null, null,
-                null, null, null, BigDecimal.ZERO, "USD", "Origin", null, "City", "TX", "00000", "US", 0.0, 0.0,
-                "Destination", null, "City", "TX", "00000", "US", 0.0, 0.0, date, date == null ? null : provenance());
+                null, null, null, BigDecimal.ZERO, "USD", "Origin", null, "City", "TX", "00000", "US", 41.0, -87.0,
+                "Destination", null, "City", "TX", "00000", "US", 32.0, -96.0, date, date == null ? null : provenance(),
+                null, null);
     }
     @Test void createCapturesExactLocalDateIndependentlyOfAppointmentOffsetAndAuditsActor() {
         var f = fixture(); var expected = LocalDate.of(2026, 2, 1);

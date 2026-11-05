@@ -245,8 +245,205 @@ if (d && d.id) {
 
     items.append(make_req("02.7 List Employees", "GET", "/api/employees", "List employees", qparams={"search": "", "page": 1, "pageSize": 20}, test=TEST_BASE))
     items.append(make_req("02.8 Get Employee by ID", "GET", "/api/employees/{{driverEmployeeId}}", "Get employee details", test=TEST_BASE))
-    items.append(make_req("02.9 List Drivers", "GET", "/api/drivers", "List active drivers", qparams={"search": "", "page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.9 List Drivers", "GET", "/api/drivers", "List drivers; optional availability filter is available in 02.10.50", qparams={"search": "", "page": 1, "pageSize": 20}, test=TEST_BASE))
     items.append(make_req("02.10 Get Driver by ID", "GET", "/api/drivers/{{driverId}}", "Get driver view", test=TEST_BASE))
+    items.append(make_req("02.10.48 Upsert Driver Operational Status", "PUT",
+        "/api/drivers/{{driverId}}/operational-status", "Set dispatcher-managed availability and optional location; current trip is derived from active assignment history", body={
+            "availability": "AVAILABLE", "defaultVehicleId": None, "lastKnownLatitude": 21.028511,
+            "lastKnownLongitude": 105.804817, "lastKnownAt": "2026-01-01T00:00:00Z", "leaveBalanceDays": 2.50
+        }, test=TEST_BASE))
+    items.append(make_req("02.10.49 Get Driver Operational Status", "GET",
+        "/api/drivers/{{driverId}}/operational-status", "Get driver operational status and derived current trip", test=TEST_BASE))
+    items.append(make_req("02.10.50 List Drivers by Availability", "GET", "/api/drivers",
+        "Filter the paged driver directory by operational availability", qparams={
+            "availability": "AVAILABLE", "page": 1, "pageSize": 20
+        }, test=TEST_BASE))
+
+    # Driver compliance profile uses synthetic test data only.
+    items.append(make_req("02.10.1 Create Driver License", "POST", "/api/drivers/{{driverId}}/licenses", "Create encrypted driver license record", body={
+        "licenseNumber": "TEST-VN-1234567", "licenseClass": "C1E", "endorsements": "Synthetic Postman test record",
+        "issuingCountry": "VN", "issuedDate": "2024-01-01T00:00:00Z", "expiryDate": "2030-01-01T00:00:00Z",
+        "issuedPlace": "Hà Nội", "remainingPoints": 12
+    }, test=TEST_BASE + "if (d && d.id) pm.environment.set('driverLicenseId', d.id);"))
+    items.append(make_req("02.10.2 List Driver Licenses", "GET", "/api/drivers/{{driverId}}/licenses", "List paged driver licenses", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.10.3 Get Driver License", "GET", "/api/drivers/{{driverId}}/licenses/{{driverLicenseId}}", "Get masked driver license", test=TEST_BASE))
+    items.append(make_req("02.10.4 Update Driver License", "PUT", "/api/drivers/{{driverId}}/licenses/{{driverLicenseId}}", "Update driver license while retaining encrypted number", body={
+        "licenseClass": "C1E", "endorsements": "Synthetic Postman test record updated", "issuingCountry": "VN",
+        "issuedDate": "2024-01-01T00:00:00Z", "expiryDate": "2030-01-01T00:00:00Z", "issuedPlace": "Hà Nội",
+        "remainingPoints": 11, "active": True
+    }, test=TEST_BASE))
+    items.append(make_req("02.10.5 Admin Read Driver License Number", "GET", "/api/drivers/{{driverId}}/licenses/{{driverLicenseId}}/sensitive", "ADMIN-only cleartext license read", test=TEST_BASE))
+    items.append(make_req("02.10.6 Deactivate Driver License", "DELETE", "/api/drivers/{{driverId}}/licenses/{{driverLicenseId}}", "Deactivate license and keep compliance history", test=TEST_BASE))
+
+    items.append(make_req("02.10.7 Create Driver Health Check", "POST", "/api/drivers/{{driverId}}/health-checks", "Create encrypted health check", body={
+        "checkedDate": "2025-01-02", "expiryDate": "2027-01-02", "facility": "Synthetic Postman clinic", "conclusion": "FIT"
+    }, test=TEST_BASE + "if (d && d.id) pm.environment.set('driverHealthCheckId', d.id);"))
+    items.append(make_req("02.10.8 List Driver Health Checks", "GET", "/api/drivers/{{driverId}}/health-checks", "List paged driver health checks", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.10.9 Get Driver Health Check", "GET", "/api/drivers/{{driverId}}/health-checks/{{driverHealthCheckId}}", "Get driver health check", test=TEST_BASE))
+    items.append(make_req("02.10.10 Update Driver Health Check", "PUT", "/api/drivers/{{driverId}}/health-checks/{{driverHealthCheckId}}", "Update driver health check", body={
+        "checkedDate": "2025-01-02", "expiryDate": "2027-01-02", "facility": "Synthetic Postman clinic", "conclusion": "FIT"
+    }, test=TEST_BASE))
+    items.append(make_req("02.10.11 Deactivate Driver Health Check", "DELETE", "/api/drivers/{{driverId}}/health-checks/{{driverHealthCheckId}}", "Deactivate health check and retain history", test=TEST_BASE))
+
+    items.append(make_req("02.10.12 Create Driver Certification", "POST", "/api/drivers/{{driverId}}/certifications", "Create driver safety certification", body={
+        "type": "SAFETY", "name": "Synthetic Postman safety training", "issuedDate": "2025-01-02",
+        "expiryDate": "2027-01-02", "issuer": "Synthetic test issuer"
+    }, test=TEST_BASE + "if (d && d.id) pm.environment.set('driverCertificationId', d.id);"))
+    items.append(make_req("02.10.13 List Driver Certifications", "GET", "/api/drivers/{{driverId}}/certifications", "List paged driver certifications", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.10.14 Get Driver Certification", "GET", "/api/drivers/{{driverId}}/certifications/{{driverCertificationId}}", "Get driver certification", test=TEST_BASE))
+    items.append(make_req("02.10.15 Update Driver Certification", "PUT", "/api/drivers/{{driverId}}/certifications/{{driverCertificationId}}", "Update driver certification", body={
+        "type": "SAFETY", "name": "Synthetic Postman safety training updated", "issuedDate": "2025-01-02",
+        "expiryDate": "2027-01-02", "issuer": "Synthetic test issuer"
+    }, test=TEST_BASE))
+    items.append(make_req("02.10.16 Deactivate Driver Certification", "DELETE", "/api/drivers/{{driverId}}/certifications/{{driverCertificationId}}", "Deactivate certification and retain history", test=TEST_BASE))
+
+    # Driver personal profile and emergency contacts use synthetic PII generated per run.
+    items.append(make_req("02.10.17 Upsert Driver Personal Profile", "PUT", "/api/drivers/{{driverId}}/profile", "Upsert driver profile; identifiers are encrypted and masked", body={
+        "dateOfBirth": "1985-05-02", "gender": "MALE", "nationality": "Vietnam",
+        "maritalStatus": "MARRIED", "educationLevel": "HIGH_SCHOOL",
+        "nationalIdNumber": "{{syntheticDriverNationalId}}", "nationalIdIssuedDate": "2020-01-02",
+        "nationalIdIssuedPlace": "Hà Nội", "personalTaxCode": "{{syntheticDriverTaxCode}}",
+        "avatarUrl": "https://example.test/synthetic-driver-avatar.png",
+        "permanentAddress": "Địa chỉ dữ liệu tổng hợp", "temporaryAddress": "Hà Nội", "hometown": "Nam Định"
+    }, pre="""
+const nationalId = "079" + String(Math.floor(100000000 + Math.random() * 900000000));
+const taxCode = String(Math.floor(1000000000 + Math.random() * 9000000000));
+pm.variables.set("syntheticDriverNationalId", nationalId);
+pm.variables.set("syntheticDriverTaxCode", taxCode);
+""", test=TEST_BASE + """
+pm.test("Sensitive identifiers are masked", function () {
+    pm.expect(d.nationalIdNumber).to.match(/^\\*{4}\\d{4}$/);
+    pm.expect(d.personalTaxCode).to.match(/^\\*{4}\\d{4}$/);
+});
+"""))
+    items.append(make_req("02.10.18 Get Masked Driver Profile", "GET", "/api/drivers/{{driverId}}/profile", "Get driver personal profile with PII masked", test=TEST_BASE))
+    items.append(make_req("02.10.19 Admin Get Sensitive Driver Profile", "GET", "/api/drivers/{{driverId}}/profile/sensitive", "ADMIN-only cleartext national ID and tax code", test=TEST_BASE))
+    items.append(make_req("02.10.20 Create Driver Emergency Contact", "POST", "/api/drivers/{{driverId}}/emergency-contacts", "Create synthetic emergency contact", body={
+        "fullName": "Nguyễn An", "relationship": "Thân nhân", "phoneNumber": "+84901234567",
+        "address": "Hà Nội", "primary": True
+    }, test=TEST_BASE + "if (d && d.id) pm.environment.set('driverEmergencyContactId', d.id);"))
+    items.append(make_req("02.10.21 List Driver Emergency Contacts", "GET", "/api/drivers/{{driverId}}/emergency-contacts",
+        "List active emergency contacts with pagination", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.10.22 Get Driver Emergency Contact", "GET",
+        "/api/drivers/{{driverId}}/emergency-contacts/{{driverEmergencyContactId}}", "Get emergency contact", test=TEST_BASE))
+    items.append(make_req("02.10.23 Update Driver Emergency Contact", "PUT",
+        "/api/drivers/{{driverId}}/emergency-contacts/{{driverEmergencyContactId}}", "Update emergency contact", body={
+            "fullName": "Nguyễn An", "relationship": "Thân nhân", "phoneNumber": "+84901234567",
+            "address": "Hà Nội", "primary": True, "active": True
+        }, test=TEST_BASE))
+    items.append(make_req("02.10.24 Deactivate Driver Emergency Contact", "DELETE",
+        "/api/drivers/{{driverId}}/emergency-contacts/{{driverEmergencyContactId}}", "Deactivate and retain emergency contact history", test=TEST_BASE))
+    items.append(make_req("02.10.25 Create Employment Contract", "POST", "/api/drivers/{{driverId}}/contracts",
+        "Create synthetic fixed-term employment contract", body={
+            "contractNumber": "HD-{{$timestamp}}", "contractType": "FIXED_TERM",
+            "signedDate": "2026-01-01", "effectiveDate": "2026-01-02", "expiryDate": "2030-01-01"
+        }, test=TEST_BASE + "if (d && d.id) pm.environment.set('driverContractId', d.id);"))
+    items.append(make_req("02.10.26 List Employment Contracts", "GET", "/api/drivers/{{driverId}}/contracts",
+        "List paged employment contract history", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.10.27 Get Employment Contract", "GET",
+        "/api/drivers/{{driverId}}/contracts/{{driverContractId}}", "Get employment contract", test=TEST_BASE))
+    items.append(make_req("02.10.28 Update Employment Contract", "PUT",
+        "/api/drivers/{{driverId}}/contracts/{{driverContractId}}", "Record employment contract termination", body={
+            "contractNumber": "HD-{{$timestamp}}", "contractType": "FIXED_TERM",
+            "signedDate": "2026-01-01", "effectiveDate": "2026-01-02", "expiryDate": "2030-01-01",
+            "terminationDate": "2028-01-01", "terminationReason": "Synthetic contract test update", "active": True
+        }, test=TEST_BASE))
+    items.append(make_req("02.10.29 Deactivate Employment Contract", "DELETE",
+        "/api/drivers/{{driverId}}/contracts/{{driverContractId}}", "Deactivate contract without deleting its history", test=TEST_BASE))
+    items.append(make_req("02.10.30 Create Driver Insurance History", "POST", "/api/drivers/{{driverId}}/insurances",
+        "Create synthetic insurance history with encrypted identifiers", body={
+            "socialInsuranceNumber": "{{syntheticSocialInsuranceNumber}}",
+            "healthInsuranceCardNumber": "{{syntheticHealthInsuranceCardNumber}}",
+            "registeredClinic": "Synthetic clinic", "participationStartDate": "2026-01-01",
+            "socialInsuranceStatus": "ACTIVE", "healthInsuranceStatus": "ACTIVE",
+            "unemploymentInsuranceStatus": "ACTIVE", "insuredSalary": 8000000.00,
+            "healthInsuranceExpiryDate": "2027-12-31", "note": "Synthetic Postman test record"
+        }, pre="""
+const socialNumber = String(Math.floor(1000000000 + Math.random() * 9000000000));
+const healthNumber = "VN" + String(Math.floor(100000000 + Math.random() * 900000000));
+pm.variables.set("syntheticSocialInsuranceNumber", socialNumber);
+pm.variables.set("syntheticHealthInsuranceCardNumber", healthNumber);
+""", test=TEST_BASE + "if (d && d.id) pm.environment.set('driverInsuranceId', d.id);"))
+    items.append(make_req("02.10.31 List Driver Insurances", "GET", "/api/drivers/{{driverId}}/insurances",
+        "List paged insurance history with identifiers masked", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.10.32 Get Driver Insurance", "GET",
+        "/api/drivers/{{driverId}}/insurances/{{driverInsuranceId}}", "Get masked insurance record", test=TEST_BASE))
+    items.append(make_req("02.10.33 Admin Get Sensitive Insurance", "GET",
+        "/api/drivers/{{driverId}}/insurances/{{driverInsuranceId}}/sensitive", "ADMIN-only clear insurance identifier read", test=TEST_BASE))
+    items.append(make_req("02.10.34 Update Driver Insurance", "PUT",
+        "/api/drivers/{{driverId}}/insurances/{{driverInsuranceId}}", "Update insurance record while retaining omitted encrypted identifiers", body={
+            "registeredClinic": "Synthetic clinic updated", "participationStartDate": "2026-01-01",
+            "socialInsuranceStatus": "ACTIVE", "healthInsuranceStatus": "ACTIVE",
+            "unemploymentInsuranceStatus": "ACTIVE", "insuredSalary": 8000000.00,
+            "healthInsuranceExpiryDate": "2027-12-31", "note": "Synthetic Postman update", "active": True
+        }, test=TEST_BASE))
+    items.append(make_req("02.10.35 Deactivate Driver Insurance", "DELETE",
+        "/api/drivers/{{driverId}}/insurances/{{driverInsuranceId}}", "Deactivate insurance history without deleting it", test=TEST_BASE))
+
+    # Dependents and bank accounts; identifiers are generated at request time and only masked values persist.
+    items.append(make_req("02.10.36 Create Driver Dependent", "POST", "/api/drivers/{{driverId}}/dependents",
+        "Create synthetic dependent and tax-deduction history", body={
+            "fullName": "Nguyễn An", "relationship": "Child", "dateOfBirth": "2015-01-02",
+            "nationalIdNumber": "{{syntheticDependentNationalId}}", "taxCode": "{{syntheticDependentTaxCode}}",
+            "deductionStartDate": "2026-01-01", "deductionEndDate": "2026-12-31"
+        }, pre="""
+const nationalId = String(Math.floor(100000000000 + Math.random() * 900000000000));
+const taxCode = String(Math.floor(1000000000 + Math.random() * 9000000000));
+pm.variables.set("syntheticDependentNationalId", nationalId);
+pm.variables.set("syntheticDependentTaxCode", taxCode);
+""", test=TEST_BASE + """
+if (d && d.id) pm.environment.set("driverDependentId", d.id);
+if (d && d.nationalIdNumber) pm.environment.set("driverDependentNationalIdMasked", d.nationalIdNumber);
+if (d && d.taxCode) pm.environment.set("driverDependentTaxCodeMasked", d.taxCode);
+pm.test("Dependent identifiers are masked", function () {
+    pm.expect(d.nationalIdNumber).to.match(/^\\*{4}\\d{4}$/);
+    pm.expect(d.taxCode).to.match(/^\\*{4}\\d{4}$/);
+});
+"""))
+    items.append(make_req("02.10.37 List Driver Dependents", "GET", "/api/drivers/{{driverId}}/dependents",
+        "List paged dependent and deduction history", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.10.38 Get Driver Dependent", "GET",
+        "/api/drivers/{{driverId}}/dependents/{{driverDependentId}}", "Get masked dependent record", test=TEST_BASE))
+    items.append(make_req("02.10.39 Admin Read Sensitive Dependent", "GET",
+        "/api/drivers/{{driverId}}/dependents/{{driverDependentId}}/sensitive",
+        "ADMIN-only cleartext dependent identifiers", test=TEST_BASE))
+    items.append(make_req("02.10.40 Update Driver Dependent", "PUT",
+        "/api/drivers/{{driverId}}/dependents/{{driverDependentId}}", "Update dependent while retaining masked identifiers", body={
+            "fullName": "Nguyễn An", "relationship": "Child", "dateOfBirth": "2015-01-02",
+            "nationalIdNumber": "{{driverDependentNationalIdMasked}}", "taxCode": "{{driverDependentTaxCodeMasked}}",
+            "deductionStartDate": "2026-01-01", "deductionEndDate": "2026-12-31", "active": True
+        }, test=TEST_BASE))
+    items.append(make_req("02.10.41 Deactivate Driver Dependent", "DELETE",
+        "/api/drivers/{{driverId}}/dependents/{{driverDependentId}}", "Deactivate dependent and retain tax-deduction history", test=TEST_BASE))
+
+    items.append(make_req("02.10.42 Create Driver Bank Account", "POST", "/api/drivers/{{driverId}}/bank-accounts",
+        "Create synthetic bank account; generated account number is not stored in the environment", body={
+            "bankName": "Ngân hàng tổng hợp", "accountNumber": "{{syntheticBankAccountNumber}}",
+            "accountHolderName": "NGUYEN AN", "primary": True
+        }, pre="""
+const accountNumber = String(Math.floor(10000000 + Math.random() * 90000000));
+pm.variables.set("syntheticBankAccountNumber", accountNumber);
+""", test=TEST_BASE + """
+if (d && d.id) pm.environment.set("driverBankAccountId", d.id);
+if (d && d.accountNumber) pm.environment.set("driverBankAccountNumberMasked", d.accountNumber);
+pm.test("Bank account number is masked", function () {
+    pm.expect(d.accountNumber).to.match(/^\\*{4}\\d{4}$/);
+});
+"""))
+    items.append(make_req("02.10.43 List Driver Bank Accounts", "GET", "/api/drivers/{{driverId}}/bank-accounts",
+        "List paged bank-account history", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("02.10.44 Get Driver Bank Account", "GET",
+        "/api/drivers/{{driverId}}/bank-accounts/{{driverBankAccountId}}", "Get masked bank-account record", test=TEST_BASE))
+    items.append(make_req("02.10.45 Admin Read Sensitive Bank Account", "GET",
+        "/api/drivers/{{driverId}}/bank-accounts/{{driverBankAccountId}}/sensitive",
+        "ADMIN-only cleartext bank-account number", test=TEST_BASE))
+    items.append(make_req("02.10.46 Update Driver Bank Account", "PUT",
+        "/api/drivers/{{driverId}}/bank-accounts/{{driverBankAccountId}}", "Update bank details while retaining masked account number", body={
+            "bankName": "Ngân hàng tổng hợp cập nhật", "accountNumber": "{{driverBankAccountNumberMasked}}",
+            "accountHolderName": "NGUYEN AN", "primary": True, "active": True
+        }, test=TEST_BASE))
+    items.append(make_req("02.10.47 Deactivate Driver Bank Account", "DELETE",
+        "/api/drivers/{{driverId}}/bank-accounts/{{driverBankAccountId}}", "Deactivate bank account and retain payroll history", test=TEST_BASE))
 
     # Customers
     items.append(make_req("02.11 Create Customer", "POST", "/api/customers", "Create shipper customer", body={
@@ -777,6 +974,68 @@ if (d && d.id) {
     console.log("Saved driverAssignmentId:", d.id);
 }
 """))
+    items.append(make_req("07.4.1 Create Driver Violation", "POST", "/api/drivers/{{driverId}}/violations",
+        "Create confirmed driver violation; HOS provider telemetry remains separate", body={
+            "violationDate": "2026-10-30T09:00:00Z", "violationType": "SPEED",
+            "description": "Synthetic confirmed speed violation", "fineAmount": 250000.00,
+            "fineCurrency": "VND", "tripId": "{{tripId}}", "resolutionStatus": "OPEN"
+        }, pre="""
+const body = JSON.parse(pm.request.body.raw);
+body.violationDate = new Date(Date.now() - 600000).toISOString();
+pm.request.body.raw = JSON.stringify(body, null, 2);
+""", test=TEST_BASE + "if (d && d.id) pm.environment.set('driverViolationId', d.id);"))
+    items.append(make_req("07.4.2 List Driver Violations", "GET", "/api/drivers/{{driverId}}/violations",
+        "List active confirmed violations with bounded paging", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("07.4.3 Get Driver Violation", "GET",
+        "/api/drivers/{{driverId}}/violations/{{driverViolationId}}", "Get violation and resolution state", test=TEST_BASE))
+    items.append(make_req("07.4.4 Update Driver Violation", "PUT",
+        "/api/drivers/{{driverId}}/violations/{{driverViolationId}}", "Update violation resolution without deleting history", body={
+            "violationDate": "2026-10-30T09:00:00Z", "violationType": "SPEED",
+            "description": "Synthetic confirmed speed violation", "fineAmount": 250000.00,
+            "fineCurrency": "VND", "tripId": "{{tripId}}", "resolutionStatus": "UNDER_REVIEW", "active": True
+        }, pre="""
+const body = JSON.parse(pm.request.body.raw);
+body.violationDate = new Date(Date.now() - 600000).toISOString();
+pm.request.body.raw = JSON.stringify(body, null, 2);
+""", test=TEST_BASE))
+    items.append(make_req("07.4.5 Deactivate Driver Violation", "DELETE",
+        "/api/drivers/{{driverId}}/violations/{{driverViolationId}}", "Retain the confirmed violation and inactivate its directory record", test=TEST_BASE))
+    items.append(make_req("07.4.6 Create Driver Accident", "POST", "/api/drivers/{{driverId}}/accidents",
+        "Create accident record in the existing accident_reports aggregate", body={
+            "truckId": "{{truckId}}", "tripId": "{{tripId}}", "accidentType": "COLLISION", "severity": "MINOR",
+            "accidentDateTime": "2026-10-30T09:00:00Z", "latitude": 21.028511, "longitude": 105.804817,
+            "address": "Synthetic Postman location", "description": "Synthetic low-severity test accident",
+            "anyInjuries": False, "vehicleDamaged": True, "estimatedDamageCost": 125000.00,
+            "vehicleDrivable": True, "policeReportFiled": False, "insuranceNotified": False, "status": "REPORTED"
+        }, pre="""
+const body = JSON.parse(pm.request.body.raw);
+body.accidentDateTime = new Date(Date.now() - 600000).toISOString();
+pm.request.body.raw = JSON.stringify(body, null, 2);
+""", test=TEST_BASE + "if (d && d.id) pm.environment.set('driverAccidentId', d.id);"))
+    items.append(make_req("07.4.7 List Driver Accidents", "GET", "/api/drivers/{{driverId}}/accidents",
+        "List non-cancelled accident history", qparams={"page": 1, "pageSize": 20}, test=TEST_BASE))
+    items.append(make_req("07.4.8 Get Driver Accident", "GET",
+        "/api/drivers/{{driverId}}/accidents/{{driverAccidentId}}", "Get accident details; signatures are not exposed", test=TEST_BASE))
+    items.append(make_req("07.4.9 Update Driver Accident", "PUT",
+        "/api/drivers/{{driverId}}/accidents/{{driverAccidentId}}", "Move the accident report to review status", body={
+            "truckId": "{{truckId}}", "tripId": "{{tripId}}", "accidentType": "COLLISION", "severity": "MINOR",
+            "accidentDateTime": "2026-10-30T09:00:00Z", "latitude": 21.028511, "longitude": 105.804817,
+            "address": "Synthetic Postman location", "description": "Synthetic low-severity test accident",
+            "anyInjuries": False, "vehicleDamaged": True, "estimatedDamageCost": 125000.00,
+            "vehicleDrivable": True, "policeReportFiled": False, "insuranceNotified": False, "status": "UNDER_REVIEW"
+        }, pre="""
+const body = JSON.parse(pm.request.body.raw);
+body.accidentDateTime = new Date(Date.now() - 600000).toISOString();
+pm.request.body.raw = JSON.stringify(body, null, 2);
+""", test=TEST_BASE))
+    items.append(make_req("07.4.10 Cancel Driver Accident", "DELETE",
+        "/api/drivers/{{driverId}}/accidents/{{driverAccidentId}}", "Cancel without deleting the existing accident report", test=TEST_BASE))
+    items.append(make_req("07.4.11 Driver Profile Summary", "GET",
+        "/api/drivers/{{driverId}}/profile-summary",
+        "Review profile group counts, active compliance status, and the driver's upcoming expiry items", test=TEST_BASE))
+    items.append(make_req("07.4.12 Expiring Driver Compliance Items", "GET",
+        "/api/drivers/expiring", "List driver compliance records expiring within 30 days with bounded paging",
+        qparams={"days": 30, "page": 1, "pageSize": 20}, test=TEST_BASE))
     items.append(make_req("07.5 Get Trip Stops", "GET", "/api/trips/{{tripId}}/stops", "List stops of trip to extract pickupStopId", test=TEST_BASE + """
 pm.test("Trip has at least one stop", function () {
     pm.expect(d).to.be.an("array").and.not.empty;
@@ -1861,6 +2120,22 @@ pm.test("Content array returned", function () {
 """))
 
     items.append(make_req("14.15 Driver Portal - Get My Payslips", "GET", "/api/driver/me/payslips", "Driver self-service portal payslips list", test=TEST_BASE))
+    items.append(make_req("14.16 Driver Portal - Get My Licenses", "GET", "/api/driver/me/licenses", "Driver self-service licenses; skipped without driverAccessToken", noauth=True,
+        pre='const t = pm.environment.get("driverAccessToken"); if (!t || !t.trim()) pm.execution.skipRequest(); else pm.request.headers.upsert({key: "Authorization", value: "Bearer " + t});', test=TEST_BASE))
+    items.append(make_req("14.17 Driver Portal - Get My Profile", "GET", "/api/driver/me/profile", "Driver self-service masked profile; skipped without driverAccessToken", noauth=True,
+        pre='const t = pm.environment.get("driverAccessToken"); if (!t || !t.trim()) pm.execution.skipRequest(); else pm.request.headers.upsert({key: "Authorization", value: "Bearer " + t});', test=TEST_BASE))
+    items.append(make_req("14.18 Driver Portal - Get My Emergency Contacts", "GET", "/api/driver/me/emergency-contacts", "Driver self-service emergency contacts; skipped without driverAccessToken", noauth=True,
+        pre='const t = pm.environment.get("driverAccessToken"); if (!t || !t.trim()) pm.execution.skipRequest(); else pm.request.headers.upsert({key: "Authorization", value: "Bearer " + t});', test=TEST_BASE))
+    items.append(make_req("14.19 Driver Portal - Get My Contracts", "GET", "/api/driver/me/contracts", "Driver self-service contract history; skipped without driverAccessToken", noauth=True,
+        pre='const t = pm.environment.get("driverAccessToken"); if (!t || !t.trim()) pm.execution.skipRequest(); else pm.request.headers.upsert({key: "Authorization", value: "Bearer " + t});', test=TEST_BASE))
+    items.append(make_req("14.20 Driver Portal - Get My Insurances", "GET", "/api/driver/me/insurances", "Driver self-service masked insurance history; skipped without driverAccessToken", noauth=True,
+        pre='const t = pm.environment.get("driverAccessToken"); if (!t || !t.trim()) pm.execution.skipRequest(); else pm.request.headers.upsert({key: "Authorization", value: "Bearer " + t});', test=TEST_BASE))
+    items.append(make_req("14.21 Driver Portal - Get My Dependents", "GET", "/api/driver/me/dependents", "Driver self-service masked dependent history; skipped without driverAccessToken", noauth=True,
+        pre='const t = pm.environment.get("driverAccessToken"); if (!t || !t.trim()) pm.execution.skipRequest(); else pm.request.headers.upsert({key: "Authorization", value: "Bearer " + t});', test=TEST_BASE))
+    items.append(make_req("14.22 Driver Portal - Get My Bank Accounts", "GET", "/api/driver/me/bank-accounts", "Driver self-service masked bank-account history; skipped without driverAccessToken", noauth=True,
+        pre='const t = pm.environment.get("driverAccessToken"); if (!t || !t.trim()) pm.execution.skipRequest(); else pm.request.headers.upsert({key: "Authorization", value: "Bearer " + t});', test=TEST_BASE))
+    items.append(make_req("14.23 Driver Portal - Get My Operational Status", "GET", "/api/driver/me/operational-status", "Driver self-service operational status; skipped without driverAccessToken", noauth=True,
+        pre='const t = pm.environment.get("driverAccessToken"); if (!t || !t.trim()) pm.execution.skipRequest(); else pm.request.headers.upsert({key: "Authorization", value: "Bearer " + t});', test=TEST_BASE))
 
     return {"name": "14_PayrollRun", "item": items}
 
@@ -2165,6 +2440,18 @@ def build_environment():
         {"key": "dispatcherEmployeeId", "value": "", "enabled": True},
         {"key": "driverEmployeeId", "value": "", "enabled": True},
         {"key": "driverId", "value": "", "enabled": True},
+        {"key": "driverAccessToken", "value": "", "enabled": True},
+        {"key": "driverLicenseId", "value": "", "enabled": True},
+        {"key": "driverHealthCheckId", "value": "", "enabled": True},
+        {"key": "driverCertificationId", "value": "", "enabled": True},
+        {"key": "driverEmergencyContactId", "value": "", "enabled": True},
+        {"key": "driverContractId", "value": "", "enabled": True},
+        {"key": "driverInsuranceId", "value": "", "enabled": True},
+        {"key": "driverDependentId", "value": "", "enabled": True},
+        {"key": "driverDependentNationalIdMasked", "value": "", "enabled": True},
+        {"key": "driverDependentTaxCodeMasked", "value": "", "enabled": True},
+        {"key": "driverBankAccountId", "value": "", "enabled": True},
+        {"key": "driverBankAccountNumberMasked", "value": "", "enabled": True},
         {"key": "customerId", "value": "", "enabled": True},
         {"key": "truckId", "value": "", "enabled": True},
         {"key": "truckVersion", "value": "0", "enabled": True},

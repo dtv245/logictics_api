@@ -1,7 +1,11 @@
 package com.company.logicstic.dto.terminal;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
+import java.time.LocalTime;
 
 public record CreateTerminalRequest(
         @NotBlank(message = "Name is required")
@@ -37,5 +41,16 @@ public record CreateTerminalRequest(
         String addressState,
 
         @NotBlank(message = "ZIP code is required")
-        String addressZipCode
+        String addressZipCode,
+
+        @DecimalMin(value = "-90", message = "Latitude must be between -90 and 90")
+        @DecimalMax(value = "90", message = "Latitude must be between -90 and 90")
+        Double latitude,
+
+        @DecimalMin(value = "-180", message = "Longitude must be between -180 and 180")
+        @DecimalMax(value = "180", message = "Longitude must be between -180 and 180")
+        Double longitude,
+
+        LocalTime workingHoursOpen,
+        LocalTime workingHoursClose
 ) {}

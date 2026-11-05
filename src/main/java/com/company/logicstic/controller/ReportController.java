@@ -219,10 +219,16 @@ public class ReportController {
 
     @GetMapping("/reports/profitability/by-load")
     public ResponseEntity<ApiResponse<java.util.List<com.company.logicstic.dto.profitability.LoadFinancialSummary>>> profitabilityByLoad(
-            @RequestParam(required = false) UUID loadId, HttpServletRequest request) {
-        var summaries = loadId == null ? profitabilityService.getAllLoadFinancialSummaries()
-                : java.util.List.of(profitabilityService.getLoadFinancialSummary(loadId));
-        return ResponseEntity.ok(ApiResponse.success(summaries, request));
+            @RequestParam(required = false) UUID loadId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer pageSize,
+            HttpServletRequest request) {
+        if (loadId != null) {
+            return ResponseEntity.ok(ApiResponse.success(
+                    java.util.List.of(profitabilityService.getLoadFinancialSummary(loadId)), request));
+        }
+        var summaries = profitabilityService.getAllLoadFinancialSummaries(page, pageSize);
+        return ResponseEntity.ok(ApiResponse.successPage(summaries, request));
     }
 
     @GetMapping("/reports/profitability/by-lane")

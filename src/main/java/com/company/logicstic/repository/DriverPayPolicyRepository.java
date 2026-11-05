@@ -1,6 +1,8 @@
 package com.company.logicstic.repository;
 
 import com.company.logicstic.entity.DriverPayPolicy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface DriverPayPolicyRepository extends JpaRepository<DriverPayPolicy, UUID> {
+    @Override
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = "driver")
+    Page<DriverPayPolicy> findAll(Pageable pageable);
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM DriverPayPolicy p WHERE p.id = :id")
     Optional<DriverPayPolicy> findByIdForUpdate(@Param("id") UUID id);

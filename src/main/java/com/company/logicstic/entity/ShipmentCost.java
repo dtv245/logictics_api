@@ -99,6 +99,15 @@ public class ShipmentCost extends BaseAuditableEntity {
     @Column(name = "posted_at")
     private OffsetDateTime postedAt;
 
+    @Column(name = "voided_at")
+    private OffsetDateTime voidedAt;
+
+    @Column(name = "voided_by")
+    private UUID voidedBy;
+
+    @Column(name = "void_reason", length = 500)
+    private String voidReason;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "calculation_snapshot_id")
     private CalculationSnapshot calculationSnapshot;
