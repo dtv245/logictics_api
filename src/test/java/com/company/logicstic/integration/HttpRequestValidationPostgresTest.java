@@ -87,7 +87,8 @@ class HttpRequestValidationPostgresTest {
     }
     @Test void optionalRatingSelectorsAndProviderErrorCallbackRemainValidTransport() throws Exception {
         postBody("/api/loads/"+UUID.randomUUID()+"/rating/preview",Map.of("contextSource","Approved fixture","accessorialIds",List.of(),"currency","USD")).andExpect(status().isNotFound());
-        mvc().perform(post("/api/auth/lark/callback").contentType("application/json").content("{\"error\":\"access_denied\"}"))
+        mvc().perform(post("/api/auth/lark/callback").contentType("application/json")
+                        .content(json.writeValueAsString(Map.of("error", "access_denied", "state", tokens.createState("/")))))
                 .andExpect(status().isUnauthorized()).andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
         mvc().perform(post("/api/auth/lark/callback").contentType("application/json").content("{}"))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));

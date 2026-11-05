@@ -1,5 +1,5 @@
 ALTER TABLE public.employees
-    ADD COLUMN employee_type VARCHAR(20);
+    ADD COLUMN employee_type VARCHAR(20) DEFAULT 'OFFICE_STAFF';
 
 UPDATE public.employees employee
 SET employee_type = CASE

@@ -171,9 +171,10 @@ class LarkEmployeeMappingPostgresTest {
             barrier.await(10, TimeUnit.SECONDS); // Both lookups missed before either insert.
             return result;
         }).when(employees).findAllByEmailForLarkLogin(email);
-        String state = login.createState("/");
+        String firstState = login.createState("/");
+        String secondState = login.createState("/");
         try (var pool = Executors.newFixedThreadPool(2)) {
-            var work = (java.util.concurrent.Callable<UUID>) () -> {
+            java.util.function.Function<String, java.util.concurrent.Callable<UUID>> work = state -> () -> {
                 try {
                     return new TransactionTemplate(transactions).execute(status -> {
                         UUID resolved = login.handleCallback("code", state, null, null, null).employeeId();
@@ -183,7 +184,8 @@ class LarkEmployeeMappingPostgresTest {
                     });
                 } finally { TenantContext.clear(); }
             };
-            var first = pool.submit(work); var second = pool.submit(work);
+            var first = pool.submit(work.apply(firstState));
+            var second = pool.submit(work.apply(secondState));
             assertEquals(employee, first.get(20, TimeUnit.SECONDS));
             assertEquals(employee, second.get(20, TimeUnit.SECONDS));
         }

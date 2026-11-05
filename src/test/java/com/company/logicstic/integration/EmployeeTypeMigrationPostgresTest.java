@@ -88,6 +88,10 @@ class EmployeeTypeMigrationPostgresTest {
                 String.class, UUID.fromString("20000000-0000-0000-0000-000000000002"))).isEqualTo("OFFICE_STAFF");
         assertThat(jdbc.queryForObject("SELECT employee_type FROM public.employees WHERE id = ?",
                 String.class, UUID.fromString("20000000-0000-0000-0000-000000000003"))).isEqualTo("OFFICE_STAFF");
+        UUID defaultedEmployeeId = UUID.fromString("20000000-0000-0000-0000-000000000006");
+        jdbc.update("INSERT INTO public.employees (id) VALUES (?)", defaultedEmployeeId);
+        assertThat(jdbc.queryForObject("SELECT employee_type FROM public.employees WHERE id = ?",
+                String.class, defaultedEmployeeId)).isEqualTo("OFFICE_STAFF");
 
         assertThatThrownBy(() -> jdbc.update(
                 "INSERT INTO public.employees (id, employee_type) VALUES (?, ?)",

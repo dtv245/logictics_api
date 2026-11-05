@@ -42,9 +42,26 @@ class MultiTenantStartupPostgresTest {
         if(!System.getenv("TASK_DB_URL").matches("jdbc:postgresql://[^/]+/codex_[a-z0-9_]+"))throw new IllegalStateException("Disposable database required");
         var admin=new JdbcTemplate(source(null));String suffix=UUID.randomUUID().toString().replace("-","");
         String registryName="codex_registry_"+suffix,aName="codex_startup_a_"+suffix,bName="codex_startup_b_"+suffix,futureName="codex_future_"+suffix;
+        admin.execute("""
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'control_migrator') THEN
+                        CREATE ROLE control_migrator NOLOGIN;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'control_app') THEN
+                        CREATE ROLE control_app NOLOGIN;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'control_readonly') THEN
+                        CREATE ROLE control_readonly NOLOGIN;
+                    END IF;
+                END;
+                $$
+                """);
         for(String name:List.of(registryName,aName,bName,futureName))admin.execute("create database "+name);
+        admin.execute("alter database "+registryName+" owner to control_migrator");
         registry=source(registryName);a=source(aName);b=source(bName);future=source(futureName);
-        Flyway.configure().dataSource(registry).locations("classpath:db/migration/registry").load().migrate();
+        var migrationSource=source(registryName);migrationSource.setOptions("-c role=control_migrator");
+        Flyway.configure().dataSource(migrationSource).locations("classpath:db/migration/registry").load().migrate();
         var props=new TenancyProperties();props.getRegistry().setEncryptionKey(KEY);var cipher=new TenantCredentialCipher(props);
         var jdbc=new JdbcTemplate(registry);
         for(var tenant:Map.of("startup-a",a,"startup-b",b).entrySet())jdbc.update("insert into tenant_registry(tenant_id,db_url,db_username,db_password,status) values (?,?,?,?,'ACTIVE')",tenant.getKey(),jdbcUrl(tenant.getValue()),tenant.getValue().getUser(),cipher.encrypt(System.getenv("TASK_DB_PASSWORD")));

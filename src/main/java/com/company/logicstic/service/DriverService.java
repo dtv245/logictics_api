@@ -108,7 +108,6 @@ public class DriverService {
 
     @Transactional
     public EmployeeView create(CreateEmployeeRequest request) {
-        UUID driverRoleId = requireDriverRole().getId();
         return employeeService.createDriver(request);
     }
 
